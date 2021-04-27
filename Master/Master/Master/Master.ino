@@ -22,10 +22,10 @@
 #include <PID_v1.h>
 #include <EEPROMex.h>
 #include <ArduinoJson.h>
-#include "C:\Users\pierr\OneDrive\Documents\Arduino\libraries\cocorico2\Mesocosmes.h"
-#include "C:\Users\pierr\OneDrive\Documents\Arduino\libraries\cocorico2\Hamilton.h"
-#include "C:\Users\pierr\OneDrive\Documents\Arduino\libraries\cocorico2\Condition.h"
-#include "C:\Users\pierr\OneDrive\Documents\Arduino\libraries\cocorico2\ModbusSensor.h"
+#include "..\..\..\Libs\Mesocosmes.h"
+#include "..\..\..\Libs\Hamilton.h"
+#include "..\..\..\Libs\Condition.h"
+#include "..\..\..\Libs\ModbusSensor.h"
 #include <WebSocketsServer.h>
 #include <C:\Users\pierr\OneDrive\Documents\Arduino\libraries\Mduino\Ethernet\src\Ethernet.h>
 

@@ -8,9 +8,9 @@
 #include <TimeLib.h>
 #include <EEPROMex.h>
 #include <ArduinoJson.h>
-#include "C:\Users\pierr\OneDrive\Documents\Arduino\libraries\cocorico2\Mesocosmes.h"
-#include "C:\Users\pierr\OneDrive\Documents\Arduino\libraries\cocorico2\Hamilton.h"
-#include "C:\Users\pierr\OneDrive\Documents\Arduino\libraries\cocorico2\Condition.h"
+#include "C:\Users\pierr\Dropbox\Pierre\CNRS\repos\CocoriCO2\Libs/Mesocosmes.h"
+#include "C:\Users\pierr\Dropbox\Pierre\CNRS\repos\CocoriCO2\Libs/Hamilton.h"
+#include "C:\Users\pierr\Dropbox\Pierre\CNRS\repos\CocoriCO2\Libs/Condition.h"
 #include <Ethernet.h>
 #include <WebSocketsClient.h>
 #include <RTC.h>
