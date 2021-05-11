@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,6 +15,12 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using InfluxDB.Client;
+using InfluxDB.Client.Api.Domain;
+using InfluxDB.Client.Core;
+using InfluxDB.Client.Writes;
+using System.Threading;
+using System.Net;
 
 namespace Appli_CocoriCO2
 {
@@ -23,10 +30,53 @@ namespace Appli_CocoriCO2
     public partial class ComDebugWindow : Window
     {
         MainWindow MW = ((MainWindow)Application.Current.MainWindow);
-        
+        DateTime lastFileWrite = DateTime.Now.ToUniversalTime();
+
+        string token = Properties.Settings.Default["InfluxDBToken"].ToString();
+        string bucket = Properties.Settings.Default["InfluxDBBucket"].ToString();
+        string org = Properties.Settings.Default["InfluxDBOrg"].ToString();
+
+        InfluxDBClient client;
+        CancellationTokenSource cts = new CancellationTokenSource();
+
         public ComDebugWindow()
         {
             InitializeComponent();
+#pragma warning disable CS4014 // Dans la mesure où cet appel n'est pas attendu, l'exécution de la méthode actuelle continue avant la fin de l'appel. Envisagez d'appliquer l'opérateur 'await' au résultat de l'appel.
+            InitializeAsync();
+#pragma warning restore CS4014 // Dans la mesure où cet appel n'est pas attendu, l'exécution de la méthode actuelle continue avant la fin de l'appel. Envisagez d'appliquer l'opérateur 'await' au résultat de l'appel.
+
+            client = InfluxDBClientFactory.Create("http://localhost:8086", token.ToCharArray());
+        }
+        private static async Task RunPeriodicAsync(Action onTick,
+                                          TimeSpan dueTime,
+                                          TimeSpan interval,
+                                          CancellationToken token)
+        {
+            // Initial wait time before we begin the periodic loop.
+            if (dueTime > TimeSpan.Zero)
+                await Task.Delay(dueTime, token);
+
+            // Repeat this loop until cancelled.
+            while (!token.IsCancellationRequested)
+            {
+                // Call our onTick function.
+                onTick?.Invoke();
+
+                // Wait to repeat again.
+                if (interval > TimeSpan.Zero)
+                    await Task.Delay(interval, token);
+            }
+        }
+        private async Task InitializeAsync()
+        {
+            int t;
+            Int32.TryParse(Properties.Settings.Default["dataLogInterval"].ToString(), out t);
+            var dueTime = TimeSpan.FromMinutes(t);
+            var interval = TimeSpan.FromMinutes(t);
+
+            // TODO: Add a CancellationTokenSource and supply the token here instead of None.
+            await RunPeriodicAsync(saveData, dueTime, interval, cts.Token);
         }
 
         private void tb2_TextChanged(object sender, TextChangedEventArgs e)
@@ -79,11 +129,7 @@ namespace Appli_CocoriCO2
                 else if (c.command == 3  && (c.Meso != null))
                 {
                     ///MW.monitoringWindow.Labels.Add(c.lastUpdated.ToString());
-                    MW.monitoringWindow.seriesCollection[0].Values.Add(new DateModel
-                    {
-                        DateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(c.time),
-                        Value = c.condID
-                    }); 
+                    
                     for (int i = 0; i < 3; i++) MW.conditions[c.condID].Meso[i] = c.Meso[i];
                     MW.conditions[c.condID].temperature = c.temperature;
                     MW.conditions[c.condID].pH = c.pH;
@@ -106,9 +152,158 @@ namespace Appli_CocoriCO2
                 
                 
             }
+#pragma warning disable CS0168 // La variable 'e' est déclarée, mais jamais utilisée
             catch (Exception e)
+#pragma warning restore CS0168 // La variable 'e' est déclarée, mais jamais utilisée
             {
 
+            }
+        }
+
+        private void saveData()
+        {
+            Condition c = MW.conditionData.Last<Condition>();
+            if (c.lastUpdated != lastFileWrite)
+            {
+                DateTime dt = DateTime.Now;
+                string filePath = Properties.Settings.Default["dataFileBasePath"].ToString();
+                filePath += "_" + dt.Year.ToString() + "_" + dt.Month.ToString() + "_" + dt.Day.ToString() + ".csv";
+
+                saveToFile(filePath, dt);
+                if (c.lastUpdated.Day != lastFileWrite.Day) ftpTransfer(filePath);
+                lastFileWrite = c.lastUpdated;
+            }
+        }
+
+        private void writeDataPoint(int conditionId, int MesoID, string field, double value, DateTime dt)
+        {
+            string tag; 
+            if (MesoID == -1) tag = "AmbiantData";
+            else tag = MesoID.ToString();
+            var point = PointData
+              .Measurement("CRCBN")
+              .Tag("Condition", conditionId.ToString())
+              .Tag("Mesocosm", tag)
+              .Field(field, value)
+              .Timestamp(dt.ToUniversalTime(), WritePrecision.S);
+
+            using (var writeApi = client.GetWriteApi())
+            {
+                writeApi.WritePoint(bucket, org, point);
+            }
+        }
+
+
+        private void saveToFile(string filePath, DateTime dt)
+        {
+            if (!System.IO.File.Exists(filePath))
+            {
+                //Write headers
+                String header = "Time;Sun;Tide;Ambiant_O2;Ambiant_Conductivity;Ambiant_Turbidity;Ambiant_Fluo;Ambiant_Temperature;Ambiant_pH;";
+
+                for (int i = 0; i < 4; i++)
+                {
+                    header += "Condition["; header += i; header += "]_Temperature;";
+                    header += "Condition["; header += i; header += "]_pH;";
+                    header += "Condition["; header += i; header += "]_consigne_pH;";
+                    header += "Condition["; header += i; header += "]_sortiePID_pH;";
+                    if (i > 0)
+                    {
+                        header += "Condition["; header += i; header += "]_consigne_Temperature;";
+                        header += "Condition["; header += i; header += "]_sortiePID_Temperature;";
+                    }
+                    for (int j = 0; j < 3; j++)
+                    {
+                        header += "Condition["; header += i; header += "]_Meso["; header += j; header += "]_Temperature;"; 
+                        header += "Condition["; header += i; header += "]_Meso["; header += j; header += "]_pH;"; 
+                        header += "Condition["; header += i; header += "]_Meso["; header += j; header += "]_FlowRate;"; 
+                        header += "Condition["; header += i; header += "]_Meso["; header += j; header += "]_LevelH;"; 
+                        header += "Condition["; header += i; header += "]_Meso["; header += j; header += "]_LevelL;"; 
+                        header += "Condition["; header += i; header += "]_Meso["; header += j; header += "]_LevelLL;"; 
+                    }
+                }
+                header += "\n";
+                System.IO.File.WriteAllText(filePath, header);
+            }
+
+            string data = dt.ToString(); ; data += ";";
+
+            double sun = MW.ambiantConditions.sun ? 1 : 0;
+            double tide = MW.ambiantConditions.tide ? 1 : 0;
+
+            data += sun; data += ";";
+            data += MW.ambiantConditions.tide ? 1 : 0; data += ";";
+            data += MW.ambiantConditions.oxy; data += ";";
+            data += MW.ambiantConditions.cond; data += ";";
+            data += MW.ambiantConditions.turb; data += ";";
+            data += MW.ambiantConditions.fluo; data += ";";
+            data += MW.ambiantConditions.temperature; data += ";";
+            data += MW.ambiantConditions.pH; data += ";";
+
+            writeDataPoint(0, -1, "sun", sun, dt);
+            writeDataPoint(0, -1, "tide", tide, dt);
+            writeDataPoint(0, -1, "oxy", MW.ambiantConditions.oxy, dt);
+            writeDataPoint(0, -1, "cond", MW.ambiantConditions.cond, dt);
+            writeDataPoint(0, -1, "turb", MW.ambiantConditions.turb, dt);
+            writeDataPoint(0, -1, "fluo", MW.ambiantConditions.fluo, dt);
+            writeDataPoint(0, -1, "temperature", MW.ambiantConditions.temperature, dt);
+            writeDataPoint(0, -1, "pH", MW.ambiantConditions.pH, dt);
+
+            for (int i = 0; i < 4; i++)
+            {
+                data += MW.conditions[i].temperature; data += ";";
+                data += MW.conditions[i].pH; data += ";";
+                data += MW.conditions[i].regulpH.consigne; data += ";";
+                data += MW.conditions[i].regulpH.sortiePID_pc; data += ";";
+
+                writeDataPoint(i, -1, "temperature", MW.conditions[i].temperature, dt);
+                writeDataPoint(i, -1, "pH", MW.conditions[i].pH, dt);
+                writeDataPoint(i, -1, "regulpH.consigne", MW.conditions[i].regulpH.consigne, dt);
+                writeDataPoint(i, -1, "regulpH.sortiePID", MW.conditions[i].regulpH.sortiePID_pc, dt);
+
+                if (i > 0)
+                {
+                    data += MW.conditions[i].regulTemp.consigne; data += ";";
+                    data += MW.conditions[i].regulTemp.sortiePID_pc; data += ";";
+                    writeDataPoint(i, -1, "regulTemp.consigne", MW.conditions[i].regulTemp.consigne, dt);
+                    writeDataPoint(i, -1, "regulTemp.sortiePID", MW.conditions[i].regulTemp.sortiePID_pc, dt);
+                }
+
+                for (int j = 0; j < 3; j++)
+                {
+                    double LH = MW.conditions[i].Meso[j].alarmeNiveauHaut ? 1 : 0;
+                    double LL = MW.conditions[i].Meso[j].alarmeNiveauBas ? 1 : 0;
+                    double LLL = MW.conditions[i].Meso[j].alarmeNiveauTresBas ? 1 : 0;
+
+                    data += MW.conditions[i].Meso[j].temperature; data += ";";
+                    data += MW.conditions[i].Meso[j].pH; data += ";";
+                    data += MW.conditions[i].Meso[j].debit; data += ";";
+                    data += LH; data += ";";
+                    data += LL; data += ";";
+                    data += LLL; data += ";";
+
+                    writeDataPoint(i, j, "temperature", MW.conditions[i].Meso[j].temperature, dt);
+                    writeDataPoint(i, j, "pH", MW.conditions[i].Meso[j].pH, dt);
+                    writeDataPoint(i, j, "debit", MW.conditions[i].Meso[j].debit, dt);
+                    writeDataPoint(i, j, "LH", LH, dt);
+                    writeDataPoint(i, j, "LL", LL, dt);
+                    writeDataPoint(i, j, "LLL", LLL, dt);
+
+                }
+            }
+            data += "\n";
+            System.IO.File.AppendAllText(filePath, data);
+        }
+
+        private void ftpTransfer(string fileName)
+        {
+            string ftpUsername = Properties.Settings.Default["ftpUsername"].ToString();
+            string ftpPassword = Properties.Settings.Default["ftpPassword"].ToString();
+            string ftpDir= Properties.Settings.Default["ftpDir"].ToString();
+            using (var client = new WebClient())
+            {
+                client.Credentials = new NetworkCredential(ftpUsername, ftpPassword);
+                client.UploadFile(ftpDir, WebRequestMethods.Ftp.UploadFile, fileName);
             }
         }
 

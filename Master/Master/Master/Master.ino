@@ -22,10 +22,10 @@
 #include <PID_v1.h>
 #include <EEPROMex.h>
 #include <ArduinoJson.h>
-#include "..\..\..\Libs\Mesocosmes.h"
-#include "..\..\..\Libs\Hamilton.h"
-#include "..\..\..\Libs\Condition.h"
-#include "..\..\..\Libs\ModbusSensor.h"
+#include "C:\Users\pierr\Dropbox\Pierre\CNRS\repos\CocoriCO2\Libs/Mesocosmes.h"
+#include "C:\Users\pierr\Dropbox\Pierre\CNRS\repos\CocoriCO2\Libs/Hamilton.h"
+#include "C:\Users\pierr\Dropbox\Pierre\CNRS\repos\CocoriCO2\Libs/Condition.h"
+#include "C:\Users\pierr\Dropbox\Pierre\CNRS\repos\CocoriCO2\Libs/ModbusSensor.h"
 #include <WebSocketsServer.h>
 #include <C:\Users\pierr\OneDrive\Documents\Arduino\libraries\Mduino\Ethernet\src\Ethernet.h>
 
@@ -229,9 +229,9 @@ void setup() {
     
     Ethernet.begin(mac, ip);
 
-    Serial.println(F("START"));
+    Serial.println(F("START+"));
     int i = 0;
-    while (i<20) {
+    while (i<2) {
         if (Ethernet.hardwareStatus() != EthernetNoHardware) {
             Serial.println(F("Ethernet STARTED"));
             break;
@@ -239,36 +239,44 @@ void setup() {
         delay(500); // do nothing, no point running without Ethernet hardware
         i++;
     }
+    Serial.println(F("+++"));
 
-    webSocket.begin();
-    webSocket.onEvent(webSocketEvent);
-
+    if (Ethernet.hardwareStatus() != EthernetNoHardware) {
+        webSocket.begin();
+        webSocket.onEvent(webSocketEvent);
+    }
+    Serial.println(F("end websocket"));
+    
     
 
-    /*RTC.setYear(YEAR);                      //sets year
-    RTC.setMonth(MONTH);                   //sets month
-    RTC.setMonthDay(DAY);                   //sets day
-    RTC.setHour(HOUR);                      //sets hour
-    RTC.setMinute(MINUTE);                  //sets minute
-    RTC.setSecond(SECOND);                  //sets second
-
-    RTC.write();*/
-    
+    RTC.setYear(2021);                      //sets year
+    RTC.setMonth(4);                   //sets month
+    RTC.setMonthDay(28);                   //sets day
+    RTC.setHour(15);                      //sets hour
+    RTC.setMinute(18);                  //sets minute
+    RTC.setSecond(0);                  //sets second
+    Serial.println(F("End RTC setup"));
+    RTC.write();
+    Serial.println(F("End RTC write"));
 
     RTC.read();
+    Serial.println(F("End RTC read"));
     currentDay = RTC.getMonthDay();
 
+    Serial.println(F("End RTC"));
     setPIDparams();
-
-    SD.begin(53);
-
+    Serial.println(F("End Params"));
+    Serial.print(SD.begin(53));
+    Serial.println(F("End SD"));
     updateSunTimes();
     updateTideTimes();
+    Serial.println(F("End SETUP"));
 
 }
 
 void loop() {
     RTC.read();
+
     //if(!calib) requestSensors();
     //else calibration();
     //requestAllStatus();
@@ -503,16 +511,16 @@ void updateTideTimes() {
 }
 
 void printToSD() {
-
     if (elapsed(&tempowriteSD.debut, tempowriteSD.interval)) {
         // open the file. note that only one file can be open at a time,
   // so you have to close this one before opening another.
-        String path =  String("data/"+RTC.getMonth()) + "_" + String(RTC.getYear()) + ".csv";
-        //Serial.println(path);
+        String path = "data/" + String(RTC.getMonth()) + "_" + String(RTC.getYear()) + ".csv";
+        //String path = String("dataN.csv");
+        Serial.println(path);
         
         if (!SD.exists(path)) {
             File dataFile = SD.open(path, FILE_WRITE);
-            //Serial.println(F("file does not exist. Writing headers"));
+            Serial.println(F("file does not exist. Writing headers"));
 
             if (dataFile) {
                 dataFile.print(F("timestamp;Sun;Tide;Ambiant.O2;Ambiant.Conductivity;Ambiant.Turbidity;Ambiant.Fluo;Ambiant.Temperature;Ambiant.pH;"));
@@ -543,9 +551,8 @@ void printToSD() {
                 //Serial.println(F("Error opening file"));
             }
         }
+        
         File dataFile = SD.open(path, FILE_WRITE);
-        
-        
         // if the file is available, write to it:
         if (dataFile) {
             char sep = ';';

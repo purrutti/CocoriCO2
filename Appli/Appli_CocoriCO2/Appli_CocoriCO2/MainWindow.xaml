@@ -126,8 +126,8 @@
             <Label x:Name="label_C3M2_Alarm" Content="Alarm: ...." HorizontalAlignment="Left" Width="118" Height="30" VerticalAlignment="Top" Canvas.Left="852" Canvas.Top="672"/>
             <Label x:Name="label_C3M3_Alarm" Content="Alarm: ...." HorizontalAlignment="Left" Width="118" Height="30" VerticalAlignment="Top" Canvas.Left="1090" Canvas.Top="672"/>
             <Label x:Name="label_time" Content="Time: ...." Canvas.Left="1122" Width="180" Canvas.Top="8"/>
-            <Label x:Name="label_exondation_state" Content="Exondation valve: open (low Tide)" Canvas.Left="898" Width="202" Canvas.Top="6"/>
-            <Label x:Name="label_ledstate" Content="LED state: Day" Canvas.Left="696" Width="202" Canvas.Top="6"/>
+            <Label x:Name="label_exondation_state" Content="Exondation valve: open (low Tide)" Canvas.Left="847" Width="248" Canvas.Top="8"/>
+            <Label x:Name="label_ledstate" Content="LED state: Day" Canvas.Left="645" Width="202" Canvas.Top="8"/>
         </Canvas>
         <!--<Image Margin="10,25,0,0" Source="CocoriCO2 - P&amp;ID Container.png" Width="1280" Height="720" HorizontalAlignment="Left" VerticalAlignment="Top"/>
         

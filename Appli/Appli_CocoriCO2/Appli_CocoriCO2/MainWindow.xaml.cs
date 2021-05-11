@@ -118,13 +118,14 @@ namespace Appli_CocoriCO2
         public Ambiant ambiantConditions = new Ambiant();
 
         //public List<Condition> conditionData;
-        public MonitoringWindow monitoringWindow;
         public ExpSettingsWindow expSettingsWindow;
         public ComDebugWindow comDebugWindow;
         public CultureInfo ci;
 
         public ClientWebSocket ws = new ClientWebSocket();
+#pragma warning disable CS0414 // Le champ 'MainWindow.autoReco' est assigné, mais sa valeur n'est jamais utilisée
         bool autoReco;
+#pragma warning restore CS0414 // Le champ 'MainWindow.autoReco' est assigné, mais sa valeur n'est jamais utilisée
         public int step;
 
 
@@ -136,7 +137,9 @@ namespace Appli_CocoriCO2
 
             
 
+#pragma warning disable CS4014 // Dans la mesure où cet appel n'est pas attendu, l'exécution de la méthode actuelle continue avant la fin de l'appel. Envisagez d'appliquer l'opérateur 'await' au résultat de l'appel.
             InitializeAsync();
+#pragma warning restore CS4014 // Dans la mesure où cet appel n'est pas attendu, l'exécution de la méthode actuelle continue avant la fin de l'appel. Envisagez d'appliquer l'opérateur 'await' au résultat de l'appel.
             autoReco = false;
             conditions = new ObservableCollection<Condition>();
             conditionData = new ObservableCollection<Condition>();
@@ -156,7 +159,6 @@ namespace Appli_CocoriCO2
 
             expSettingsWindow = new ExpSettingsWindow();
             comDebugWindow = new ComDebugWindow();
-            monitoringWindow = new MonitoringWindow();
 
             comDebugWindow.lv_data.ItemsSource = conditionData;
             ci = new CultureInfo("en-US");
@@ -170,22 +172,6 @@ namespace Appli_CocoriCO2
 
 
 
-        }
-
-
-
-
-
-        private void saveCondtionsData(Condition cond)
-        {
-            string objjsonData = JsonConvert.SerializeObject(cond);
-            System.IO.File.WriteAllText(@"D:\path.txt", objjsonData);
-        }
-
-        private void loadCondtionsData()
-        {
-            string json = System.IO.File.ReadAllText(@"D:\path.txt");
-            conditions = JsonConvert.DeserializeObject <ObservableCollection<Condition>>(json);
         }
 
         
@@ -524,9 +510,9 @@ namespace Appli_CocoriCO2
                 label_C0_Temp.Content = string.Format(ci, "T°C: \t{0:0.00}", ambiantConditions.temperature);
                 label_C0_pH.Content = string.Format(ci, "pH: \t{0:0.00}", ambiantConditions.pH);
                 if (ambiantConditions.tide) label_exondation_state.Content = string.Format(ci, "Exondation Valve: OPEN (low tide)");
-                else string.Format(ci, "Exondation Valve: CLOSED (high tide)");
+                else label_exondation_state.Content = string.Format(ci, "Exondation Valve: CLOSED (high tide)");
                 if (ambiantConditions.sun) label_ledstate.Content = string.Format(ci, "LED state: ON (Day)");
-                else string.Format(ci, "LED state: OFF (Night)");
+                else label_ledstate.Content = string.Format(ci, "LED state: OFF (Night)");
             }
         }
 
@@ -712,7 +698,6 @@ namespace Appli_CocoriCO2
             Properties.Settings.Default.Save();
             comDebugWindow.Close();
             expSettingsWindow.Close();
-            monitoringWindow.Close();
             System.Windows.Application.Current.Shutdown();
         }
 
@@ -728,7 +713,7 @@ namespace Appli_CocoriCO2
 
         private void Monitoring_btn_Click(object sender, RoutedEventArgs e)
         {
-            monitoringWindow.Show();
+            System.Diagnostics.Process.Start(Properties.Settings.Default["InfluxDBWebpage"].ToString());            
         }
     }
 }
