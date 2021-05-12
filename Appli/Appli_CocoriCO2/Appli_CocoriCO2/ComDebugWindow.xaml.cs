@@ -170,8 +170,12 @@ namespace Appli_CocoriCO2
                 filePath += "_" + dt.Year.ToString() + "_" + dt.Month.ToString() + "_" + dt.Day.ToString() + ".csv";
 
                 saveToFile(filePath, dt);
-                if (c.lastUpdated.Day != lastFileWrite.Day) ftpTransfer(filePath);
-                lastFileWrite = c.lastUpdated;
+                //if (c.lastUpdated.Day != lastFileWrite.Day) ftpTransfer(filePath);
+                if (c.lastUpdated.Minute != lastFileWrite.Minute)// POur tester
+                {
+                    ftpTransfer(filePath);
+                    lastFileWrite = c.lastUpdated;
+                }
             }
         }
 
@@ -299,7 +303,10 @@ namespace Appli_CocoriCO2
         {
             string ftpUsername = Properties.Settings.Default["ftpUsername"].ToString();
             string ftpPassword = Properties.Settings.Default["ftpPassword"].ToString();
-            string ftpDir= Properties.Settings.Default["ftpDir"].ToString();
+            string ftpDir= "ftp://"+Properties.Settings.Default["ftpDir"].ToString();
+
+            string fn = fileName.Substring(fileName.LastIndexOf('/')+1);
+            ftpDir += fn;
             using (var client = new WebClient())
             {
                 client.Credentials = new NetworkCredential(ftpUsername, ftpPassword);

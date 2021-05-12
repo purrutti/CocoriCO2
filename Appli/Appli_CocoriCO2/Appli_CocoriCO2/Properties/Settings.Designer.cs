@@ -73,7 +73,7 @@ namespace Appli_CocoriCO2.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("cocorico2")]
         public string ftpUsername {
             get {
                 return ((string)(this["ftpUsername"]));
@@ -85,7 +85,7 @@ namespace Appli_CocoriCO2.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("C0q2Ch0c@2021")]
         public string ftpPassword {
             get {
                 return ((string)(this["ftpPassword"]));
@@ -97,7 +97,7 @@ namespace Appli_CocoriCO2.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("ftp.obs-vlfr.fr/CRCBN/")]
         public string ftpDir {
             get {
                 return ((string)(this["ftpDir"]));
