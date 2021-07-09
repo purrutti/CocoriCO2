@@ -110,21 +110,21 @@
             <Label x:Name="label_C3_Temp_setpoint" Content="T°C: ...." HorizontalAlignment="Left" Width="118" Height="28" VerticalAlignment="Top" Canvas.Left="305" Canvas.Top="658" />
             <Label Content="Condition 3 set points" HorizontalAlignment="Left" Width="153" Height="28" VerticalAlignment="Top" Canvas.Left="293" Canvas.Top="624" />
 
-            <Label x:Name="label_C0M1_Alarm" Content="Alarm: ...." HorizontalAlignment="Left" Width="118" Height="30" VerticalAlignment="Top" Canvas.Left="612" Canvas.Top="167"/>
-            <Label x:Name="label_C0M2_Alarm" Content="Alarm: ...." HorizontalAlignment="Left" Width="118" Height="30" VerticalAlignment="Top" Canvas.Left="852" Canvas.Top="167"/>
-            <Label x:Name="label_C0M3_Alarm" Content="Alarm: ...." HorizontalAlignment="Left" Width="118" Height="30" VerticalAlignment="Top" Canvas.Left="1090" Canvas.Top="167"/>
-            <Label x:Name="label_C1M1_Alarm" Content="Alarm: ...." HorizontalAlignment="Left" Width="118" Height="30" VerticalAlignment="Top" Canvas.Left="612" Canvas.Top="336"/>
-            <Label x:Name="label_C1M2_Alarm" Content="Alarm: ...." HorizontalAlignment="Left" Width="118" Height="30" VerticalAlignment="Top" Canvas.Left="852" Canvas.Top="336"/>
-            <Label x:Name="label_C1M3_Alarm" Content="Alarm: ...." HorizontalAlignment="Left" Width="118" Height="30" VerticalAlignment="Top" Canvas.Left="1090" Canvas.Top="336"/>
-            <Label x:Name="label_C2M1_Alarm" Content="Alarm: ...." HorizontalAlignment="Left" Width="118" Height="30" VerticalAlignment="Top" Canvas.Left="612" Canvas.Top="504"/>
-            <Label x:Name="label_C2M2_Alarm" Content="Alarm: ...." HorizontalAlignment="Left" Width="118" Height="30" VerticalAlignment="Top" Canvas.Left="852" Canvas.Top="504"/>
-            <Label x:Name="label_C2M3_Alarm" Content="Alarm: ...." HorizontalAlignment="Left" Width="118" Height="30" VerticalAlignment="Top" Canvas.Left="1090" Canvas.Top="504"/>
-            <Label x:Name="label_C3M1_Alarm" Content="Alarm: ...." HorizontalAlignment="Left" Width="118" Height="30" VerticalAlignment="Top" Canvas.Left="612" Canvas.Top="672"/>
-            <Label x:Name="label_C3M2_Alarm" Content="Alarm: ...." HorizontalAlignment="Left" Width="118" Height="30" VerticalAlignment="Top" Canvas.Left="852" Canvas.Top="672"/>
-            <Label x:Name="label_C3M3_Alarm" Content="Alarm: ...." HorizontalAlignment="Left" Width="118" Height="30" VerticalAlignment="Top" Canvas.Left="1090" Canvas.Top="672"/>
+            <Label x:Name="label_C0M1_Alarm" Content="Alarm: ...." HorizontalAlignment="Left" Width="203" Height="30" VerticalAlignment="Top" Canvas.Left="612" Canvas.Top="167"/>
+            <Label x:Name="label_C0M2_Alarm" Content="Alarm: ...." HorizontalAlignment="Left" Width="203" Height="30" VerticalAlignment="Top" Canvas.Left="852" Canvas.Top="167"/>
+            <Label x:Name="label_C0M3_Alarm" Content="Alarm: ...." HorizontalAlignment="Left" Width="203" Height="30" VerticalAlignment="Top" Canvas.Left="1090" Canvas.Top="167"/>
+            <Label x:Name="label_C1M1_Alarm" Content="Alarm: ...." HorizontalAlignment="Left" Width="203" Height="30" VerticalAlignment="Top" Canvas.Left="612" Canvas.Top="336"/>
+            <Label x:Name="label_C1M2_Alarm" Content="Alarm: ...." HorizontalAlignment="Left" Width="203" Height="30" VerticalAlignment="Top" Canvas.Left="852" Canvas.Top="336"/>
+            <Label x:Name="label_C1M3_Alarm" Content="Alarm: ...." HorizontalAlignment="Left" Width="203" Height="30" VerticalAlignment="Top" Canvas.Left="1090" Canvas.Top="336"/>
+            <Label x:Name="label_C2M1_Alarm" Content="Alarm: ...." HorizontalAlignment="Left" Width="203" Height="30" VerticalAlignment="Top" Canvas.Left="612" Canvas.Top="504"/>
+            <Label x:Name="label_C2M2_Alarm" Content="Alarm: ...." HorizontalAlignment="Left" Width="203" Height="30" VerticalAlignment="Top" Canvas.Left="852" Canvas.Top="504"/>
+            <Label x:Name="label_C2M3_Alarm" Content="Alarm: ...." HorizontalAlignment="Left" Width="203" Height="30" VerticalAlignment="Top" Canvas.Left="1090" Canvas.Top="504"/>
+            <Label x:Name="label_C3M1_Alarm" Content="Alarm: ...." HorizontalAlignment="Left" Width="203" Height="30" VerticalAlignment="Top" Canvas.Left="612" Canvas.Top="672"/>
+            <Label x:Name="label_C3M2_Alarm" Content="Alarm: ...." HorizontalAlignment="Left" Width="203" Height="30" VerticalAlignment="Top" Canvas.Left="852" Canvas.Top="672"/>
+            <Label x:Name="label_C3M3_Alarm" Content="Alarm: ...." HorizontalAlignment="Left" Width="203" Height="30" VerticalAlignment="Top" Canvas.Left="1090" Canvas.Top="672"/>
             <Label x:Name="label_time" Content="Time: ...." Canvas.Left="1122" Width="180" Canvas.Top="8"/>
-            <Label x:Name="label_exondation_state" Content="Exondation valve: open (low Tide)" Canvas.Left="847" Width="248" Canvas.Top="8"/>
-            <Label x:Name="label_ledstate" Content="LED state: Day" Canvas.Left="645" Width="202" Canvas.Top="8"/>
+            <Label x:Name="label_exondation_state" Content="Exondation valve: open (low Tide)" Canvas.Left="847" Width="248" Canvas.Top="-1"/>
+            <Label x:Name="label_ledstate" Content="LED state: Day" Canvas.Left="645" Width="202" Canvas.Top="-1"/>
             <Label x:Name="label_EA_pressure_setpoint" Content="Pressure setpoint: ...." HorizontalAlignment="Left" Width="172" Height="28" VerticalAlignment="Top" Canvas.Left="41" Canvas.Top="486" />
             <Label x:Name="label_EA_pressure_measure" Content="Pressure measure: ...." HorizontalAlignment="Left" Width="172" Height="28" VerticalAlignment="Top" Canvas.Left="41" Canvas.Top="502" />
             <Label x:Name="label_EC_pressure_setpoint" Content="Pressure setpoint: ...." HorizontalAlignment="Left" Width="172" Height="28" VerticalAlignment="Top" Canvas.Left="41" Canvas.Top="676" />
@@ -135,6 +135,10 @@
             <Label x:Name="label_Amb_Copy1" Content="Warm Water Inlet" HorizontalAlignment="Left" Width="160" Height="28" VerticalAlignment="Top" Canvas.Left="41" Canvas.Top="652" FontWeight="Bold" />
             <Label x:Name="label_C0_Salinity" Content="Salinity: ...." HorizontalAlignment="Left" Width="163" Height="28" VerticalAlignment="Top" Canvas.Left="16" Canvas.Top="339" />
             <Border BorderBrush="Black" BorderThickness="1" Height="191" Canvas.Left="10" Canvas.Top="268" Width="169"/>
+            <Label x:Name="label_nextTideHigh" Content="Exondation valve: open (low Tide)" Canvas.Left="847" Width="248" Canvas.Top="16"/>
+            <Label x:Name="label_nextTideLow" Content="Exondation valve: open (low Tide)" Canvas.Left="847" Width="248" Canvas.Top="34"/>
+            <Label x:Name="label_nextSunUp" Content="LED state: Day" Canvas.Left="645" Width="202" Canvas.Top="16"/>
+            <Label x:Name="label_nextSunDown" Content="LED state: Day" Canvas.Left="645" Width="202" Canvas.Top="34"/>
         </Canvas>
         <!--<Image Margin="10,25,0,0" Source="CocoriCO2 - P&amp;ID Container.png" Width="1280" Height="720" HorizontalAlignment="Left" VerticalAlignment="Top"/>
         

@@ -60,10 +60,8 @@
             <TextBox HorizontalAlignment="Left" Height="20" Margin="0,105,0,0" TextWrapping="Wrap"  x:Name="tb_dpH_setPoint" Text="" VerticalAlignment="Top" Width="100" Grid.Column="1"/>
             <Label x:Name="label_dpH" Content="delta pH setpoint" HorizontalAlignment="Left" Margin="10,100,0,0" VerticalAlignment="Top" Height="25" Width="129"/>
         </Grid>
-        <Button x:Name="btn_SaveToPLC" Content="Save to PLC" Margin="0,0,174,16"  Height="30" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="120" Click="btn_SaveToPLC_Click"/>
+        <Button x:Name="btn_SaveToPLC" Content="Save" Margin="0,0,174,16"  Height="30" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="120" Click="btn_SaveToPLC_Click"/>
         <Button x:Name="btn_Cancel" Content="Cancel" Margin="0,0,15,16"  Height="30" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="120" Click="btn_Cancel_Click"/>
-        <Button x:Name="btn_LoadFromPLC" Content="Load from PLC" Margin="0,0,332,16" Height="30" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="120" Click="btn_LoadFromPLC_Click"/>
-        <Button x:Name="btn_SaveToFile" Content="Save Config" Margin="0,0,483,16"  Height="30" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="120" Click="btn_SaveToFile_Click"/>
 
     </Grid>
 </Window>

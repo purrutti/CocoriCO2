@@ -84,19 +84,10 @@ namespace Appli_CocoriCO2
             if (tb2.Text.Length > 0)
             {
                 ReadData(tb2.Text);
-                // tb2.Text = "";
-                Sort("lastUpdated", ListSortDirection.Descending);
             }
         }
 
-        private void Sort(string sortBy, ListSortDirection direction)
-        {
-            CollectionView view = (CollectionView)CollectionViewSource.GetDefaultView(lv_data.ItemsSource);
-            view.SortDescriptions.Clear();
-            SortDescription sd = new SortDescription(sortBy, direction);
-            view.SortDescriptions.Add(sd);
-            view.Refresh();
-        }
+
 
         public void ReadData(string data)
         {
@@ -105,10 +96,11 @@ namespace Appli_CocoriCO2
             {
                 Condition c = JsonConvert.DeserializeObject<Condition>(data);
                 c.lastUpdated = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(c.time);
-                
-                
-                MW.statusLabel1.Text = "Last updated: " + c.lastUpdated.ToString() + " UTC";
                 MW.conditionData.Add(c);
+
+
+
+                MW.statusLabel1.Text = "Last updated: " + c.lastUpdated.ToString() + " UTC";
                 if (c.command == 2 && (c.regulpH != null)) //SEND_PARAMS
                 {
                     MW.conditions[c.condID].lastUpdated = c.lastUpdated;
@@ -129,11 +121,15 @@ namespace Appli_CocoriCO2
                 else if (c.command == 3  && (c.Meso != null))
                 {
                     ///MW.monitoringWindow.Labels.Add(c.lastUpdated.ToString());
-                    
-                    for (int i = 0; i < 3; i++) MW.conditions[c.condID].Meso[i] = c.Meso[i];
+
+                    for (int i = 0; i < 3; i++) {
+                        MW.conditions[c.condID].Meso[i] = c.Meso[i];
+                        if (MW.conditions[c.condID].Meso[i].debit < 0) MW.conditions[c.condID].Meso[i].debit = 0;
+                    }
                     MW.conditions[c.condID].temperature = c.temperature;
                     MW.conditions[c.condID].pH = c.pH;
                     MW.conditions[c.condID].regulpH.sortiePID_pc = c.regulpH.sortiePID_pc;
+                    
                     if(c.condID != 0)
                     {
                         MW.conditions[c.condID].regulpH.consigne = c.regulpH.consigne;
@@ -165,21 +161,29 @@ namespace Appli_CocoriCO2
 
         private void saveData()
         {
-            Condition c = MW.conditionData.Last<Condition>();
-            if (c.lastUpdated != lastFileWrite)
+            try
             {
-                DateTime dt = DateTime.Now;
-                string filePath = Properties.Settings.Default["dataFileBasePath"].ToString();
-                filePath += "_" + dt.Year.ToString() + "_" + dt.Month.ToString() + "_" + dt.Day.ToString() + ".csv";
-
-                saveToFile(filePath, dt);
-                //if (c.lastUpdated.Day != lastFileWrite.Day) ftpTransfer(filePath);
-                if (c.lastUpdated.Minute != lastFileWrite.Minute)// POur tester
+                Condition c = MW.conditionData.Last<Condition>();
+                if (c.lastUpdated != lastFileWrite)
                 {
-                    ftpTransfer(filePath);
-                    lastFileWrite = c.lastUpdated;
+                    DateTime dt = DateTime.Now;
+                    string filePath = Properties.Settings.Default["dataFileBasePath"].ToString();
+                    filePath += "_" + dt.Year.ToString() + "_" + dt.Month.ToString() + "_" + dt.Day.ToString() + ".csv";
+
+                    saveToFile(filePath, dt);
+                    //if (c.lastUpdated.Day != lastFileWrite.Day) ftpTransfer(filePath);
+                    if (c.lastUpdated.Minute != lastFileWrite.Minute)// POur tester
+                    {
+                        ftpTransfer(filePath);
+                        lastFileWrite = c.lastUpdated;
+                    }
+                    MW.conditionData.Clear();
                 }
+            }catch(Exception e)
+            {
+
             }
+            
         }
 
         private void writeDataPoint(int conditionId, int MesoID, string field, double value, DateTime dt)

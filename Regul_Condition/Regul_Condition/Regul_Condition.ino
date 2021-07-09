@@ -264,7 +264,8 @@ void setPIDparams() {
     condition.regulpH.pid.SetControllerDirection(REVERSE);
 
     condition.regulTemp.pid = PID((double*)&Hamilton[3].temp_sensorValue, &condition.regulTemp.sortiePID, &condition.regulTemp.consigne, condition.regulTemp.Kp, condition.regulTemp.Ki, condition.regulTemp.Kd, DIRECT);
-    condition.regulTemp.pid.SetOutputLimits(50, 255);
+    if(CONDID>1) condition.regulTemp.pid.SetOutputLimits(90, 215);
+    else condition.regulTemp.pid.SetOutputLimits(50, 255);
     condition.regulTemp.pid.SetMode(AUTOMATIC);
     condition.regulTemp.pid.SetControllerDirection(DIRECT);
 }

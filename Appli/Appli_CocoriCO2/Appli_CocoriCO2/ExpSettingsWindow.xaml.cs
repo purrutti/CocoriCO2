@@ -285,54 +285,58 @@ namespace Appli_CocoriCO2
                 tb_dT_setPoint.Visibility = v;
                 label_dT.Visibility = v;
             }
-                
-            
-
-            refreshParams();
+            //refreshParams();
           }
 
         private void refreshParams()
         {
-            if(comboBox_Condition.SelectedIndex < 4)
+            try
             {
-                int condID = comboBox_Condition.SelectedIndex;
-                tb_dpH_setPoint.Text = MW.conditions[condID].regulpH.offset.ToString(ci);
-                tb_pH_setPoint.Text = MW.conditions[condID].regulpH.consigne.ToString(ci);
-                tb_pH_consigneForcage.Text = MW.conditions[condID].regulpH.consigneForcage.ToString(ci);
-                tb_pH_Kp.Text = MW.conditions[condID].regulpH.Kp.ToString(ci);
-                tb_pH_Ki.Text = MW.conditions[condID].regulpH.Ki.ToString(ci);
-                tb_pH_Kd.Text = MW.conditions[condID].regulpH.Kd.ToString(ci);
-                checkBox_pH_Override.IsChecked = MW.conditions[condID].regulpH.autorisationForcage;
-                if (condID > 0)
+                if (comboBox_Condition.SelectedIndex < 4)
                 {
-                    tb_dT_setPoint.Text = MW.conditions[condID].regulTemp.offset.ToString(ci);
-                    tb_Temp_setPoint.Text = MW.conditions[condID].regulTemp.consigne.ToString(ci);
-                    tb_Temp_consigneForcage.Text = MW.conditions[condID].regulTemp.consigneForcage.ToString(ci);
-                    tb_Temp_Kp.Text = MW.conditions[condID].regulTemp.Kp.ToString(ci);
-                    tb_Temp_Ki.Text = MW.conditions[condID].regulTemp.Ki.ToString(ci);
-                    tb_Temp_Kd.Text = MW.conditions[condID].regulTemp.Kd.ToString(ci);
-                    checkBox_Temp_Override.IsChecked = MW.conditions[condID].regulTemp.autorisationForcage;
+                    int condID = comboBox_Condition.SelectedIndex;
+                    tb_dpH_setPoint.Text = MW.conditions[condID].regulpH.offset.ToString(ci);
+                    tb_pH_setPoint.Text = MW.conditions[condID].regulpH.consigne.ToString(ci);
+                    tb_pH_consigneForcage.Text = MW.conditions[condID].regulpH.consigneForcage.ToString(ci);
+                    tb_pH_Kp.Text = MW.conditions[condID].regulpH.Kp.ToString(ci);
+                    tb_pH_Ki.Text = MW.conditions[condID].regulpH.Ki.ToString(ci);
+                    tb_pH_Kd.Text = MW.conditions[condID].regulpH.Kd.ToString(ci);
+                    checkBox_pH_Override.IsChecked = MW.conditions[condID].regulpH.autorisationForcage;
+                    if (condID > 0)
+                    {
+                        tb_dT_setPoint.Text = MW.conditions[condID].regulTemp.offset.ToString(ci);
+                        tb_Temp_setPoint.Text = MW.conditions[condID].regulTemp.consigne.ToString(ci);
+                        tb_Temp_consigneForcage.Text = MW.conditions[condID].regulTemp.consigneForcage.ToString(ci);
+                        tb_Temp_Kp.Text = MW.conditions[condID].regulTemp.Kp.ToString(ci);
+                        tb_Temp_Ki.Text = MW.conditions[condID].regulTemp.Ki.ToString(ci);
+                        tb_Temp_Kd.Text = MW.conditions[condID].regulTemp.Kd.ToString(ci);
+                        checkBox_Temp_Override.IsChecked = MW.conditions[condID].regulTemp.autorisationForcage;
+                    }
                 }
-            }
-            else
+                else
+                {
+                    tb_dpH_setPoint.Text = MW.masterParams.regulPressionEA.offset.ToString(ci);
+                    tb_pH_setPoint.Text = MW.masterParams.regulPressionEA.consigne.ToString(ci);
+                    tb_pH_consigneForcage.Text = MW.masterParams.regulPressionEA.consigneForcage.ToString(ci);
+                    tb_pH_Kp.Text = MW.masterParams.regulPressionEA.Kp.ToString(ci);
+                    tb_pH_Ki.Text = MW.masterParams.regulPressionEA.Ki.ToString(ci);
+                    tb_pH_Kd.Text = MW.masterParams.regulPressionEA.Kd.ToString(ci);
+                    checkBox_pH_Override.IsChecked = MW.masterParams.regulPressionEA.autorisationForcage;
+
+                    tb_dT_setPoint.Text = MW.masterParams.regulPressionEC.offset.ToString(ci);
+                    tb_Temp_setPoint.Text = MW.masterParams.regulPressionEC.consigne.ToString(ci);
+                    tb_Temp_consigneForcage.Text = MW.masterParams.regulPressionEC.consigneForcage.ToString(ci);
+                    tb_Temp_Kp.Text = MW.masterParams.regulPressionEC.Kp.ToString(ci);
+                    tb_Temp_Ki.Text = MW.masterParams.regulPressionEC.Ki.ToString(ci);
+                    tb_Temp_Kd.Text = MW.masterParams.regulPressionEC.Kd.ToString(ci);
+                    checkBox_Temp_Override.IsChecked = MW.masterParams.regulPressionEC.autorisationForcage;
+
+                }
+            }catch(Exception e)
             {
-                tb_dpH_setPoint.Text = MW.masterParams.regulPressionEA.offset.ToString(ci);
-                tb_pH_setPoint.Text = MW.masterParams.regulPressionEA.consigne.ToString(ci);
-                tb_pH_consigneForcage.Text = MW.masterParams.regulPressionEA.consigneForcage.ToString(ci);
-                tb_pH_Kp.Text = MW.masterParams.regulPressionEA.Kp.ToString(ci);
-                tb_pH_Ki.Text = MW.masterParams.regulPressionEA.Ki.ToString(ci);
-                tb_pH_Kd.Text = MW.masterParams.regulPressionEA.Kd.ToString(ci);
-                checkBox_pH_Override.IsChecked = MW.masterParams.regulPressionEA.autorisationForcage;
-
-                tb_dT_setPoint.Text = MW.masterParams.regulPressionEC.offset.ToString(ci);
-                tb_Temp_setPoint.Text = MW.masterParams.regulPressionEC.consigne.ToString(ci);
-                tb_Temp_consigneForcage.Text = MW.masterParams.regulPressionEC.consigneForcage.ToString(ci);
-                tb_Temp_Kp.Text = MW.masterParams.regulPressionEC.Kp.ToString(ci);
-                tb_Temp_Ki.Text = MW.masterParams.regulPressionEC.Ki.ToString(ci);
-                tb_Temp_Kd.Text = MW.masterParams.regulPressionEC.Kd.ToString(ci);
-                checkBox_Temp_Override.IsChecked = MW.masterParams.regulPressionEC.autorisationForcage;
 
             }
+            
             
         }
 
