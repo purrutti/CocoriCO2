@@ -15,7 +15,7 @@
 #include <WebSocketsClient.h>
 #include <RTC.h>
 
-const uint8_t CONDID = 1;
+const uint8_t CONDID = 3;
 
 /***** PIN ASSIGNMENTS *****/
 const byte PIN_DEBITMETRE_1 = 56;
@@ -55,6 +55,16 @@ Condition condition;
 
 Modbus master(0, 3, 46); // this is master and RS-232 or USB-FTDI
 ModbusSensorHamilton Hamilton[4];// indexes O to 2 are mesocosms, index 3 is buffer tank
+typedef struct Calibration {
+    int sensorID;
+    int calibParam;
+    float value;
+    bool calibEnCours;
+    bool calibRequested;
+}Calibration;
+
+Calibration calib;
+
 
 typedef struct tempo {
     unsigned long debut;
@@ -68,7 +78,6 @@ tempo tempoCheckMeso;
 tempo tempoSendValues;
 
 int sensorIndex = 0;
-bool calib = false;
 bool pH = true;
 
 // Enter a MAC address for your controller below.
@@ -76,7 +85,7 @@ bool pH = true;
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, CONDID };
 
 // Set the static IP address to use if the DHCP fails to assign
-IPAddress ip(192, 168, 1, 3);
+IPAddress ip(192, 168, 1, 160+ CONDID);
 
 WebSocketsClient webSocket;
 
@@ -213,7 +222,7 @@ void setup() {
     }
     Serial.println("Ethernet connected");
     
-        webSocket.begin("192.168.1.1", 81);
+        webSocket.begin("192.168.1.160", 81);
    //webSocket.begin("echo.websocket.org", 80);
     webSocket.onEvent(webSocketEvent);
 
@@ -255,25 +264,40 @@ void setPIDparams() {
     condition.regulpH.pid.SetControllerDirection(REVERSE);
 
     condition.regulTemp.pid = PID((double*)&Hamilton[3].temp_sensorValue, &condition.regulTemp.sortiePID, &condition.regulTemp.consigne, condition.regulTemp.Kp, condition.regulTemp.Ki, condition.regulTemp.Kd, DIRECT);
-    condition.regulTemp.pid.SetOutputLimits(0, 255);
+    condition.regulTemp.pid.SetOutputLimits(50, 255);
     condition.regulTemp.pid.SetMode(AUTOMATIC);
     condition.regulTemp.pid.SetControllerDirection(DIRECT);
-
-    
-
 }
 
 
-uint8_t calibrationStep = 0;
+int HamiltonCalibStep = 0;
 
-void calibrateSensor(uint8_t sensorID, float pHValue) {
-    if (elapsed(&tempoSensorRead.debut, tempoSensorRead.interval)) {
-        calibrationStep = Hamilton[sensorID].calibrate(pHValue, calibrationStep);
-        if (calibrationStep == 3) {
-            calib = false;
-            calibrationStep = 0;
+int state = 0;
+
+void calibrateSensor() {
+    Serial.println("CALIBRATE PH");
+    Serial.print("calib.value:"); Serial.println(calib.value);
+
+    Serial.print("HamiltonCalibStep:"); Serial.println(HamiltonCalibStep);
+    Hamilton[calib.sensorID].query.u8id = calib.sensorID + 1;
+    Serial.print("Hamilton.query.u8id:"); Serial.println(Hamilton[calib.sensorID].query.u8id);
+    if (calib.calibParam == 99) {
+        if (state == 0) {
+            if (Hamilton[calib.sensorID].factoryReset()) state = 1;
+        }
+        else {
+            calib.calibEnCours = false;
+            state = 0;
         }
     }
+    else {
+        HamiltonCalibStep = Hamilton[calib.sensorID].calibrate(calib.value, HamiltonCalibStep);
+        if (HamiltonCalibStep == 4) {
+            HamiltonCalibStep = 0;
+            calib.calibEnCours = false;
+        }
+    }
+
 }
 
 
@@ -302,20 +326,32 @@ void checkMesocosmes() {
 
 void readMBSensors() {
     if (elapsed(&tempoSensorRead.debut, tempoSensorRead.interval)) {
-        
-        if (pH) {
-            if (Hamilton[sensorIndex].readPH()) {
-                if (sensorIndex < 3) condition.Meso[sensorIndex].pH = Hamilton[sensorIndex].pH_sensorValue;
-                if (sensorIndex == 3) condition.mesurepH = Hamilton[sensorIndex].pH_sensorValue;
-                pH = false;
-            }
+        if (calib.calibRequested) {
+            calib.calibRequested = false;
+            calib.calibEnCours = true;
+        }
+        if (calib.calibEnCours) {
+            calibrateSensor();
         }
         else {
-            if (Hamilton[sensorIndex].readTemp()) {
-                if (sensorIndex < 3) condition.Meso[sensorIndex].temperature = Hamilton[sensorIndex].temp_sensorValue;
-                if (sensorIndex == 3) condition.mesureTemperature = Hamilton[sensorIndex].temp_sensorValue;        
-                sensorIndex == 3 ? sensorIndex = 0 : sensorIndex++;
-                pH = true;
+            if (pH) {
+                if (Hamilton[sensorIndex].readPH()) {
+                    Serial.print("sensor address:"); Serial.println(Hamilton[sensorIndex].query.u8id);
+                    Serial.print(F("pH:")); Serial.println(Hamilton[sensorIndex].pH_sensorValue);
+                    if (sensorIndex < 3) condition.Meso[sensorIndex].pH = Hamilton[sensorIndex].pH_sensorValue;
+                    if (sensorIndex == 3) condition.mesurepH = Hamilton[sensorIndex].pH_sensorValue;
+                    pH = false;
+                }
+            }
+            else {
+                if (Hamilton[sensorIndex].readTemp()) {
+                    Serial.print("sensor address:"); Serial.println(Hamilton[sensorIndex].query.u8id);
+                    Serial.print(F("pH:")); Serial.println(Hamilton[sensorIndex].temp_sensorValue);
+                    if (sensorIndex < 3) condition.Meso[sensorIndex].temperature = Hamilton[sensorIndex].temp_sensorValue;
+                    if (sensorIndex == 3) condition.mesureTemperature = Hamilton[sensorIndex].temp_sensorValue;
+                    sensorIndex == 3 ? sensorIndex = 0 : sensorIndex++;
+                    pH = true;
+                }
             }
         }
     }
@@ -335,7 +371,9 @@ int regulationTemperature() {
         if (elapsed(&tempoRegulTemp.debut, tempoRegulTemp.interval)) {
             //condition.load();
             condition.regulTemp.pid.Compute();
-            condition.regulTemp.sortiePID_pc = (int)(condition.regulTemp.sortiePID / 2.55);
+
+            condition.regulTemp.sortiePID_pc = (int)map(condition.regulTemp.sortiePID, 50, 255, 0, 100);
+            if (condition.regulTemp.sortiePID_pc < 0) condition.regulTemp.sortiePID_pc = 0;
             analogWrite(PIN_V3V, condition.regulTemp.sortiePID);
             return condition.regulTemp.sortiePID_pc;
         }
@@ -419,33 +457,24 @@ void readJSON(char* json) {
                 /*case CALIBRATE_SENSOR:
                     readCalibRequest(doc);
                     break;*/
+        case CALIBRATE_SENSOR:
+            Serial.println(F("CALIB REQ received"));
+            calib.sensorID = doc[F("sensorID")];
+            calib.calibParam = doc[F("calibParam")];
+            calib.value = doc[F("value")];
+
+            Serial.print(F("calib.sensorID:")); Serial.println(calib.sensorID);
+            Serial.print(F("calib.calibParam:")); Serial.println(calib.calibParam);
+            Serial.print(F("calib.value:")); Serial.println(calib.value);
+            if (condID == CONDID) {
+                calib.calibRequested = true;
+            }
+            break;
         default:
             //webSocket.sendTXT(F("wrong request"));
             break;
-
         }
     }
         
 }
 
-
-void readCalibRequest(DynamicJsonDocument doc) {
-    Serial.println("Calibrate sensors");
-    int8_t sensorID = doc["sensorID"]; // 1
-    float pHValue = doc["pHValue"]; // 6.2
-    float tempValue = doc["tempValue"]; // 21.4
-
-    if (sensorID < 0 || sensorID > 4) return;
-
-    calib = true;
-    Hamilton[sensorID].querySent = false;
-    if (pHValue < 0) {
-        while (!Hamilton[sensorID].sendCalibrationCommand(2)) {
-        }//ANNULER LA CALIBRATION
-        calib = false;
-    }
-    else {
-        while (calib) calibrateSensor(sensorID, pHValue);
-    }
-
-}

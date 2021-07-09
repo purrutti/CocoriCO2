@@ -156,5 +156,17 @@ namespace Appli_CocoriCO2.Properties {
                 this["InfluxDBOrg"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://www.obs-vlfr.fr/~gazeau/FACE-IT/FACE-IT.html")]
+        public string RDataWebpage {
+            get {
+                return ((string)(this["RDataWebpage"]));
+            }
+            set {
+                this["RDataWebpage"] = value;
+            }
+        }
     }
 }

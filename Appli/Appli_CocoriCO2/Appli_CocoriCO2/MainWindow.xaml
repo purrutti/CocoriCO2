@@ -22,14 +22,11 @@
             </MenuItem>
             <MenuItem Header="_Maintenance">
                 <MenuItem Name="Calibrate_btn" Header="_Calibrate sensors" Click="Calibrate_btn_Click"/>
-                <MenuItem Name="CleanUp_btn" Header="Clean-up procedure" Click="CleanUp_Click" />
-                <MenuItem Name="ManualOverride_btn" Header="Manual Override" Click="ManualOverride_Click" />
                 <MenuItem Name="ComDebug_btn" Header="Communication Debug" Click="ComDebug_Click" />
-            </MenuItem>
-            <MenuItem Header="_View">
             </MenuItem>
             <MenuItem Header="_Data">
                 <MenuItem Name="Monitoring_btn" Header="_Live Monitoring" Click="Monitoring_btn_Click"/>
+                <MenuItem x:Name="RData" Header="_Historical Data" Click="RData_btn_Click"/>
             </MenuItem>
             <MenuItem Header="_About">
             </MenuItem>
@@ -90,13 +87,13 @@
             <Label x:Name="label_C3M3_Flowrate" Content="Flowrate: ...." HorizontalAlignment="Left" Width="118" Height="30" VerticalAlignment="Top" Canvas.Left="1090" Canvas.Top="586"/>
             <Label x:Name="label_C0_pH_setpoint" Content="pH setpoint: ...." HorizontalAlignment="Left" Width="118" Height="28" VerticalAlignment="Top" Canvas.Left="20" Canvas.Top="133" />
             <Label x:Name="label_C0_pH_CO2" Content="pH measure: ...." HorizontalAlignment="Left" Width="118" Height="28" VerticalAlignment="Top" Canvas.Left="20" Canvas.Top="149" />
-            <Label x:Name="label_C0_Turb" Content="Turbidity: ...." HorizontalAlignment="Left" Width="118" Height="28" VerticalAlignment="Top" Canvas.Left="66" Canvas.Top="341" />
-            <Label x:Name="label_C0_Fluo" Content="Fluo: ...." HorizontalAlignment="Left" Width="118" Height="28" VerticalAlignment="Top" Canvas.Left="66" Canvas.Top="369" />
-            <Label x:Name="label_C0_Temp" Content="T°C: ...." HorizontalAlignment="Left" Width="118" Height="28" VerticalAlignment="Top" Canvas.Left="66" Canvas.Top="397" />
-            <Label x:Name="label_C0_pH" Content="pH: ...." HorizontalAlignment="Left" Width="118" Height="28" VerticalAlignment="Top" Canvas.Left="66" Canvas.Top="425" />
-            <Label x:Name="label_C0_Cond" Content="Cond: ...." HorizontalAlignment="Left" Width="118" Height="28" VerticalAlignment="Top" Canvas.Left="66" Canvas.Top="318" />
-            <Label x:Name="label_C0_02" Content="O2: ...." HorizontalAlignment="Left" Width="118" Height="28" VerticalAlignment="Top" Canvas.Left="66" Canvas.Top="296" />
-            <Label x:Name="label_Amb" Content="Ambiant Conditions" HorizontalAlignment="Left" Width="118" Height="28" VerticalAlignment="Top" Canvas.Left="66" Canvas.Top="268" FontWeight="Bold" />
+            <Label x:Name="label_C0_Turb" Content="Turbidity: ...." HorizontalAlignment="Left" Width="163" Height="28" VerticalAlignment="Top" Canvas.Left="16" Canvas.Top="361" />
+            <Label x:Name="label_C0_Fluo" Content="Fluo: ...." HorizontalAlignment="Left" Width="163" Height="28" VerticalAlignment="Top" Canvas.Left="16" Canvas.Top="385" />
+            <Label x:Name="label_C0_Temp" Content="T°C: ...." HorizontalAlignment="Left" Width="163" Height="28" VerticalAlignment="Top" Canvas.Left="16" Canvas.Top="407" />
+            <Label x:Name="label_C0_pH" Content="pH: ...." HorizontalAlignment="Left" Width="163" Height="28" VerticalAlignment="Top" Canvas.Left="16" Canvas.Top="427" />
+            <Label x:Name="label_C0_Cond" Content="Cond: ...." HorizontalAlignment="Left" Width="163" Height="28" VerticalAlignment="Top" Canvas.Left="16" Canvas.Top="314" />
+            <Label x:Name="label_C0_02" Content="O2: ...." HorizontalAlignment="Left" Width="163" Height="28" VerticalAlignment="Top" Canvas.Left="16" Canvas.Top="292" />
+            <Label x:Name="label_Amb" Content="Ambient Conditions" HorizontalAlignment="Left" Width="118" Height="28" VerticalAlignment="Top" Canvas.Left="10" Canvas.Top="268" FontWeight="Bold" />
             <Label x:Name="label_C0_pH_sortiePID" Content="Valve: ...." HorizontalAlignment="Left" Width="118" Height="29" VerticalAlignment="Top" Canvas.Left="10" Canvas.Top="207" />
             <Label x:Name="label_C2_Temp_sortiePID" Content="V3V: ...." HorizontalAlignment="Left" Width="118" Height="29" VerticalAlignment="Top" Canvas.Left="340" Canvas.Top="365" />
             <Label x:Name="label_C2_pH" Content="pH: ...." HorizontalAlignment="Left" Width="118" Height="28" VerticalAlignment="Top" Canvas.Left="400" Canvas.Top="394" />
@@ -128,6 +125,16 @@
             <Label x:Name="label_time" Content="Time: ...." Canvas.Left="1122" Width="180" Canvas.Top="8"/>
             <Label x:Name="label_exondation_state" Content="Exondation valve: open (low Tide)" Canvas.Left="847" Width="248" Canvas.Top="8"/>
             <Label x:Name="label_ledstate" Content="LED state: Day" Canvas.Left="645" Width="202" Canvas.Top="8"/>
+            <Label x:Name="label_EA_pressure_setpoint" Content="Pressure setpoint: ...." HorizontalAlignment="Left" Width="172" Height="28" VerticalAlignment="Top" Canvas.Left="41" Canvas.Top="486" />
+            <Label x:Name="label_EA_pressure_measure" Content="Pressure measure: ...." HorizontalAlignment="Left" Width="172" Height="28" VerticalAlignment="Top" Canvas.Left="41" Canvas.Top="502" />
+            <Label x:Name="label_EC_pressure_setpoint" Content="Pressure setpoint: ...." HorizontalAlignment="Left" Width="172" Height="28" VerticalAlignment="Top" Canvas.Left="41" Canvas.Top="676" />
+            <Label x:Name="label_EC_pressure_measure" Content="Pressure measure: ...." HorizontalAlignment="Left" Width="172" Height="28" VerticalAlignment="Top" Canvas.Left="41" Canvas.Top="692" />
+            <Label x:Name="label_EA_sortiePID" Content="Valve: ...." HorizontalAlignment="Left" Width="172" Height="29" VerticalAlignment="Top" Canvas.Left="41" Canvas.Top="519" />
+            <Label x:Name="label_EC_sortiePID" Content="Valve: ...." HorizontalAlignment="Left" Width="172" Height="29" VerticalAlignment="Top" Canvas.Left="41" Canvas.Top="709" />
+            <Label x:Name="label_Amb_Copy" Content="Ambient Water Inlet" HorizontalAlignment="Left" Width="160" Height="28" VerticalAlignment="Top" Canvas.Left="41" Canvas.Top="464" FontWeight="Bold" />
+            <Label x:Name="label_Amb_Copy1" Content="Warm Water Inlet" HorizontalAlignment="Left" Width="160" Height="28" VerticalAlignment="Top" Canvas.Left="41" Canvas.Top="652" FontWeight="Bold" />
+            <Label x:Name="label_C0_Salinity" Content="Salinity: ...." HorizontalAlignment="Left" Width="163" Height="28" VerticalAlignment="Top" Canvas.Left="16" Canvas.Top="339" />
+            <Border BorderBrush="Black" BorderThickness="1" Height="191" Canvas.Left="10" Canvas.Top="268" Width="169"/>
         </Canvas>
         <!--<Image Margin="10,25,0,0" Source="CocoriCO2 - P&amp;ID Container.png" Width="1280" Height="720" HorizontalAlignment="Left" VerticalAlignment="Top"/>
         

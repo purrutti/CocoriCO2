@@ -35,5 +35,8 @@
     <Setting Name="InfluxDBOrg" Type="System.String" Scope="User">
       <Value Profile="(Default)">CNRS</Value>
     </Setting>
+    <Setting Name="RDataWebpage" Type="System.String" Scope="User">
+      <Value Profile="(Default)">http://www.obs-vlfr.fr/~gazeau/FACE-IT/FACE-IT.html</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

@@ -44,7 +44,17 @@ namespace Appli_CocoriCO2
         [JsonProperty(Required = Required.Default)]
         public double temperature { get; set; }
         [JsonProperty(Required = Required.Default)]
+        public double salinite { get; set; }
+        [JsonProperty(Required = Required.Default)]
         public double pH { get; set; }
+        [JsonProperty(Required = Required.Default)]
+        public double sortiePID_EA { get; set; }
+        [JsonProperty(Required = Required.Default)]
+        public double sortiePID_EC { get; set; }
+        [JsonProperty(Required = Required.Default)]
+        public double pressionEA { get; set; }
+        [JsonProperty(Required = Required.Default)]
+        public double pressionEC { get; set; }
         public long time { get; set; }
         public DateTime lastUpdated { get; set; }
     }
@@ -106,6 +116,19 @@ namespace Appli_CocoriCO2
 
     }
 
+    public class MasterParams
+    {
+        [JsonProperty("regulPressionEA", Required = Required.Default)]
+        public Regul regulPressionEA;
+        [JsonProperty("regulPressionEC", Required = Required.Default)]
+        public Regul regulPressionEC;
+        public MasterParams()
+        {
+            regulPressionEA = new Regul();
+            regulPressionEC = new Regul();
+        }
+    }
+
     
     /// <summary>
     /// Logique d'interaction pour MainWindow.xaml
@@ -120,6 +143,7 @@ namespace Appli_CocoriCO2
         //public List<Condition> conditionData;
         public ExpSettingsWindow expSettingsWindow;
         public ComDebugWindow comDebugWindow;
+        public Calibration calibrationWindow;
         public CultureInfo ci;
 
         public ClientWebSocket ws = new ClientWebSocket();
@@ -128,6 +152,7 @@ namespace Appli_CocoriCO2
 #pragma warning restore CS0414 // Le champ 'MainWindow.autoReco' est assigné, mais sa valeur n'est jamais utilisée
         public int step;
 
+        public MasterParams masterParams;
 
         public string[] Labels = new[] {"0"};
         public MainWindow()
@@ -155,10 +180,13 @@ namespace Appli_CocoriCO2
                 conditions.Add(c);
             }
 
-            
+            masterParams = new MasterParams();
+
+
 
             expSettingsWindow = new ExpSettingsWindow();
             comDebugWindow = new ComDebugWindow();
+            calibrationWindow = new Calibration();
 
             comDebugWindow.lv_data.ItemsSource = conditionData;
             ci = new CultureInfo("en-US");
@@ -221,11 +249,21 @@ namespace Appli_CocoriCO2
             if (expSettingsWindow.ShowActivated)
             {
                 int selctedcondID = expSettingsWindow.comboBox_Condition.SelectedIndex;
-                if (selctedcondID < 0 || selctedcondID > 3) selctedcondID = 0;
-                expSettingsWindow.tb_pH_measure.Text = conditions[selctedcondID].pH.ToString(ci);
-                expSettingsWindow.tb_pH_PIDoutput.Text = conditions[selctedcondID].regulpH.sortiePID_pc.ToString(ci);
-                expSettingsWindow.tb_Temp_measure.Text = conditions[selctedcondID].temperature.ToString(ci);
-                expSettingsWindow.tb_Temp_PIDoutput.Text = conditions[selctedcondID].regulTemp.sortiePID_pc.ToString(ci);
+                if(selctedcondID == 4)
+                {
+                    expSettingsWindow.tb_pH_measure.Text = ambiantConditions.pressionEA.ToString(ci);
+                    expSettingsWindow.tb_pH_PIDoutput.Text = ambiantConditions.sortiePID_EA.ToString(ci);
+                    expSettingsWindow.tb_Temp_measure.Text = ambiantConditions.pressionEC.ToString(ci);
+                    expSettingsWindow.tb_Temp_PIDoutput.Text = ambiantConditions.sortiePID_EC.ToString(ci);
+                }
+                else
+                {
+                    if (selctedcondID < 0 || selctedcondID > 3) selctedcondID = 0;
+                    expSettingsWindow.tb_pH_measure.Text = conditions[selctedcondID].pH.ToString(ci);
+                    expSettingsWindow.tb_pH_PIDoutput.Text = conditions[selctedcondID].regulpH.sortiePID_pc.ToString(ci);
+                    expSettingsWindow.tb_Temp_measure.Text = conditions[selctedcondID].temperature.ToString(ci);
+                    expSettingsWindow.tb_Temp_PIDoutput.Text = conditions[selctedcondID].regulTemp.sortiePID_pc.ToString(ci);
+                }
             }
 
 
@@ -236,58 +274,31 @@ namespace Appli_CocoriCO2
             }
             else if (command == 3)//DATA
             {
+                if (ambiantConditions.tide)//vanne exondation ouverte
+                {
+                    if (conditions[0].Meso[0].alarmeNiveauBas) label_C0M1_Alarm.Content = "Alarm: Exondation not effective";
+                }
+                else if (!conditions[0].Meso[0].alarmeNiveauBas) label_C0M1_Alarm.Content = "Alarm: Low level";
+                else label_C0M1_Alarm.Content = !conditions[0].Meso[0].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
 
 
-                if (conditions[0].Meso[0].alarmeNiveauHaut)
-                {
-                    label_C0M1_Alarm.Content = "Alarm: Overflow";
-                }
-                else
-                {
-                    if (ambiantConditions.tide)//vanne exondation ouverte
-                    {
-                        if (conditions[0].Meso[0].alarmeNiveauBas) label_C0M1_Alarm.Content = "Alarm: Exondation not effective";
-                    }
-                    else
-                    {
-                        if (!conditions[0].Meso[0].alarmeNiveauBas) label_C0M1_Alarm.Content = "Alarm: Low level";
-                    }
-                    label_C0M1_Alarm.Content = conditions[0].Meso[0].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
-                }
 
-                if (conditions[0].Meso[1].alarmeNiveauHaut)
+                if (ambiantConditions.tide)//vanne exondation ouverte
                 {
-                    label_C0M2_Alarm.Content = "Alarm: Overflow";
+                    if (conditions[0].Meso[1].alarmeNiveauBas) label_C0M2_Alarm.Content = "Alarm: Exondation not effective";
                 }
-                else
-                {
-                    if (ambiantConditions.tide)//vanne exondation ouverte
-                    {
-                        if (conditions[0].Meso[1].alarmeNiveauBas) label_C0M2_Alarm.Content = "Alarm: Exondation not effective";
-                    }
-                    else
-                    {
-                        if (!conditions[0].Meso[1].alarmeNiveauBas) label_C0M2_Alarm.Content = "Alarm: Low level";
-                    }
-                    label_C0M2_Alarm.Content = conditions[0].Meso[1].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
-                }
+                else if (!conditions[0].Meso[1].alarmeNiveauBas) label_C0M2_Alarm.Content = "Alarm: Low level";
+                else label_C0M2_Alarm.Content = !conditions[0].Meso[1].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
+                
 
-                if (conditions[0].Meso[2].alarmeNiveauHaut)
+                if (ambiantConditions.tide)//vanne exondation ouverte
                 {
-                    label_C0M3_Alarm.Content = "Alarm: Overflow";
+                    if (conditions[0].Meso[2].alarmeNiveauBas) label_C0M3_Alarm.Content = "Alarm: Exondation not effective";
                 }
-                else
-                {
-                    if (ambiantConditions.tide)//vanne exondation ouverte
-                    {
-                        if (conditions[0].Meso[2].alarmeNiveauBas) label_C0M3_Alarm.Content = "Alarm: Exondation not effective";
-                    }
-                    else
-                    {
-                        if (!conditions[0].Meso[2].alarmeNiveauBas) label_C0M3_Alarm.Content = "Alarm: Low level";
-                    }
-                    label_C0M3_Alarm.Content = conditions[0].Meso[2].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
-                }
+                else if (!conditions[0].Meso[2].alarmeNiveauBas) label_C0M3_Alarm.Content = "Alarm: Low level";
+                else label_C0M3_Alarm.Content = !conditions[0].Meso[2].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
+
+
                 if (conditions[1].Meso[0].alarmeNiveauHaut)
                 {
                     label_C1M1_Alarm.Content = "Alarm: Overflow";
@@ -298,12 +309,10 @@ namespace Appli_CocoriCO2
                     {
                         if (conditions[1].Meso[0].alarmeNiveauBas) label_C1M1_Alarm.Content = "Alarm: Exondation not effective";
                     }
-                    else
-                    {
-                        if (!conditions[1].Meso[0].alarmeNiveauBas) label_C1M1_Alarm.Content = "Alarm: Low level";
-                    }
-                    label_C1M1_Alarm.Content = conditions[1].Meso[0].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
+                    else if (!conditions[1].Meso[0].alarmeNiveauBas) label_C1M1_Alarm.Content = "Alarm: Low level";
+                    else                    label_C1M1_Alarm.Content = !conditions[1].Meso[0].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
                 }
+
                 if (conditions[1].Meso[1].alarmeNiveauHaut)
                 {
                     label_C1M2_Alarm.Content = "Alarm: Overflow";
@@ -314,11 +323,8 @@ namespace Appli_CocoriCO2
                     {
                         if (conditions[1].Meso[1].alarmeNiveauBas) label_C1M2_Alarm.Content = "Alarm: Exondation not effective";
                     }
-                    else
-                    {
-                        if (!conditions[1].Meso[1].alarmeNiveauBas) label_C1M2_Alarm.Content = "Alarm: Low level";
-                    }
-                    label_C1M2_Alarm.Content = conditions[1].Meso[1].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
+                    else  if (!conditions[1].Meso[1].alarmeNiveauBas) label_C1M2_Alarm.Content = "Alarm: Low level";
+                    else                     label_C1M2_Alarm.Content = !conditions[1].Meso[1].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
                 }
                 if (conditions[1].Meso[2].alarmeNiveauHaut)
                 {
@@ -330,11 +336,8 @@ namespace Appli_CocoriCO2
                     {
                         if (conditions[1].Meso[2].alarmeNiveauBas) label_C1M3_Alarm.Content = "Alarm: Exondation not effective";
                     }
-                    else
-                    {
-                        if (!conditions[1].Meso[2].alarmeNiveauBas) label_C1M3_Alarm.Content = "Alarm: Low level";
-                    }
-                    label_C1M3_Alarm.Content = conditions[1].Meso[2].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
+                    else  if (!conditions[1].Meso[2].alarmeNiveauBas) label_C1M3_Alarm.Content = "Alarm: Low level";
+                    else                     label_C1M3_Alarm.Content = !conditions[1].Meso[2].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
                 }
                 if (conditions[2].Meso[0].alarmeNiveauHaut)
                 {
@@ -346,11 +349,8 @@ namespace Appli_CocoriCO2
                     {
                         if (conditions[2].Meso[0].alarmeNiveauBas) label_C2M1_Alarm.Content = "Alarm: Exondation not effective";
                     }
-                    else
-                    {
-                        if (!conditions[2].Meso[0].alarmeNiveauBas) label_C2M1_Alarm.Content = "Alarm: Low level";
-                    }
-                    label_C2M1_Alarm.Content = conditions[2].Meso[0].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
+                    else if (!conditions[2].Meso[0].alarmeNiveauBas) label_C2M1_Alarm.Content = "Alarm: Low level";
+                    else                     label_C2M1_Alarm.Content = !conditions[2].Meso[0].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
                 }
                 if (conditions[2].Meso[1].alarmeNiveauHaut)
                 {
@@ -362,11 +362,9 @@ namespace Appli_CocoriCO2
                     {
                         if (conditions[2].Meso[1].alarmeNiveauBas) label_C2M2_Alarm.Content = "Alarm: Exondation not effective";
                     }
+                    else if (!conditions[2].Meso[1].alarmeNiveauBas) label_C2M2_Alarm.Content = "Alarm: Low level";
                     else
-                    {
-                        if (!conditions[2].Meso[1].alarmeNiveauBas) label_C2M2_Alarm.Content = "Alarm: Low level";
-                    }
-                    label_C2M2_Alarm.Content = conditions[2].Meso[1].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
+                    label_C2M2_Alarm.Content = !conditions[2].Meso[1].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
                 }
                 if (conditions[2].Meso[2].alarmeNiveauHaut)
                 {
@@ -378,12 +376,10 @@ namespace Appli_CocoriCO2
                     {
                         if (conditions[2].Meso[2].alarmeNiveauBas) label_C2M3_Alarm.Content = "Alarm: Exondation not effective";
                     }
-                    else
-                    {
-                        if (!conditions[2].Meso[2].alarmeNiveauBas) label_C2M3_Alarm.Content = "Alarm: Low level";
-                    }
-                    label_C2M3_Alarm.Content = conditions[2].Meso[2].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
+                    else if (!conditions[2].Meso[2].alarmeNiveauBas) label_C2M3_Alarm.Content = "Alarm: Low level";
+                    else    label_C2M3_Alarm.Content = !conditions[2].Meso[2].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
                 }
+
                 if (conditions[3].Meso[0].alarmeNiveauHaut)
                 {
                     label_C3M1_Alarm.Content = "Alarm: Overflow";
@@ -394,11 +390,8 @@ namespace Appli_CocoriCO2
                     {
                         if (conditions[3].Meso[0].alarmeNiveauBas) label_C3M1_Alarm.Content = "Alarm: Exondation not effective";
                     }
-                    else
-                    {
-                        if (!conditions[3].Meso[0].alarmeNiveauBas) label_C3M1_Alarm.Content = "Alarm: Low level";
-                    }
-                    label_C3M1_Alarm.Content = conditions[3].Meso[0].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
+                    else if (!conditions[3].Meso[0].alarmeNiveauBas) label_C3M1_Alarm.Content = "Alarm: Low level";
+                    else label_C3M1_Alarm.Content = !conditions[3].Meso[0].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
                 }
                 if (conditions[3].Meso[1].alarmeNiveauHaut)
                 {
@@ -410,11 +403,8 @@ namespace Appli_CocoriCO2
                     {
                         if (conditions[3].Meso[1].alarmeNiveauBas) label_C3M2_Alarm.Content = "Alarm: Exondation not effective";
                     }
-                    else
-                    {
-                        if (!conditions[3].Meso[1].alarmeNiveauBas) label_C3M2_Alarm.Content = "Alarm: Low level";
-                    }
-                    label_C3M2_Alarm.Content = conditions[3].Meso[1].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
+                    else if (!conditions[3].Meso[1].alarmeNiveauBas) label_C3M2_Alarm.Content = "Alarm: Low level";
+                    else label_C3M2_Alarm.Content = !conditions[3].Meso[1].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
                 }
                 if (conditions[3].Meso[2].alarmeNiveauHaut)
                 {
@@ -426,12 +416,16 @@ namespace Appli_CocoriCO2
                     {
                         if (conditions[3].Meso[2].alarmeNiveauBas) label_C3M3_Alarm.Content = "Alarm: Exondation not effective";
                     }
-                    else
-                    {
-                        if (!conditions[3].Meso[2].alarmeNiveauBas) label_C3M3_Alarm.Content = "Alarm: Low level";
-                    }
-                    label_C3M3_Alarm.Content = conditions[3].Meso[2].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
+                    else if (!conditions[3].Meso[2].alarmeNiveauBas) label_C3M3_Alarm.Content = "Alarm: Low level";
+                    else  label_C3M3_Alarm.Content = !conditions[3].Meso[2].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
                 }
+
+                label_EA_pressure_measure.Content = string.Format(ci, "Pressure measure: {0:0.00} bars", ambiantConditions.pressionEA);
+                label_EA_pressure_setpoint.Content = string.Format(ci, "Pressure setpoint: {0:0.00} bars", masterParams.regulPressionEA.consigne);
+                label_EA_sortiePID.Content = string.Format(ci, "Valve: \t{0:0}%", ambiantConditions.sortiePID_EA);
+                label_EC_pressure_measure.Content = string.Format(ci, "Pressure measure: {0:0.00} bars", ambiantConditions.pressionEC);
+                label_EC_pressure_setpoint.Content = string.Format(ci, "Pressure setpoint: {0:0.00} bars", masterParams.regulPressionEC.consigne);
+                label_EC_sortiePID.Content = string.Format(ci, "Valve: \t{0:0}%", ambiantConditions.sortiePID_EC);
 
                 label_C0_pH_setpoint.Content = string.Format(ci, "pH setpoint: {0:0.00}", conditions[0].regulpH.consigne);
                 label_C0_pH_sortiePID.Content = string.Format(ci, "Valve: \t{0:0}%", conditions[0].regulpH.sortiePID_pc);
@@ -461,9 +455,9 @@ namespace Appli_CocoriCO2
                 label_C3_pH.Content = string.Format(ci, "pH: {0:0.00}", conditions[3].pH);
                 label_C3_Temp.Content = string.Format(ci, "T°C: {0:0.00}°C", conditions[3].temperature);
 
-                label_C0M1_Flowrate.Content = string.Format(ci, "Flowrate: {0:0.00}l/s", conditions[0].Meso[0].debit);
-                label_C0M2_Flowrate.Content = string.Format(ci, "Flowrate: {0:0.00}l/s", conditions[0].Meso[1].debit);
-                label_C0M3_Flowrate.Content = string.Format(ci, "Flowrate: {0:0.00}l/s", conditions[0].Meso[2].debit);
+                label_C0M1_Flowrate.Content = string.Format(ci, "Flowrate: {0:0.00}l/mn", conditions[0].Meso[0].debit);
+                label_C0M2_Flowrate.Content = string.Format(ci, "Flowrate: {0:0.00}l/mn", conditions[0].Meso[1].debit);
+                label_C0M3_Flowrate.Content = string.Format(ci, "Flowrate: {0:0.00}l/mn", conditions[0].Meso[2].debit);
                 label_C0M1_pH.Content = string.Format(ci, "pH: \t{0:0.00}", conditions[0].Meso[0].pH);
                 label_C0M2_pH.Content = string.Format(ci, "pH: \t{0:0.00}", conditions[0].Meso[1].pH);
                 label_C0M3_pH.Content = string.Format(ci, "pH: \t{0:0.00}", conditions[0].Meso[2].pH);
@@ -471,9 +465,9 @@ namespace Appli_CocoriCO2
                 label_C0M2_Temp.Content = string.Format(ci, "T°C: \t{0:0.00}°C", conditions[0].Meso[1].temperature);
                 label_C0M3_Temp.Content = string.Format(ci, "T°C: \t{0:0.00}°C", conditions[0].Meso[2].temperature);
 
-                label_C1M1_Flowrate.Content = string.Format(ci, "Flowrate: {0:0.00}l/s", conditions[1].Meso[0].debit);
-                label_C1M2_Flowrate.Content = string.Format(ci, "Flowrate: {0:0.00}l/s", conditions[1].Meso[1].debit);
-                label_C1M3_Flowrate.Content = string.Format(ci, "Flowrate: {0:0.00}l/s", conditions[1].Meso[2].debit);
+                label_C1M1_Flowrate.Content = string.Format(ci, "Flowrate: {0:0.00}l/mn", conditions[1].Meso[0].debit);
+                label_C1M2_Flowrate.Content = string.Format(ci, "Flowrate: {0:0.00}l/mn", conditions[1].Meso[1].debit);
+                label_C1M3_Flowrate.Content = string.Format(ci, "Flowrate: {0:0.00}l/mn", conditions[1].Meso[2].debit);
                 label_C1M1_pH.Content = string.Format(ci, "pH: \t{0:0.00}", conditions[1].Meso[0].pH);
                 label_C1M2_pH.Content = string.Format(ci, "pH: \t{0:0.00}", conditions[1].Meso[1].pH);
                 label_C1M3_pH.Content = string.Format(ci, "pH: \t{0:0.00}", conditions[1].Meso[2].pH);
@@ -481,9 +475,9 @@ namespace Appli_CocoriCO2
                 label_C1M2_Temp.Content = string.Format(ci, "T°C: \t{0:0.00}°C", conditions[1].Meso[1].temperature);
                 label_C1M3_Temp.Content = string.Format(ci, "T°C: \t{0:0.00}°C", conditions[1].Meso[2].temperature);
 
-                label_C2M1_Flowrate.Content = string.Format(ci, "Flowrate: {0:0.00}l/s", conditions[2].Meso[0].debit);
-                label_C2M2_Flowrate.Content = string.Format(ci, "Flowrate: {0:0.00}l/s", conditions[2].Meso[1].debit);
-                label_C2M3_Flowrate.Content = string.Format(ci, "Flowrate: {0:0.00}l/s", conditions[2].Meso[2].debit);
+                label_C2M1_Flowrate.Content = string.Format(ci, "Flowrate: {0:0.00}l/mn", conditions[2].Meso[0].debit);
+                label_C2M2_Flowrate.Content = string.Format(ci, "Flowrate: {0:0.00}l/mn", conditions[2].Meso[1].debit);
+                label_C2M3_Flowrate.Content = string.Format(ci, "Flowrate: {0:0.00}l/mn", conditions[2].Meso[2].debit);
                 label_C2M1_pH.Content = string.Format(ci, "pH: \t{0:0.00}", conditions[2].Meso[0].pH);
                 label_C2M2_pH.Content = string.Format(ci, "pH: \t{0:0.00}", conditions[2].Meso[1].pH);
                 label_C2M3_pH.Content = string.Format(ci, "pH: \t{0:0.00}", conditions[2].Meso[2].pH);
@@ -491,9 +485,9 @@ namespace Appli_CocoriCO2
                 label_C2M2_Temp.Content = string.Format(ci, "T°C: \t{0:0.00}°C", conditions[2].Meso[1].temperature);
                 label_C2M3_Temp.Content = string.Format(ci, "T°C: \t{0:0.00}°C", conditions[2].Meso[2].temperature);
 
-                label_C3M1_Flowrate.Content = string.Format(ci, "Flowrate: {0:0.00}l/s", conditions[3].Meso[0].debit);
-                label_C3M2_Flowrate.Content = string.Format(ci, "Flowrate: {0:0.00}l/s", conditions[3].Meso[1].debit);
-                label_C3M3_Flowrate.Content = string.Format(ci, "Flowrate: {0:0.00}l/s", conditions[3].Meso[2].debit);
+                label_C3M1_Flowrate.Content = string.Format(ci, "Flowrate: {0:0.00}l/mn", conditions[3].Meso[0].debit);
+                label_C3M2_Flowrate.Content = string.Format(ci, "Flowrate: {0:0.00}l/mn", conditions[3].Meso[1].debit);
+                label_C3M3_Flowrate.Content = string.Format(ci, "Flowrate: {0:0.00}l/mn", conditions[3].Meso[2].debit);
                 label_C3M1_pH.Content = string.Format(ci, "pH: \t{0:0.00}", conditions[3].Meso[0].pH);
                 label_C3M2_pH.Content = string.Format(ci, "pH: \t{0:0.00}", conditions[3].Meso[1].pH);
                 label_C3M3_pH.Content = string.Format(ci, "pH: \t{0:0.00}", conditions[3].Meso[2].pH);
@@ -503,11 +497,12 @@ namespace Appli_CocoriCO2
             }
             else if (command == 6)//MASTER DATA
             {
-                label_C0_02.Content = string.Format(ci, "O2: \t{0:0.00}", ambiantConditions.oxy);
-                label_C0_Cond.Content = string.Format(ci, "Cond: \t{0:0.00}", ambiantConditions.cond);
+                label_C0_02.Content = string.Format(ci, "O2: \t{0:0.00}%", ambiantConditions.oxy);
+                label_C0_Cond.Content = string.Format(ci, "Cond: \t{0:0.00} uS/cm", ambiantConditions.cond);
+                label_C0_Salinity.Content = string.Format(ci, "Salinity: \t{0:0.00}", ambiantConditions.salinite);
                 label_C0_Turb.Content = string.Format(ci, "Turb: \t{0:0.00}", ambiantConditions.turb);
                 label_C0_Fluo.Content = string.Format(ci, "Fluo: \t{0:0.00}", ambiantConditions.fluo);
-                label_C0_Temp.Content = string.Format(ci, "T°C: \t{0:0.00}", ambiantConditions.temperature);
+                label_C0_Temp.Content = string.Format(ci, "Temperature: \t{0:0.00}°C", ambiantConditions.temperature);
                 label_C0_pH.Content = string.Format(ci, "pH: \t{0:0.00}", ambiantConditions.pH);
                 if (ambiantConditions.tide) label_exondation_state.Content = string.Format(ci, "Exondation Valve: OPEN (low tide)");
                 else label_exondation_state.Content = string.Format(ci, "Exondation Valve: CLOSED (high tide)");
@@ -668,22 +663,15 @@ namespace Appli_CocoriCO2
 
         private void ExpSettings_Click(object sender, RoutedEventArgs e)
         {
+            for (int i = 0; i < 5; i++) expSettingsWindow.load(i);
             expSettingsWindow.Show();
+            expSettingsWindow.Focus();
         }
 
         private void Calibrate_btn_Click(object sender, RoutedEventArgs e)
         {
-
-        }
-
-        private void CleanUp_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
-
-        private void ManualOverride_Click(object sender, RoutedEventArgs e)
-        {
-
+            calibrationWindow.Show();
+            calibrationWindow.Focus();
         }
 
         
@@ -714,6 +702,11 @@ namespace Appli_CocoriCO2
         private void Monitoring_btn_Click(object sender, RoutedEventArgs e)
         {
             System.Diagnostics.Process.Start(Properties.Settings.Default["InfluxDBWebpage"].ToString());            
+        }
+
+        private void RData_btn_Click(object sender, RoutedEventArgs e)
+        {
+            System.Diagnostics.Process.Start(Properties.Settings.Default["RDataWebpage"].ToString());
         }
     }
 }

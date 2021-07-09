@@ -133,7 +133,6 @@ public:
     bool readPH()
     {
         setQuerypH();
-        //Serial.print("Slave ID:"); Serial.println(queryPH.u8id);
         if (!querySent) {
             master->query(query);
             querySent = true;
@@ -241,34 +240,57 @@ public:
     }
 
     int calibrate(float value, int step) {
+        Serial.println(F("CALIB HAMILTON"));
         switch (step) {
         case 0:
             //PAS NECESSAIRE??
             if (setLevel()) {
                 step++;
-                Serial.println("set Level S OK");
+                Serial.println(F("set Level S OK"));
             }
             break;
         case 1:
             if (sendCalibrationCommand(1)) {//1 = request calibration; 2 = cancel calibration
                 step++;
-                Serial.println("send calib OK");
+                Serial.println(F("send calib OK"));
             }
             break;
         case 2:
             if (sendCalibrationValue(value)) {
                 step++;
-                Serial.println("send calib value OK");
+                Serial.println(F("send calib value OK"));
             }
             break;
         case 3:
             if (getCalibrationStatus()) {
                 step++;
-                Serial.println("get status OK");
+                Serial.println(F("get status OK"));
             }
             break;
         }
         return step;
+    }
+
+    bool factoryReset()
+    {
+        Serial.println(F("factory reset"));
+        setQuery(16, 8191, 2);
+        data[0] = 911;
+
+        if (!querySent) {
+            master->query(query);
+            querySent = true;
+            Serial.println(F("query sent"));
+        }
+        else {
+            master->poll();
+            if (master->getState() == COM_IDLE) {
+                querySent = false;
+                Serial.println(F("query OK"));
+                return 1;
+            }
+        }
+        return 0;
     }
 
 

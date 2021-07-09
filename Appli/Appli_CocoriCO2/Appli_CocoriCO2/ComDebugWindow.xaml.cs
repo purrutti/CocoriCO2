@@ -145,12 +145,15 @@ namespace Appli_CocoriCO2
                 {
                     MW.ambiantConditions = JsonConvert.DeserializeObject<Ambiant>(data);
                     MW.ambiantConditions.lastUpdated = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(MW.ambiantConditions.time);
-                    MW.statusLabel1.Text = "Last updated: " + MW.ambiantConditions.lastUpdated.ToString() +" UTC";
+                    MW.statusLabel1.Text = "Last updated: " + MW.ambiantConditions.lastUpdated.ToString() + " UTC";
+                }
+                else if (c.command == 8)
+                {
+
+                    MW.masterParams = JsonConvert.DeserializeObject<MasterParams>(data);
                 }
 
                 MW.DisplayData(c.command);
-                
-                
             }
 #pragma warning disable CS0168 // La variable 'e' est déclarée, mais jamais utilisée
             catch (Exception e)
@@ -182,7 +185,7 @@ namespace Appli_CocoriCO2
         private void writeDataPoint(int conditionId, int MesoID, string field, double value, DateTime dt)
         {
             string tag; 
-            if (MesoID == -1) tag = "AmbiantData";
+            if (MesoID == -1) tag = "AmbientData";
             else tag = MesoID.ToString();
             var point = PointData
               .Measurement("CRCBN")
@@ -203,7 +206,7 @@ namespace Appli_CocoriCO2
             if (!System.IO.File.Exists(filePath))
             {
                 //Write headers
-                String header = "Time;Sun;Tide;Ambiant_O2;Ambiant_Conductivity;Ambiant_Turbidity;Ambiant_Fluo;Ambiant_Temperature;Ambiant_pH;";
+                String header = "Time;Sun;Tide;Ambient_O2;Ambient_salinity;Ambient_Turbidity;Ambient_Fluo;Ambient_Temperature;Ambient_pH;";
 
                 for (int i = 0; i < 4; i++)
                 {
@@ -247,7 +250,7 @@ namespace Appli_CocoriCO2
             writeDataPoint(0, -1, "sun", sun, dt);
             writeDataPoint(0, -1, "tide", tide, dt);
             writeDataPoint(0, -1, "oxy", MW.ambiantConditions.oxy, dt);
-            writeDataPoint(0, -1, "cond", MW.ambiantConditions.cond, dt);
+            writeDataPoint(0, -1, "salinite", MW.ambiantConditions.cond, dt);
             writeDataPoint(0, -1, "turb", MW.ambiantConditions.turb, dt);
             writeDataPoint(0, -1, "fluo", MW.ambiantConditions.fluo, dt);
             writeDataPoint(0, -1, "temperature", MW.ambiantConditions.temperature, dt);

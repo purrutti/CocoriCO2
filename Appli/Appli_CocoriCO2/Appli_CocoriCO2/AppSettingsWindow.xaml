@@ -36,6 +36,9 @@
         <Label Content="InfluxDB" HorizontalAlignment="Left" Margin="30,372,0,0" VerticalAlignment="Top" FontWeight="Bold"/>
         <TextBox HorizontalAlignment="Left" Height="23" Margin="155,483,0,0" TextWrapping="Wrap"  x:Name="tb_MasterIPAdress_Copy9" Text="{Binding InfluxDBOrg, Mode=TwoWay, Source={x:Static p:Settings.Default}}" VerticalAlignment="Top" Width="1056"/>
         <Label Content="Org" HorizontalAlignment="Left" Margin="30,480,0,0" VerticalAlignment="Top"/>
+        <TextBox HorizontalAlignment="Left" Height="23" Margin="155,565,0,0" TextWrapping="Wrap"  x:Name="tb_MasterIPAdress_Copy10" Text="{Binding RDataWebpage, Mode=TwoWay, Source={x:Static p:Settings.Default}}" VerticalAlignment="Top" Width="1056"/>
+        <Label Content="Webpage" HorizontalAlignment="Left" Margin="30,562,0,0" VerticalAlignment="Top"/>
+        <Label Content="RData" HorizontalAlignment="Left" Margin="30,531,0,0" VerticalAlignment="Top" FontWeight="Bold"/>
 
     </Grid>
 </Window>

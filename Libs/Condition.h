@@ -18,6 +18,7 @@ public:
     int consigneForcage;
     double offset;
     PID pid;
+    int startAddress;
 
     int save(int startAddress) {
         int add = startAddress;
@@ -49,7 +50,7 @@ public:
 
 class Condition {
 public:
-    uint8_t socketID;
+    //uint8_t socketID;
     uint8_t condID;
     Mesocosme Meso[3];
     double mesureTemperature;
@@ -65,10 +66,8 @@ public:
     }
 
     int save() {
-        Serial.print("SAVE condID:");
-        Serial.println(condID);
         int add = startAddress;
-        EEPROM.updateInt(add, condID); add += sizeof(int);
+        add += sizeof(int);
         add = regulpH.save(add);
         add = regulTemp.save(add);
         return add;
@@ -76,7 +75,7 @@ public:
 
     int load() {
         int add = startAddress;
-        condID = EEPROM.readInt(add); add += sizeof(int);
+        add += sizeof(int);
         add = regulpH.load(add);
         add = regulTemp.load(add);
         return add;
@@ -118,8 +117,8 @@ public:
 
             dataArray[i][F("debit")] = Meso[i].debit;
             dataArray[i][F("LevelH")] = Meso[i].alarmeNiveauHaut;
-            dataArray[i][F("LevelL")] = !Meso[i].alarmeNiveauBas;
-            dataArray[i][F("LevelLL")] = !Meso[i].alarmeNiveauTresBas;
+            dataArray[i][F("LevelL")] = Meso[i].alarmeNiveauBas;
+            dataArray[i][F("LevelLL")] = Meso[i].alarmeNiveauTresBas;
         }
         serializeJson(doc, buffer, 600);
         return true;
