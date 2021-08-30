@@ -15,7 +15,7 @@
 #include <WebSocketsClient.h>
 #include <RTC.h>
 
-const uint8_t CONDID = 3;
+const uint8_t CONDID = 1;
 
 /***** PIN ASSIGNMENTS *****/
 const byte PIN_DEBITMETRE_1 = 56;
@@ -76,6 +76,7 @@ tempo tempoRegulTemp;
 tempo tempoRegulpH;
 tempo tempoCheckMeso;
 tempo tempoSendValues;
+tempo tempoRR;
 
 int sensorIndex = 0;
 bool pH = true;
@@ -85,7 +86,7 @@ bool pH = true;
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, CONDID };
 
 // Set the static IP address to use if the DHCP fails to assign
-IPAddress ip(192, 168, 1, 160+ CONDID);
+IPAddress ip(192, 168, 1, 160 + CONDID);
 
 WebSocketsClient webSocket;
 
@@ -159,7 +160,7 @@ void setup() {
     digitalWrite(PIN_POMPE_DIR, HIGH);
 
 
-    
+
 
     Serial.begin(115200);
     master.begin(9600); // baud-rate at 19200
@@ -169,7 +170,7 @@ void setup() {
 
     condition = Condition();
     condition.startAddress = 2;
-    
+
     load(2);
     condition.condID = CONDID;
 
@@ -198,10 +199,14 @@ void setup() {
 
 
     tempoSensorRead.interval = 200;
-    tempoRegulTemp.interval = 100;
+    //tempoRegulTemp.interval = 100;
+    tempoRegulTemp.interval = 0;
+
     tempoRegulpH.interval = 100;
     tempoCheckMeso.interval = 200;
     tempoSendValues.interval = 5000;
+
+    tempoRR.interval = 30000;
 
     tempoSensorRead.debut = millis() + 2000;
     Serial.println("ETHER");
@@ -221,26 +226,32 @@ void setup() {
         }
     }
     Serial.println("Ethernet connected");
-    
-        webSocket.begin("192.168.1.160", 81);
-   //webSocket.begin("echo.websocket.org", 80);
+
+    webSocket.begin("192.168.1.160", 81);
+    //webSocket.begin("echo.websocket.org", 80);
     webSocket.onEvent(webSocketEvent);
 
     RTC.read();
     setPIDparams();
 
-            
+
 
 }
 
 // the loop function runs over and over again until power down or reset
 void loop() {
-    readMBSensors();  
+    readMBSensors();
 
 
     checkMesocosmes();
-    regulationTemperature();
-    regulationpH();
+    if (elapsed(&tempoRegulTemp.debut, tempoRegulTemp.interval)) {
+        regulationTemperature();
+        regulationpH();
+    }
+
+    if (elapsed(&tempoRegulpH.debut, tempoRegulpH.interval)) {
+
+    }
 
     webSocket.loop();
     sendData();
@@ -250,24 +261,25 @@ void loop() {
 void sendData() {
     if (elapsed(&tempoSendValues.debut, tempoSendValues.interval)) {
         Serial.println("SEND DATA");
-        condition.serializeData(buffer, RTC.getTime(),CONDID);
+        condition.serializeData(buffer, RTC.getTime(), CONDID);
         Serial.println(buffer);
         webSocket.sendTXT(buffer);
     }
-    
+
 }
 
 void setPIDparams() {
+
     condition.regulpH.pid = PID((double*)&Hamilton[3].pH_sensorValue, &condition.regulpH.sortiePID, &condition.regulpH.consigne, condition.regulpH.Kp, condition.regulpH.Ki, condition.regulpH.Kd, DIRECT);
     condition.regulpH.pid.SetOutputLimits(0, 127);
     condition.regulpH.pid.SetMode(AUTOMATIC);
     condition.regulpH.pid.SetControllerDirection(REVERSE);
 
-    condition.regulTemp.pid = PID((double*)&Hamilton[3].temp_sensorValue, &condition.regulTemp.sortiePID, &condition.regulTemp.consigne, condition.regulTemp.Kp, condition.regulTemp.Ki, condition.regulTemp.Kd, DIRECT);
-    if(CONDID>1) condition.regulTemp.pid.SetOutputLimits(90, 215);
-    else condition.regulTemp.pid.SetOutputLimits(50, 255);
+    condition.regulTemp.pid = PID((double*)&Hamilton[3].temp_sensorValue, &condition.regulTemp.sortiePID, &condition.regulTemp.consigne, condition.regulTemp.Kp, condition.regulTemp.Ki, condition.regulTemp.Kd, P_ON_M, DIRECT);
+    condition.regulTemp.pid.SetOutputLimits(70, 200);
     condition.regulTemp.pid.SetMode(AUTOMATIC);
     condition.regulTemp.pid.SetControllerDirection(DIRECT);
+
 }
 
 
@@ -322,7 +334,7 @@ void checkMesocosmes() {
             condition.Meso[i].checkLevel();
         }
     }
-    
+
 }
 
 void readMBSensors() {
@@ -369,7 +381,50 @@ int regulationTemperature() {
         }
     }
     else {
-        if (elapsed(&tempoRegulTemp.debut, tempoRegulTemp.interval)) {
+        if (customRegul) {
+            /*
+            condition.regulTemp.pid.Compute();
+
+            double HWTep = 24.00;
+            double CWTemp = condition.regulTemp.consigne - condition.regulTemp.offset;
+            double diff = HWTep - CWTemp;
+            double pc = (condition.regulTemp.consigne - CWTemp) / (HWTep - CWTemp);
+            meanPIDOut_temp = pc * 205.0 + condition.regulTemp.sortiePID+50;
+            if (meanPIDOut_temp > 200) meanPIDOut_temp = 200;
+            if(meanPIDOut_temp < 95) meanPIDOut_temp = 95;
+
+
+
+
+
+            condition.regulTemp.sortiePID_pc = (long)map((long)meanPIDOut_temp, 50, 255, 0, 100);
+            if (condition.regulTemp.sortiePID_pc < 0) condition.regulTemp.sortiePID_pc = 0;*/
+
+            if (elapsed(&tempoRR.debut, tempoRR.interval)) {
+                double diff = lastTemp - Hamilton[3].temp_sensorValue;
+                double err = condition.regulTemp.consigne - Hamilton[3].temp_sensorValue;
+
+                int adjust = (int)(condition.regulTemp.Kd * diff + condition.regulTemp.Ki * err);
+                if (meanPIDOut_temp > 200) meanPIDOut_temp = 200;
+                if (meanPIDOut_temp < 70) meanPIDOut_temp = 70;
+
+                meanPIDOut_temp += adjust;
+                Serial.print("lastTemp"); Serial.println(lastTemp);
+                Serial.print("Hamilton[3].temp_sensorValue"); Serial.println(Hamilton[3].temp_sensorValue);
+                Serial.print("diff"); Serial.println(diff);
+                Serial.print("err"); Serial.println(err);
+                Serial.print("adjust"); Serial.println(adjust);
+                Serial.print("meanPIDOut_temp"); Serial.println(meanPIDOut_temp);
+                lastTemp = Hamilton[3].temp_sensorValue;
+
+            }
+            condition.regulTemp.sortiePID_pc = (int)map(meanPIDOut_temp, 50, 255, 0, 100);
+            if (condition.regulTemp.sortiePID_pc < 0) condition.regulTemp.sortiePID_pc = 0;
+            analogWrite(PIN_V3V, meanPIDOut_temp);
+
+            return meanPIDOut_temp;
+        }
+        else {
             //condition.load();
             condition.regulTemp.pid.Compute();
 
@@ -379,12 +434,12 @@ int regulationTemperature() {
             return condition.regulTemp.sortiePID_pc;
         }
     }
-    
+
 }
 
 int regulationpH() {
     if (condition.regulpH.autorisationForcage) {
-        if (condition.regulpH.consigneForcage > 0 && condition.regulpH.consigneForcage <=100) {
+        if (condition.regulpH.consigneForcage > 0 && condition.regulpH.consigneForcage <= 100) {
             digitalWrite(PIN_POMPE_MARCHE, LOW);
             analogWrite(PIN_POMPE_ANA, (int)(condition.regulpH.consigneForcage * 127 / 100));
             Serial.println("FORCAGE!");
@@ -396,18 +451,34 @@ int regulationpH() {
         }
     }
     else {
-        if (elapsed(&tempoRegulpH.debut, tempoRegulpH.interval)) {
+        /*if (customRegul) {
             condition.regulpH.pid.Compute();
-            condition.regulpH.sortiePID_pc = (int)(condition.regulpH.sortiePID / 1.27);
-            if(condition.regulpH.sortiePID <1) digitalWrite(PIN_POMPE_MARCHE, HIGH);
+
+            meanPIDOut_pH = meanPIDOut_pH * (1 - regulFilter) + condition.regulpH.sortiePID * regulFilter;
+
+            condition.regulpH.sortiePID_pc = (int)(meanPIDOut_pH / 1.27);
+            if (condition.regulpH.sortiePID_pc < 0) condition.regulpH.sortiePID_pc = 0;
+
+            if (meanPIDOut_pH < 1) digitalWrite(PIN_POMPE_MARCHE, HIGH);
             else {
                 digitalWrite(PIN_POMPE_MARCHE, LOW);
-                analogWrite(PIN_POMPE_ANA, (int)condition.regulpH.sortiePID);
+                analogWrite(PIN_POMPE_ANA, (int)meanPIDOut_pH);
             }
-            return condition.regulpH.sortiePID_pc;
+
+            return meanPIDOut_pH;
         }
+        else {*/
+        condition.regulpH.pid.Compute();
+        condition.regulpH.sortiePID_pc = (int)(condition.regulpH.sortiePID / 1.27);
+        if (condition.regulpH.sortiePID < 1) digitalWrite(PIN_POMPE_MARCHE, HIGH);
+        else {
+            digitalWrite(PIN_POMPE_MARCHE, LOW);
+            analogWrite(PIN_POMPE_ANA, (int)condition.regulpH.sortiePID);
+        }
+        return condition.regulpH.sortiePID_pc;
+        //}
     }
-    
+
 }
 
 void save(int address) {
@@ -476,6 +547,5 @@ void readJSON(char* json) {
             break;
         }
     }
-        
-}
 
+}

@@ -5,9 +5,18 @@
 
 #include <PID_v1.h>
 
+
+bool customRegul = true;
+double regulFilter = 0.01;
+
+double lastTemp = 18;
+
+double meanPIDOut_temp = 120;
+int meanPIDOut_pH = 0;
+
 class Regul {
 public:
-    
+
     double sortiePID;
     double consigne;
     double Kp;
@@ -92,7 +101,7 @@ public:
         doc[F("senderID")] = sender;
         doc[F("temperature")] = mesureTemperature;
         doc[F("pH")] = mesurepH;
-        
+
 
         //Serial.print(F("CONDID:")); Serial.println(condID);
         //Serial.print(F("socketID:")); Serial.println(socketID);
@@ -101,7 +110,7 @@ public:
         JsonArray data = doc.createNestedArray(F("data"));
         JsonObject dataArray[3];
 
-        JsonObject regulT= doc.createNestedObject(F("regulTemp"));
+        JsonObject regulT = doc.createNestedObject(F("regulTemp"));
         regulT[F("consigne")] = regulTemp.consigne;
         regulT[F("sortiePID_pc")] = regulTemp.sortiePID_pc;
 
@@ -159,7 +168,7 @@ public:
     }
 
     void deserializeParams(StaticJsonDocument<512> doc) {
-        
+
         JsonObject regulp = doc[F("regulpH")];
         regulpH.consigne = regulp[F("consigne")]; // 24.2
         regulpH.Kp = regulp[F("Kp")]; // 2.1
@@ -182,7 +191,7 @@ public:
         else regulTemp.autorisationForcage = false;
         regulTemp.consigneForcage = regulT[F("consigneForcage")]; // 2.1
         regulTemp.offset = regulT[F("offset")];
-        
+
     }
 
     void deserializeData(StaticJsonDocument<512> doc) {
@@ -203,11 +212,11 @@ public:
 
         regulpH.consigne = doc[F("regulpH")][F("consigne")]; // 3
         regulpH.sortiePID_pc = doc[F("regulpH")][F("sortiePID_pc")]; // 4
-        
+
         mesureTemperature = doc[F("temperature")];
         mesurepH = doc[F("pH")];
 
     }
 
 
-}; 
+};
