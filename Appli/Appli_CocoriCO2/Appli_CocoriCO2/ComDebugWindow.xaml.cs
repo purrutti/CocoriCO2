@@ -167,12 +167,12 @@ namespace Appli_CocoriCO2
                 if (c.lastUpdated != lastFileWrite)
                 {
                     DateTime dt = DateTime.Now;
-                    string filePath = Properties.Settings.Default["dataFileBasePath"].ToString();
-                    filePath += "_" + dt.Year.ToString() + "_" + dt.Month.ToString() + "_" + dt.Day.ToString() + ".csv";
+                    string filePath = Properties.Settings.Default["dataFileBasePath"].ToString()+ "_"+dt.ToString("yyyy-MM-dd") + ".csv";
+                    filePath = filePath.Replace('\\', '/');
 
                     saveToFile(filePath, dt);
                     //if (c.lastUpdated.Day != lastFileWrite.Day) ftpTransfer(filePath);
-                    if (c.lastUpdated.Minute != lastFileWrite.Minute)// POur tester
+                    if (c.lastUpdated.Hour != lastFileWrite.Hour)// POur tester
                     {
                         ftpTransfer(filePath);
                         lastFileWrite = c.lastUpdated;
@@ -210,7 +210,7 @@ namespace Appli_CocoriCO2
             if (!System.IO.File.Exists(filePath))
             {
                 //Write headers
-                String header = "Time;Sun;Tide;Ambient_O2;Ambient_salinity;Ambient_Turbidity;Ambient_Fluo;Ambient_Temperature;Ambient_pH;";
+                String header = "Time;Sun;Tide;Ambient_O2;Ambient_Conductivity;Ambient_Salinity;Ambient_Turbidity;Ambient_Fluo;Ambient_Temperature;Ambient_pH;";
 
                 for (int i = 0; i < 4; i++)
                 {
@@ -246,6 +246,7 @@ namespace Appli_CocoriCO2
             data += MW.ambiantConditions.tide ? 1 : 0; data += ";";
             data += MW.ambiantConditions.oxy; data += ";";
             data += MW.ambiantConditions.cond; data += ";";
+            data += MW.ambiantConditions.salinite; data += ";";
             data += MW.ambiantConditions.turb; data += ";";
             data += MW.ambiantConditions.fluo; data += ";";
             data += MW.ambiantConditions.temperature; data += ";";
@@ -254,7 +255,8 @@ namespace Appli_CocoriCO2
             writeDataPoint(0, -1, "sun", sun, dt);
             writeDataPoint(0, -1, "tide", tide, dt);
             writeDataPoint(0, -1, "oxy", MW.ambiantConditions.oxy, dt);
-            writeDataPoint(0, -1, "salinite", MW.ambiantConditions.cond, dt);
+            writeDataPoint(0, -1, "conductivity", MW.ambiantConditions.cond, dt);
+            writeDataPoint(0, -1, "salinity", MW.ambiantConditions.salinite, dt);
             writeDataPoint(0, -1, "turb", MW.ambiantConditions.turb, dt);
             writeDataPoint(0, -1, "fluo", MW.ambiantConditions.fluo, dt);
             writeDataPoint(0, -1, "temperature", MW.ambiantConditions.temperature, dt);

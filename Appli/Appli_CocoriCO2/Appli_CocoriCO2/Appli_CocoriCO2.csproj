@@ -232,5 +232,8 @@
   <ItemGroup>
     <Resource Include="background.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="cocologo.jpg" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

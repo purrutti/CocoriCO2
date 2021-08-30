@@ -46,6 +46,11 @@ const byte PIN_VANNE_EXONDATION = 36;
 const byte PIN_LED = 37;
 const byte PIN_CAPTEUR_FLUO = 59;
 
+//PAC DE MEZE
+const byte PIN_V3V_PAC = 8;
+const byte PIN_TEMP_PAC = 65;
+
+
 // Enter a MAC address for your controller below.
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xEA };
@@ -88,6 +93,7 @@ tempo tempoCheckSun;
 tempo tempoCO2ValvePWM_on;
 tempo tempoCO2ValvePWM_off;
 tempo tempoCheckWaterLevelCO2;
+tempo tempoRR;
 
 int sensorIndex = 0;
 
@@ -141,11 +147,13 @@ typedef struct MasterData {
     double sortiePID_EA;
     double sortiePID_EC;
     double pression[2];
+    double tempPAC;
 }MasterData;
 
 MasterData masterData;
 
 Regul regulPression[2];
+Regul regulTemp;
 uint8_t pinV2V_pression[2];
 uint8_t pinCapteur_pression[2];
 
@@ -226,6 +234,7 @@ void setup() {
 
     regulPression[0] = Regul();
     regulPression[1] = Regul();
+    regulTemp = Regul();
 
     load(2);
 
@@ -245,8 +254,10 @@ void setup() {
     tempoCheckSun.interval = 60 * 1000;
     tempoSendParams.interval = 5000;
     tempoCheckWaterLevelCO2.interval = 1000;
+    tempoRR.interval = 30000;
 
     tempoSensorRead.debut = millis() + 2000;
+
 
 
     Ethernet.begin(mac, ip);
@@ -313,6 +324,7 @@ void loop() {
             masterData.pression[i] = readPressure(10, pinCapteur_pression[i], masterData.pression[i]);
             regulationPression(i);
         }
+        regulationTemperature();
     }
 
     checkMesocosmes();
@@ -739,6 +751,48 @@ int regulationpH() {
     }
     digitalWrite(PIN_VANNE_CO2, toggleCO2Valve);
     return dutyCycle;
+}
+
+double readTemp(int lissage, uint8_t pin, double temp) {
+    int ana = analogRead(pin); // 0-1023 value corresponding to 0-10 V corresponding to 0-20 mA
+    //actually, using 330 ohm resistor so 20mA = 6.6V
+    int ana2 = ana * 10 / 6.6;
+    int mA = map(ana2, 0, 1023, 0, 2000); //map to milli amps with 2 extra digits
+    int mbars = map(mA, 400, 2000, 0, 4000); //map to milli amps with 2 extra digits
+    double ancienneTemp = temp;
+    temp = ((double)mbars) / 1000.0; // pressure in bars
+    temp = (lissage * temp + (100.0 - lissage) * ancienneTemp) / 100.0;
+    return temp;
+}
+
+
+int regulationTemperature() {
+    
+    masterData.tempPAC = readTemp(10, PIN_TEMP_PAC, masterData.tempPAC);
+
+    if (elapsed(&tempoRR.debut, tempoRR.interval)) {
+        double diff = lastTemp - masterData.tempPAC;
+        double err = regulTemp.consigne - masterData.tempPAC;
+
+        int adjust = (int)(regulTemp.Kd * diff + regulTemp.Ki * err);
+        if (meanPIDOut_temp > 200) meanPIDOut_temp = 200;
+        if (meanPIDOut_temp < 70) meanPIDOut_temp = 70;
+
+        meanPIDOut_temp += adjust;
+        Serial.print("lastTemp"); Serial.println(lastTemp);
+        Serial.print("Hamilton[3].temp_sensorValue"); Serial.println(masterData.tempPAC);
+        Serial.print("diff"); Serial.println(diff);
+        Serial.print("err"); Serial.println(err);
+        Serial.print("adjust"); Serial.println(adjust);
+        Serial.print("meanPIDOut_temp"); Serial.println(meanPIDOut_temp);
+        lastTemp = masterData.tempPAC;
+    }
+    regulTemp.sortiePID_pc = (int)map(meanPIDOut_temp, 50, 255, 0, 100);
+    if (regulTemp.sortiePID_pc < 0) regulTemp.sortiePID_pc = 0;
+    analogWrite(PIN_V3V_PAC, meanPIDOut_temp);
+
+    return meanPIDOut_temp;   
+
 }
 
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t lenght) {

@@ -35,7 +35,7 @@
             <StatusBarItem Height="24" VerticalAlignment="Bottom" Width="214" HorizontalAlignment="Left">
                 <TextBlock Name="statusLabel" />
             </StatusBarItem>
-            <StatusBarItem Height="24" VerticalAlignment="Bottom" Width="214" HorizontalAlignment="Left">
+            <StatusBarItem Height="24" VerticalAlignment="Bottom" Width="347" HorizontalAlignment="Left">
                 <TextBlock x:Name="statusLabel1" />
             </StatusBarItem>
         </StatusBar>
@@ -139,6 +139,7 @@
             <Label x:Name="label_nextTideLow" Content="Exondation valve: open (low Tide)" Canvas.Left="847" Width="248" Canvas.Top="34"/>
             <Label x:Name="label_nextSunUp" Content="LED state: Day" Canvas.Left="645" Width="202" Canvas.Top="16"/>
             <Label x:Name="label_nextSunDown" Content="LED state: Day" Canvas.Left="645" Width="202" Canvas.Top="34"/>
+            <Image Height="138" Source="cocologo.jpg" Stretch="Fill" Width="169" Canvas.Top="-28" Canvas.Left="-7"/>
         </Canvas>
         <!--<Image Margin="10,25,0,0" Source="CocoriCO2 - P&amp;ID Container.png" Width="1280" Height="720" HorizontalAlignment="Left" VerticalAlignment="Top"/>
         
