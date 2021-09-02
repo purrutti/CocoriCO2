@@ -115,7 +115,8 @@ enum {
     REQ_MASTER_DATA = 5,
     SEND_MASTER_DATA = 6,
     REQ_MASTER_PARAMS = 7,
-    SEND_MASTER_PARAMS = 8
+    SEND_MASTER_PARAMS = 8,
+    SEND_PAC_PARAMS = 9
 };
 
 Condition condition[4];
@@ -148,12 +149,13 @@ typedef struct MasterData {
     double sortiePID_EC;
     double pression[2];
     double tempPAC;
+    double sortiePID_TEC;
 }MasterData;
 
 MasterData masterData;
 
 Regul regulPression[2];
-Regul regulTemp;
+Regul regulTempEC;
 uint8_t pinV2V_pression[2];
 uint8_t pinCapteur_pression[2];
 
@@ -234,7 +236,7 @@ void setup() {
 
     regulPression[0] = Regul();
     regulPression[1] = Regul();
-    regulTemp = Regul();
+    regulTempEC = Regul();
 
     load(2);
 
@@ -324,7 +326,7 @@ void loop() {
             masterData.pression[i] = readPressure(10, pinCapteur_pression[i], masterData.pression[i]);
             regulationPression(i);
         }
-        regulationTemperature();
+        regulationTemperaturePAC();
     }
 
     checkMesocosmes();
@@ -766,15 +768,15 @@ double readTemp(int lissage, uint8_t pin, double temp) {
 }
 
 
-int regulationTemperature() {
+int regulationTemperaturePAC() {
     
     masterData.tempPAC = readTemp(10, PIN_TEMP_PAC, masterData.tempPAC);
 
     if (elapsed(&tempoRR.debut, tempoRR.interval)) {
         double diff = lastTemp - masterData.tempPAC;
-        double err = regulTemp.consigne - masterData.tempPAC;
+        double err = regulTempEC.consigne - masterData.tempPAC;
 
-        int adjust = (int)(regulTemp.Kd * diff + regulTemp.Ki * err);
+        int adjust = (int)(regulTempEC.Kd * diff + regulTempEC.Ki * err);
         if (meanPIDOut_temp > 200) meanPIDOut_temp = 200;
         if (meanPIDOut_temp < 70) meanPIDOut_temp = 70;
 
@@ -787,8 +789,8 @@ int regulationTemperature() {
         Serial.print("meanPIDOut_temp"); Serial.println(meanPIDOut_temp);
         lastTemp = masterData.tempPAC;
     }
-    regulTemp.sortiePID_pc = (int)map(meanPIDOut_temp, 50, 255, 0, 100);
-    if (regulTemp.sortiePID_pc < 0) regulTemp.sortiePID_pc = 0;
+    regulTempEC.sortiePID_pc = (int)map(meanPIDOut_temp, 50, 255, 0, 100);
+    if (regulTempEC.sortiePID_pc < 0) regulTempEC.sortiePID_pc = 0;
     analogWrite(PIN_V3V_PAC, meanPIDOut_temp);
 
     return meanPIDOut_temp;   
@@ -896,6 +898,13 @@ void readJSON(char* json, uint8_t num) {
         SerializeMasterParams(buffer, RTC.getTime());
         webSocket.sendTXT(num, buffer);
         break;
+    case SEND_PAC_PARAMS:
+        deserializePACParams(doc);
+        regulTempEC.save(regulTempEC.startAddress);
+        setPIDparams();
+        SerializeMasterParams(buffer, RTC.getTime());
+        webSocket.sendTXT(num, buffer);
+        break;
     case SEND_DATA:
         condition[condID].load();
         condition[condID].deserializeData(doc);
@@ -968,6 +977,23 @@ void deserializeMasterParams(StaticJsonDocument<512> doc) {
     regulPression[1].consigneForcage = regulPression1[F("consigneForcage")]; // 2.1
     regulPression[1].offset = regulPression1[F("offset")];
 
+
+}
+
+
+void deserializePACParams(StaticJsonDocument<512> doc) {
+
+    JsonObject regulTemp = doc[F("regulTempEC")];
+    regulTempEC.consigne = regulTemp[F("consigne")]; // 24.2
+    regulTempEC.Kp = regulTemp[F("Kp")]; // 2.1
+    regulTempEC.Ki = regulTemp[F("Ki")]; // 2.1
+    regulTempEC.Kd = regulTemp[F("Kd")]; // 2.1
+    const char* regulTemp_autorisationForcage = regulTemp[F("autorisationForcage")];
+    if (strcmp(regulTemp_autorisationForcage, "true") == 0 || strcmp(regulTemp_autorisationForcage, "True") == 0) regulTempEC.autorisationForcage = true;
+    else regulTempEC.autorisationForcage = false;
+    regulTempEC.consigneForcage = regulTemp[F("consigneForcage")]; // 2.1
+    regulTempEC.offset = regulTemp[F("offset")];
+
 }
 
 bool SerializeMasterParams(char* buffer, uint32_t timeString) {
@@ -998,6 +1024,16 @@ bool SerializeMasterParams(char* buffer, uint32_t timeString) {
     else regulp[F("autorisationForcage")] = "false";
     regulp[F("consigneForcage")] = regulPression[1].consigneForcage;
     regulp[F("offset")] = regulPression[1].offset;
+
+    JsonObject regulTemp = doc.createNestedObject(F("regulTempEC"));
+    regulTemp[F("consigne")] = regulTempEC.consigne;
+    regulTemp[F("Kp")] = regulTempEC.Kp;
+    regulTemp[F("Ki")] = regulTempEC.Ki;
+    regulTemp[F("Kd")] = regulTempEC.Kd;
+    if (regulTempEC.autorisationForcage) regulTemp[F("autorisationForcage")] = "true";
+    else regulTemp[F("autorisationForcage")] = "false";
+    regulTemp[F("consigneForcage")] = regulTempEC.consigneForcage;
+    regulTemp[F("offset")] = regulTempEC.offset;
     serializeJson(doc, buffer, 600);
     return true;
 }
@@ -1036,6 +1072,7 @@ bool SerializeMasterData(char* buffer, uint32_t timeString) {
     doc[F("pressionEC")] = masterData.pression[1];
     doc[F("sortiePID_EA")] = regulPression[0].sortiePID_pc;
     doc[F("sortiePID_EC")] = regulPression[1].sortiePID_pc;
+    doc[F("sortiePID_TEC")] = regulTempEC.sortiePID_pc;
 
     doc[F("nextSunUp")] = masterData.nextSunUp;
     doc[F("nextSunDown")] = masterData.nextSunDown;

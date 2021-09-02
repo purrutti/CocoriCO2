@@ -166,7 +166,7 @@ namespace Appli_CocoriCO2
                 Condition c = MW.conditionData.Last<Condition>();
                 if (c.lastUpdated != lastFileWrite)
                 {
-                    DateTime dt = DateTime.Now;
+                    DateTime dt = DateTime.Now.ToUniversalTime();
                     string filePath = Properties.Settings.Default["dataFileBasePath"].ToString()+ "_"+dt.ToString("yyyy-MM-dd") + ".csv";
                     filePath = filePath.Replace('\\', '/');
 
@@ -181,12 +181,12 @@ namespace Appli_CocoriCO2
                 }
             }catch(Exception e)
             {
-
+                MessageBox.Show("Error writing data: " + e.Message, "Error saving data");
             }
             
         }
 
-        private void writeDataPoint(int conditionId, int MesoID, string field, double value, DateTime dt)
+        private async Task writeDataPointAsync(int conditionId, int MesoID, string field, double value, DateTime dt)
         {
             string tag; 
             if (MesoID == -1) tag = "AmbientData";
@@ -198,11 +198,17 @@ namespace Appli_CocoriCO2
               .Field(field, value)
               .Timestamp(dt.ToUniversalTime(), WritePrecision.S);
 
-            using (var writeApi = client.GetWriteApi())
+            try
             {
-                writeApi.WritePoint(bucket, org, point);
+                var writeApi = client.GetWriteApiAsync();
+                await writeApi.WritePointAsync(bucket, org, point);
+            
+            }catch(Exception e)
+            {
+
             }
-        }
+
+}
 
 
         private void saveToFile(string filePath, DateTime dt)
@@ -210,7 +216,7 @@ namespace Appli_CocoriCO2
             if (!System.IO.File.Exists(filePath))
             {
                 //Write headers
-                String header = "Time;Sun;Tide;Ambient_O2;Ambient_Conductivity;Ambient_Salinity;Ambient_Turbidity;Ambient_Fluo;Ambient_Temperature;Ambient_pH;";
+                String header = "Time;Sun;Tide;Ambient_O2;Ambient_Conductivity;Ambient_Salinity;Ambient_Turbidity;Ambient_Fluo;Ambient_Temperature;Ambient_pH;Cold_Water_Pressure;Hot_Water_Pressure;";
 
                 for (int i = 0; i < 4; i++)
                 {
@@ -251,16 +257,21 @@ namespace Appli_CocoriCO2
             data += MW.ambiantConditions.fluo; data += ";";
             data += MW.ambiantConditions.temperature; data += ";";
             data += MW.ambiantConditions.pH; data += ";";
+            data += MW.ambiantConditions.pressionEA; data += ";";
+            data += MW.ambiantConditions.pressionEC; data += ";";
 
-            writeDataPoint(0, -1, "sun", sun, dt);
-            writeDataPoint(0, -1, "tide", tide, dt);
-            writeDataPoint(0, -1, "oxy", MW.ambiantConditions.oxy, dt);
-            writeDataPoint(0, -1, "conductivity", MW.ambiantConditions.cond, dt);
-            writeDataPoint(0, -1, "salinity", MW.ambiantConditions.salinite, dt);
-            writeDataPoint(0, -1, "turb", MW.ambiantConditions.turb, dt);
-            writeDataPoint(0, -1, "fluo", MW.ambiantConditions.fluo, dt);
-            writeDataPoint(0, -1, "temperature", MW.ambiantConditions.temperature, dt);
-            writeDataPoint(0, -1, "pH", MW.ambiantConditions.pH, dt);
+            writeDataPointAsync(0, -1, "sun", sun, dt);
+            writeDataPointAsync(0, -1, "tide", tide, dt);
+            writeDataPointAsync(0, -1, "oxy", MW.ambiantConditions.oxy, dt);
+            writeDataPointAsync(0, -1, "conductivity", MW.ambiantConditions.cond, dt);
+            writeDataPointAsync(0, -1, "salinity", MW.ambiantConditions.salinite, dt);
+            writeDataPointAsync(0, -1, "turb", MW.ambiantConditions.turb, dt);
+            writeDataPointAsync(0, -1, "fluo", MW.ambiantConditions.fluo, dt);
+            writeDataPointAsync(0, -1, "temperature", MW.ambiantConditions.temperature, dt);
+            writeDataPointAsync(0, -1, "pH", MW.ambiantConditions.pH, dt);
+
+            writeDataPointAsync(0, -1, "Cold_Water_Pressure", MW.ambiantConditions.pressionEA, dt);
+            writeDataPointAsync(0, -1, "Hot_Water_Pressure", MW.ambiantConditions.pressionEC, dt);
 
             for (int i = 0; i < 4; i++)
             {
@@ -269,17 +280,17 @@ namespace Appli_CocoriCO2
                 data += MW.conditions[i].regulpH.consigne; data += ";";
                 data += MW.conditions[i].regulpH.sortiePID_pc; data += ";";
 
-                writeDataPoint(i, -1, "temperature", MW.conditions[i].temperature, dt);
-                writeDataPoint(i, -1, "pH", MW.conditions[i].pH, dt);
-                writeDataPoint(i, -1, "regulpH.consigne", MW.conditions[i].regulpH.consigne, dt);
-                writeDataPoint(i, -1, "regulpH.sortiePID", MW.conditions[i].regulpH.sortiePID_pc, dt);
+                writeDataPointAsync(i, -1, "temperature", MW.conditions[i].temperature, dt);
+                writeDataPointAsync(i, -1, "pH", MW.conditions[i].pH, dt);
+                writeDataPointAsync(i, -1, "regulpH.consigne", MW.conditions[i].regulpH.consigne, dt);
+                writeDataPointAsync(i, -1, "regulpH.sortiePID", MW.conditions[i].regulpH.sortiePID_pc, dt);
 
                 if (i > 0)
                 {
                     data += MW.conditions[i].regulTemp.consigne; data += ";";
                     data += MW.conditions[i].regulTemp.sortiePID_pc; data += ";";
-                    writeDataPoint(i, -1, "regulTemp.consigne", MW.conditions[i].regulTemp.consigne, dt);
-                    writeDataPoint(i, -1, "regulTemp.sortiePID", MW.conditions[i].regulTemp.sortiePID_pc, dt);
+                    writeDataPointAsync(i, -1, "regulTemp.consigne", MW.conditions[i].regulTemp.consigne, dt);
+                    writeDataPointAsync(i, -1, "regulTemp.sortiePID", MW.conditions[i].regulTemp.sortiePID_pc, dt);
                 }
 
                 for (int j = 0; j < 3; j++)
@@ -295,12 +306,12 @@ namespace Appli_CocoriCO2
                     data += LL; data += ";";
                     data += LLL; data += ";";
 
-                    writeDataPoint(i, j, "temperature", MW.conditions[i].Meso[j].temperature, dt);
-                    writeDataPoint(i, j, "pH", MW.conditions[i].Meso[j].pH, dt);
-                    writeDataPoint(i, j, "debit", MW.conditions[i].Meso[j].debit, dt);
-                    writeDataPoint(i, j, "LH", LH, dt);
-                    writeDataPoint(i, j, "LL", LL, dt);
-                    writeDataPoint(i, j, "LLL", LLL, dt);
+                    writeDataPointAsync(i, j, "temperature", MW.conditions[i].Meso[j].temperature, dt);
+                    writeDataPointAsync(i, j, "pH", MW.conditions[i].Meso[j].pH, dt);
+                    writeDataPointAsync(i, j, "debit", MW.conditions[i].Meso[j].debit, dt);
+                    writeDataPointAsync(i, j, "LH", LH, dt);
+                    writeDataPointAsync(i, j, "LL", LL, dt);
+                    writeDataPointAsync(i, j, "LLL", LLL, dt);
 
                 }
             }

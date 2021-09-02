@@ -66,6 +66,14 @@ namespace Appli_CocoriCO2
         [JsonProperty(Required = Required.Default)]
         public long nextTideLow { get; set; }
 
+        [JsonProperty(Required = Required.Default)]
+        public double temperatureEC { get; set; }
+
+        [JsonProperty(Required = Required.Default)]
+        public double sortiePID_TEC { get; set; }
+        
+
+
         public long time { get; set; }
         public DateTime lastUpdated { get; set; }
     }
@@ -133,10 +141,13 @@ namespace Appli_CocoriCO2
         public Regul regulPressionEA;
         [JsonProperty("regulPressionEC", Required = Required.Default)]
         public Regul regulPressionEC;
+        [JsonProperty("regulTempEC", Required = Required.Default)]
+        public Regul regulTempEC;
         public MasterParams()
         {
             regulPressionEA = new Regul();
             regulPressionEC = new Regul();
+            regulTempEC = new Regul();
         }
     }
 
@@ -526,6 +537,10 @@ namespace Appli_CocoriCO2
                 label_EC_pressure_setpoint.Content = string.Format(ci, "Pressure setpoint: {0:0.00} bars", masterParams.regulPressionEC.consigne);
                 label_EC_sortiePID.Content = string.Format(ci, "Valve: \t{0:0}%", ambiantConditions.sortiePID_EC);
 
+                label_EC_temperature_measure.Content = string.Format(ci, "Temperature measure: {0:0.00} °C", ambiantConditions.temperatureEC);
+                label_EC_temperature_setpoint.Content = string.Format(ci, "Temperature setpoint: {0:0.00} °C", masterParams.regulTempEC.consigne);
+                label_EC_sortiePID.Content = string.Format(ci, "Valve: \t{0:0}%", ambiantConditions.sortiePID_TEC);
+
                 label_C0_pH_setpoint.Content = string.Format(ci, "pH setpoint: {0:0.00}", conditions[0].regulpH.consigne);
                 label_C0_pH_sortiePID.Content = string.Format(ci, "Valve: \t{0:0}%", conditions[0].regulpH.sortiePID_pc);
 
@@ -655,11 +670,11 @@ namespace Appli_CocoriCO2
             else if (command == 6)//MASTER DATA
             {
                 label_C0_02.Content = string.Format(ci, "O2: \t{0:0.00}%", ambiantConditions.oxy);
-                label_C0_Cond.Content = string.Format(ci, "Cond: \t{0:0.00} uS/cm", ambiantConditions.cond);
+                label_C0_Cond.Content = string.Format(ci, "Cond.: \t{0:0.00} uS/cm", ambiantConditions.cond);
                 label_C0_Salinity.Content = string.Format(ci, "Salinity: \t{0:0.00}", ambiantConditions.salinite);
-                label_C0_Turb.Content = string.Format(ci, "Turb: \t{0:0.00}", ambiantConditions.turb);
-                label_C0_Fluo.Content = string.Format(ci, "Fluo: \t{0:0.00}", ambiantConditions.fluo);
-                label_C0_Temp.Content = string.Format(ci, "Temperature: \t{0:0.00}°C", ambiantConditions.temperature);
+                label_C0_Turb.Content = string.Format(ci, "Turb.: \t{0:0.00}", ambiantConditions.turb);
+                label_C0_Fluo.Content = string.Format(ci, "Fluo.: \t{0:0.00}", ambiantConditions.fluo);
+                label_C0_Temp.Content = string.Format(ci, "Temp.: \t{0:0.00}°C", ambiantConditions.temperature);
                 label_C0_pH.Content = string.Format(ci, "pH: \t{0:0.00}", ambiantConditions.pH);
                 if (ambiantConditions.tide) label_exondation_state.Content = string.Format(ci, "Exondation Valve: OPEN (low tide)");
                 else label_exondation_state.Content = string.Format(ci, "Exondation Valve: CLOSED (high tide)");
