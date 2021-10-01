@@ -252,6 +252,7 @@ namespace Appli_CocoriCO2
                         header += "Condition["; header += i; header += "]_Meso["; header += j; header += "]_LevelLL;"; 
                     }
                 }
+                header += "Cleanup_Mode;";
                 header += "\n";
                 System.IO.File.WriteAllText(filePath, header);
             }
@@ -284,6 +285,8 @@ namespace Appli_CocoriCO2
             writeDataPointAsync(0, -1, "Ambient_pH", MW.ambiantConditions.pH, dt);
             writeDataPointAsync(0, -1, "Cold_Water_Pressure", MW.ambiantConditions.pressionEA, dt);
             writeDataPointAsync(0, -1, "Hot_Water_Pressure", MW.ambiantConditions.pressionEC, dt);
+            double cum = MW.cleanupMode ? 1 : 0;
+            writeDataPointAsync(0, -1, "CleanupMode", cum, dt);
 
             for (int i = 0; i < 4; i++)
             {
@@ -327,6 +330,7 @@ namespace Appli_CocoriCO2
 
                 }
             }
+            data += MW.cleanupMode; data += ";";
             data += "\n";
             System.IO.File.AppendAllText(filePath, data);
         }

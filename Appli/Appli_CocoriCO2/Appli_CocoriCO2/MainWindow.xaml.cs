@@ -272,6 +272,8 @@ namespace Appli_CocoriCO2
 #pragma warning restore CS0414 // Le champ 'MainWindow.autoReco' est assigné, mais sa valeur n'est jamais utilisée
         public int step;
 
+        public bool cleanupMode;
+
         public MasterParams masterParams;
 
         public string[] Labels = new[] { "0" };
@@ -286,7 +288,7 @@ namespace Appli_CocoriCO2
             {
                 InitializeComponent();
                 var cts = new CancellationTokenSource();
-
+                cleanupMode = false;
 
 
 #pragma warning disable CS4014 // Dans la mesure où cet appel n'est pas attendu, l'exécution de la méthode actuelle continue avant la fin de l'appel. Envisagez d'appliquer l'opérateur 'await' au résultat de l'appel.
@@ -353,6 +355,7 @@ namespace Appli_CocoriCO2
 
         private void checkAlarms()
         {
+            if (cleanupMode) return;
             double d;
 
             string cond, meso;
@@ -473,7 +476,7 @@ namespace Appli_CocoriCO2
                     alarms.Add(g);
                     Boolean.TryParse(Properties.Settings.Default["AlarmLevelL"].ToString(), out e);
                     Alarme h = new Alarme();
-                    h.set(cond + meso + "_AlarmLevelL", e, 0, 0, TimeSpan.FromSeconds(300));
+                    h.set(cond + meso + "_AlarmLevelL", e, 0, 0, TimeSpan.FromMinutes(30));
                     alarms.Add(h);
                     Boolean.TryParse(Properties.Settings.Default["AlarmLevelLL"].ToString(), out e);
                     Alarme k = new Alarme();
@@ -614,6 +617,8 @@ namespace Appli_CocoriCO2
         public void DisplayData(int command)
         {
             label_time.Content = DateTime.Now.ToUniversalTime();
+            Cleanup_btn.Header = cleanupMode? "Exit Cleanup Mode" : "Start Cleanup Mode";
+
             if (expSettingsWindow.ShowActivated)
             {
                 int selctedcondID = expSettingsWindow.comboBox_Condition.SelectedIndex;
@@ -1177,6 +1182,25 @@ namespace Appli_CocoriCO2
         {
             alarmsListWindow.Show();
             alarmsListWindow.Focus();
+        }
+
+        private void CleanUp_Click(object sender, RoutedEventArgs e)
+        {
+            if (cleanupMode)
+            {
+                if (MessageBox.Show("Are you sure you want to switch to Cleanup mode?", "Cleanup Mode", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.No)
+                {
+                    cleanupMode = !cleanupMode;
+                }
+            }
+            else
+            {
+                if (MessageBox.Show("Are you sure you want to exit Cleanup mode?", "Cleanup Mode", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.No)
+                {
+                    cleanupMode = !cleanupMode;
+                }
+            }
+            
         }
     }
 }

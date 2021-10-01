@@ -25,6 +25,8 @@
                 <MenuItem Name="Calibrate_btn" Header="_Calibrate sensors" Click="Calibrate_btn_Click"/>
                 <MenuItem Name="ComDebug_btn" Header="Communication Debug" Click="ComDebug_Click" />
                 <MenuItem Name="AlarmsList_btn" Header="Alarms List" Click="AlarmsList_Click" />
+                <Separator HorizontalAlignment="Left" Height="0" Width="208"/>
+                <MenuItem Name="Cleanup_btn" Header="Clean Up" Click="CleanUp_Click" />
             </MenuItem>
             <MenuItem Header="_Data">
                 <MenuItem Name="Monitoring_btn" Header="_Live Monitoring" Click="Monitoring_btn_Click"/>
