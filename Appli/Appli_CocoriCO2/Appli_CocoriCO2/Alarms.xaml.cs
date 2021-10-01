@@ -20,6 +20,7 @@ namespace Appli_CocoriCO2
     /// </summary>
     public partial class Alarms : Window
     {
+        MainWindow MW = ((MainWindow)Application.Current.MainWindow);
 
         public Alarms()
         {
@@ -31,6 +32,7 @@ namespace Appli_CocoriCO2
         private void btn_save_Click(object sender, RoutedEventArgs e)
         {
             Properties.Settings.Default.Save();
+            MW.setAlarms();
             this.Close();
         }
 

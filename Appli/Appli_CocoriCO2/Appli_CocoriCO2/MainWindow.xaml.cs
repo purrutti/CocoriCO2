@@ -183,6 +183,7 @@ namespace Appli_CocoriCO2
 
 
             bool t = false;
+            if (triggered) t = true;
             if (!triggered && upperThan && value >= (threshold + delta))
             {
                 dtTriggered = DateTime.Now;
@@ -430,7 +431,7 @@ namespace Appli_CocoriCO2
             else alarmsListWindow.Sort("raised", alarmsListWindow._lastDirection);
         }
 
-        private unsafe void setAlarms()
+        public unsafe void setAlarms()
         {
             alarms.Clear();
 
@@ -461,11 +462,15 @@ namespace Appli_CocoriCO2
                 Alarme c = new Alarme();
                 c.set(cond + "_AlarmpH", e, 2, d, TimeSpan.FromSeconds(30));
                 alarms.Add(c);
-                Double.TryParse(Properties.Settings.Default["ConditionTempDelta"].ToString(), out d);
-                Boolean.TryParse(Properties.Settings.Default["AlarmTempCondition"].ToString(), out e);
-                Alarme f = new Alarme();
-                f.set(cond + "_AlarmTemperature", e, 2, d, TimeSpan.FromSeconds(30));
-                alarms.Add(f);
+
+                if (i > 0)
+                {
+                    Double.TryParse(Properties.Settings.Default["ConditionTempDelta"].ToString(), out d);
+                    Boolean.TryParse(Properties.Settings.Default["AlarmTempCondition"].ToString(), out e);
+                    Alarme f = new Alarme();
+                    f.set(cond + "_AlarmTemperature", e, 2, d, TimeSpan.FromSeconds(30));
+                    alarms.Add(f);
+                }
 
                 for (int j = 0; j < 3; j++)//mesocosmes
                 {
@@ -476,7 +481,7 @@ namespace Appli_CocoriCO2
                     alarms.Add(g);
                     Boolean.TryParse(Properties.Settings.Default["AlarmLevelL"].ToString(), out e);
                     Alarme h = new Alarme();
-                    h.set(cond + meso + "_AlarmLevelL", e, 0, 0, TimeSpan.FromMinutes(30));
+                    h.set(cond + meso + "_AlarmLevelL", e, 0, 0, TimeSpan.FromMinutes(90));
                     alarms.Add(h);
                     Boolean.TryParse(Properties.Settings.Default["AlarmLevelLL"].ToString(), out e);
                     Alarme k = new Alarme();
@@ -617,7 +622,11 @@ namespace Appli_CocoriCO2
         public void DisplayData(int command)
         {
             label_time.Content = DateTime.Now.ToUniversalTime();
-            Cleanup_btn.Header = cleanupMode? "Exit Cleanup Mode" : "Start Cleanup Mode";
+            Cleanup_btn.Header = cleanupMode ? "Exit Cleanup Mode" : "Start Cleanup Mode";
+
+            statusLabel2.Text = cleanupMode ? "Cleanup Mode Active" : "";
+            statusLabel2.Foreground = cleanupMode ? new SolidColorBrush(Colors.Red) : new SolidColorBrush(Colors.Black);
+
 
             if (expSettingsWindow.ShowActivated)
             {
@@ -1200,7 +1209,7 @@ namespace Appli_CocoriCO2
                     cleanupMode = !cleanupMode;
                 }
             }
-            
+
         }
     }
 }
