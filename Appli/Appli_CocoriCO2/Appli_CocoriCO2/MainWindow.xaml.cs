@@ -1186,16 +1186,16 @@ namespace Appli_CocoriCO2
 
         private void CleanUp_Click(object sender, RoutedEventArgs e)
         {
-            if (cleanupMode)
+            if (!cleanupMode)
             {
-                if (MessageBox.Show("Are you sure you want to switch to Cleanup mode?", "Cleanup Mode", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.No)
+                if (MessageBox.Show("Are you sure you want to switch to Cleanup mode?", "Cleanup Mode", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
                 {
                     cleanupMode = !cleanupMode;
                 }
             }
             else
             {
-                if (MessageBox.Show("Are you sure you want to exit Cleanup mode?", "Cleanup Mode", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.No)
+                if (MessageBox.Show("Are you sure you want to exit Cleanup mode?", "Cleanup Mode", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
                 {
                     cleanupMode = !cleanupMode;
                 }
