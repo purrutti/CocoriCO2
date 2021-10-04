@@ -343,15 +343,32 @@ namespace Appli_CocoriCO2
 
         private void checkAlarme(string libelle, double value, double t)
         {
-            Alarme a = alarms.Single(alarm => alarm.libelle == libelle);
-            a.threshold = t;
-            a.checkAndRaise(value);
+            try
+            {
+                Alarme a = alarms.Single(alarm => alarm.libelle == libelle);
+                a.threshold = t;
+                a.checkAndRaise(value);
+            }
+            catch (Exception e)
+            {
+
+            }
+
         }
 
         private void checkAlarme(string libelle, bool value, bool threshold)
         {
-            Alarme a = alarms.Single(alarm => alarm.libelle == libelle);
-            a.checkAndRaise(value, threshold);
+
+
+            try
+            {
+                Alarme a = alarms.Single(alarm => alarm.libelle == libelle);
+                a.checkAndRaise(value, threshold);
+            }
+            catch (Exception e)
+            {
+
+            }
         }
 
         private void checkAlarms()
@@ -367,7 +384,6 @@ namespace Appli_CocoriCO2
             cond = "C0";
 
             checkAlarme(cond + "_AlarmpH", conditions[0].pH, conditions[0].regulpH.consigne);
-            checkAlarme(cond + "_AlarmTemperature", conditions[0].temperature, conditions[0].regulTemp.consigne);
 
 
 
