@@ -49,10 +49,14 @@ namespace Appli_CocoriCO2
         public double salinite { get; set; }
         [JsonProperty("pH", Required = Required.Default)]
         public double pH { get; set; }
-        [JsonProperty("sortiePID_EA", Required = Required.Default)]
+        [JsonProperty("sPID_EA", Required = Required.Default)]
         public double sortiePID_EA { get; set; }
-        [JsonProperty("sortiePID_EC", Required = Required.Default)]
+        [JsonProperty("sPID_EC", Required = Required.Default)]
         public double sortiePID_EC { get; set; }
+        [JsonProperty("sPID_TEC", Required = Required.Default)]
+        public double sortiePID_TEC { get; set; }
+        [JsonProperty("tempPAC", Required = Required.Default)]
+        public double tempPAC { get; set; }
         [JsonProperty("pressionEA", Required = Required.Default)]
         public double pressionEA { get; set; }
         [JsonProperty("pressionEC", Required = Required.Default)]
@@ -551,7 +555,7 @@ namespace Appli_CocoriCO2
                 case WebSocketState.Closed:
                     Connect_btn.Header = "Connect";
                     Connect_btn.IsEnabled = true;
-                    statusLabel.Text = "Connection Status: Disconnected";
+                    statusLabel.Text = "Connection Status: Disconnected (Closed)";
                     ws = new ClientWebSocket();
                     Connect();
                     break;
@@ -560,13 +564,13 @@ namespace Appli_CocoriCO2
                     ws = new ClientWebSocket();
                     Connect_btn.Header = "Connect";
                     Connect_btn.IsEnabled = true;
-                    statusLabel.Text = "Connection Status: Disconnected";
+                    statusLabel.Text = "Connection Status: Disconnected (Aborted)";
                     Connect();
                     break;
                 case WebSocketState.None:
                     Connect_btn.Header = "Connect";
                     Connect_btn.IsEnabled = true;
-                    statusLabel.Text = "Connection Status: Disconnected";
+                    statusLabel.Text = "Connection Status: Disconnected (None)";
                     Connect();
                     break;
                 case WebSocketState.Connecting:
@@ -664,6 +668,12 @@ namespace Appli_CocoriCO2
                     expSettingsWindow.tb_pH_PIDoutput.Text = ambiantConditions.sortiePID_EA.ToString(ci);
                     expSettingsWindow.tb_Temp_measure.Text = ambiantConditions.pressionEC.ToString(ci);
                     expSettingsWindow.tb_Temp_PIDoutput.Text = ambiantConditions.sortiePID_EC.ToString(ci);
+                }
+                else
+                if (selctedcondID == 5)
+                {
+                    expSettingsWindow.tb_pH_measure.Text = ambiantConditions.tempPAC.ToString(ci);
+                    expSettingsWindow.tb_pH_PIDoutput.Text = ambiantConditions.sortiePID_TEC.ToString(ci);
                 }
                 else
                 {
@@ -841,6 +851,8 @@ namespace Appli_CocoriCO2
                     else label_C3M3_Alarm.Content = !conditions[3].Meso[2].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
                 }
 
+                label_EC_temperature_setpoint.Content = string.Format(ci, "Temperature setpoint: \t{0:0.00}°C", pacParams.regulTempEC.consigne);
+
                 label_EA_pressure_measure.Content = string.Format(ci, "Pressure measure: {0:0.00} bars", ambiantConditions.pressionEA);
                 label_EA_pressure_setpoint.Content = string.Format(ci, "Pressure setpoint: {0:0.00} bars", masterParams.regulPressionEA.consigne);
                 label_EA_sortiePID.Content = string.Format(ci, "Valve: \t{0:0}%", ambiantConditions.sortiePID_EA);
@@ -982,10 +994,11 @@ namespace Appli_CocoriCO2
                 label_C0_Fluo.Content = string.Format(ci, "Fluo.: \t{0:0.00} µg/L", ambiantConditions.fluo);
                 label_C0_Temp.Content = string.Format(ci, "Temp.: \t{0:0.00}°C", ambiantConditions.temperature);
                 label_C0_pH.Content = string.Format(ci, "pH: \t{0:0.00}", ambiantConditions.pH);
-                if (ambiantConditions.tide) label_exondation_state.Content = string.Format(ci, "Exondation Valve: OPEN (low tide)");
-                else label_exondation_state.Content = string.Format(ci, "Exondation Valve: CLOSED (high tide)");
                 if (ambiantConditions.sun) label_ledstate.Content = string.Format(ci, "LED state: ON (Day)");
                 else label_ledstate.Content = string.Format(ci, "LED state: OFF (Night)");
+
+                label_EC_temperature_measure.Content = string.Format(ci, "Temperature measure: \t{0:0.00}°C", ambiantConditions.tempPAC);
+                label_TEC_sortiePID.Content = string.Format(ci, "Valve: \t{0:0}%", ambiantConditions.sortiePID_TEC);
 
                 DateTime dt = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(ambiantConditions.nextSunDown).ToUniversalTime();
                 label_nextSunDown.Content = "Sunset time: " + dt.ToString();
