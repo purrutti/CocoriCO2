@@ -7,48 +7,51 @@
 #include <PID_v1.h>
 #include <EEPROMex.h>
 #include <ArduinoJson.h>
-#include "C:\Users\pierr\Dropbox\Pierre\CNRS\repos\CocoriCO2\Libs/Mesocosmes.h"
-#include "C:\Users\pierr\Dropbox\Pierre\CNRS\repos\CocoriCO2\Libs/Hamilton.h"
-#include "C:\Users\pierr\Dropbox\Pierre\CNRS\repos\CocoriCO2\Libs/Condition.h"
-#include "C:\Users\pierr\Dropbox\Pierre\CNRS\repos\CocoriCO2\Libs/ModbusSensor.h"
+#include "C:\Users\pierr\OneDrive\Bureau\CRCM\CocoriCO2\Libs/Mesocosmes.h"
+#include "C:\Users\pierr\OneDrive\Bureau\CRCM\CocoriCO2\Libs/Hamilton.h"
+#include "C:\Users\pierr\OneDrive\Bureau\CRCM\CocoriCO2\Libs/Condition.h"
+#include "C:\Users\pierr\OneDrive\Bureau\CRCM\CocoriCO2\Libs/ModbusSensor.h"
 #include <WebSocketsServer.h>
-#include <C:\Users\pierr\OneDrive\Documents\Arduino\libraries\Mduino\Ethernet\src\Ethernet.h>
+#include <Ethernet.h>
 
 #include <SD.h>
 
 #include <RTC.h>
 
+
+
 //#include <IndustrialShields.h>
 //#include <RS485.h>
 
+
 //Pinout for mduino 42
 
-const byte PIN_DEBITMETRE_0 = 56;
-const byte PIN_DEBITMETRE_1 = 57;
-const byte PIN_DEBITMETRE_2 = 58;
-const byte PIN_NIVEAU_L_0 = 2;
-const byte PIN_NIVEAU_LL_0 = 24;
-const byte PIN_NIVEAU_L_1 = 26;
-const byte PIN_NIVEAU_LL_1 = 23;
-const byte PIN_NIVEAU_L_2 = 25;
-const byte PIN_NIVEAU_LL_2 = 22;
+#define PIN_DEBITMETRE_0  56
+#define PIN_DEBITMETRE_1  57
+#define PIN_DEBITMETRE_2  58
+#define PIN_NIVEAU_L_0  2
+#define PIN_NIVEAU_LL_0  24
+#define PIN_NIVEAU_L_1  26
+#define PIN_NIVEAU_LL_1  23
+#define PIN_NIVEAU_L_2  25
+#define PIN_NIVEAU_LL_2  22
 
-const byte PIN_PRESSION_EC = 55;
-const byte PIN_PRESSION_EA = 54;
-const byte PIN_NIVEAU_H_CO2 = 3;
+#define PIN_PRESSION_EC  65
+#define PIN_PRESSION_EA  64
+#define PIN_NIVEAU_H_CO2  18
 
-const byte PIN_VANNE_EAU_CO2 = 39;
-const byte PIN_V2V_EA = 4;
-const byte PIN_V2V_EC = 5;
+#define PIN_VANNE_EAU_CO2  41
+#define PIN_V2V_EA  4
+#define PIN_V2V_EC  5
 
-const byte PIN_VANNE_CO2 = 38;
-const byte PIN_VANNE_EXONDATION = 36;
-const byte PIN_LED = 37;
-const byte PIN_CAPTEUR_FLUO = 59;
+#define PIN_VANNE_CO2  38
+#define PIN_VANNE_EXONDATION  36
+#define PIN_LED  37
+#define PIN_CAPTEUR_FLUO  59
 
 //PAC DE MEZE
-const byte PIN_V3V_PAC = 8;
-const byte PIN_TEMP_PAC = 65;
+#define PIN_V3V_PAC  6
+#define PIN_TEMP_PAC  63
 
 
 // Enter a MAC address for your controller below.
@@ -72,8 +75,8 @@ WebSocketsServer webSocket = WebSocketsServer(81);
 Modbus master(0, 3, 46); // MDUINO
 
 //ModbusSensorHamilton Hamilton[5];// indexes O to 2 are mesocosms, index 4 is input measure tank, index 3 is acidification tank
-ModbusSensorHamilton Hamilton;
-ModbusSensor mbSensor(10, &master);
+//ModbusSensorHamilton Hamilton;
+ModbusSensor mbSensor(10);
 /*ModbusSensor Podoc(10, &master);
 ModbusSensor NTU(40, &master);
 ModbusSensor PC4E(30, &master);*/
@@ -97,12 +100,11 @@ tempo tempoRR;
 
 int sensorIndex = 0;
 
-bool pH = true;
+bool pHSensor = true;
 
 bool toggleCO2Valve = false;
 //bool remplissageCO2 = false;
 
-char buffer[600];
 uint8_t AppSocketId = -1;
 
 
@@ -116,7 +118,8 @@ enum {
     SEND_MASTER_DATA = 6,
     REQ_MASTER_PARAMS = 7,
     SEND_MASTER_PARAMS = 8,
-    SEND_PAC_PARAMS = 9
+    SEND_PAC_PARAMS = 9,
+    REQ_PAC_PARAMS = 10
 };
 
 Condition condition[4];
@@ -141,10 +144,7 @@ typedef struct MasterData {
     double salinite;
     uint32_t nextSunUp;
     uint32_t nextSunDown;
-    uint32_t nextTideHigh;
-    uint32_t nextTideLow;
     bool currentSun;
-    bool currentTide;
     double sortiePID_EA;
     double sortiePID_EC;
     double pression[2];
@@ -177,10 +177,26 @@ void load(int startAddress) {
         regulPression[i].startAddress = address;
         address = regulPression[i].load(address);
     }
+    regulTempEC.startAddress = address;
+    address = regulTempEC.load(address);
 }
 
 int currentDay;
 int currentMin;
+
+extern unsigned int __bss_end;
+extern unsigned int __heap_start;
+extern void* __brkval;
+
+uint16_t getFreeSram() {
+    uint8_t newVariable;
+    // heap is empty, use bss as start memory address
+    if ((uint16_t)__brkval == 0)
+        return (((uint16_t)&newVariable) - ((uint16_t)&__bss_end));
+    // use heap end as the start of the memory address
+    else
+        return (((uint16_t)&newVariable) - ((uint16_t)__brkval));
+};
 
 void setup() {
     pinV2V_pression[0] = PIN_V2V_EA;
@@ -220,13 +236,13 @@ void setup() {
 
     Serial.begin(115200);
     master.begin(9600); // baud-rate at 19200
-    master.setTimeOut(2000); // if there is no answer in 5000 ms, roll over
+    master.setTimeOut(1000); // if there is no answer in 5000 ms, roll over
 
     /*
     Condition 0 = Ambiant temperature
     */
     //for (uint8_t i = 0; i < 5; i++) Hamilton[i].setSensor(i + 1, &master);
-    Hamilton.setSensor(0, &master);
+
     condition[0].Meso[0] = Mesocosme(PIN_DEBITMETRE_0, 0, PIN_NIVEAU_L_0, PIN_NIVEAU_LL_0, 0);
     condition[0].Meso[1] = Mesocosme(PIN_DEBITMETRE_1, 0, PIN_NIVEAU_L_1, PIN_NIVEAU_LL_1, 1);
     condition[0].Meso[2] = Mesocosme(PIN_DEBITMETRE_2, 0, PIN_NIVEAU_L_2, PIN_NIVEAU_LL_2, 2);
@@ -248,7 +264,7 @@ void setup() {
         //condition[i].regulTemp.consigne = 0;
     }
 
-    tempoSensorRead.interval = 200;
+    tempoSensorRead.interval = 100;
     tempoRegul.interval = 100;
     tempoCheckMeso.interval = 200;
     tempoSendValues.interval = 5000;
@@ -264,7 +280,7 @@ void setup() {
 
     Ethernet.begin(mac, ip);
 
-    Serial.println(F("START+"));
+    Serial.println(F("START"));
     int i = 0;
     while (i < 2) {
         if (Ethernet.hardwareStatus() != EthernetNoHardware) {
@@ -274,13 +290,11 @@ void setup() {
         delay(500); // do nothing, no point running without Ethernet hardware
         i++;
     }
-    Serial.println(F("+++"));
 
     if (Ethernet.hardwareStatus() != EthernetNoHardware) {
         webSocket.begin();
         webSocket.onEvent(webSocketEvent);
     }
-    Serial.println(F("end websocket"));
 
 
 
@@ -295,28 +309,24 @@ void setup() {
     Serial.println(F("End RTC write"));*/
 
     RTC.read();
-    Serial.println(F("End RTC read"));
     currentDay = RTC.getMonthDay();
     currentMin = RTC.getMinute();
 
-    Serial.println(F("End RTC"));
     setPIDparams();
-    Serial.println(F("End Params"));
     Serial.print(SD.begin(53));
-    Serial.println(F("End SD"));
     updateSunTimes();
-    updateTideTimes();
     Serial.println(F("End SETUP"));
 
-    checkTide();
     checkSun();
+
+    Serial.print("Free RAM : "); Serial.println(getFreeSram());
 
 }
 
 void loop() {
     RTC.read();
 
-    readMBSensors();
+    //readMBSensors();
 
     webSocket.loop();
 
@@ -335,7 +345,6 @@ void loop() {
 
     if (currentMin != RTC.getMinute()) {
         currentMin = RTC.getMinute();
-        checkTide();
         checkSun();
         if (currentDay != RTC.getMonthDay()) {
             currentDay = RTC.getMonthDay();
@@ -343,7 +352,7 @@ void loop() {
         }
     }
 
-    updateParams();
+    //updateParams();
     condition[0].condID = 0;
 }
 
@@ -366,7 +375,7 @@ bool checkWaterLevelCO2() {
         // if (digitalRead(PIN_NIVEAU_H_CO2)) remplissageCO2 = true;
          //else remplissageCO2 = false;
         digitalWrite(PIN_VANNE_EAU_CO2, digitalRead(PIN_NIVEAU_H_CO2));
-        // digitalWrite(PIN_VANNE_EAU_CO2, true);
+        //digitalWrite(PIN_VANNE_EAU_CO2, true);
         return digitalRead(PIN_NIVEAU_H_CO2);
     }
 }
@@ -374,9 +383,9 @@ bool checkWaterLevelCO2() {
 
 float readPressure(int lissage, uint8_t pin, double pression) {
     int ana = analogRead(pin); // 0-1023 value corresponding to 0-10 V corresponding to 0-20 mA
-    //actually, using 330 ohm resistor so 20mA = 6.6V
-    int ana2 = ana * 10 / 6.6;
-    int mA = map(ana2, 0, 1023, 0, 2000); //map to milli amps with 2 extra digits
+    //if using 330 ohm resistor so 20mA = 6.6V
+    //int ana2 = ana * 10 / 6.6;
+    int mA = map(ana, 0, 1023, 0, 2000); //map to milli amps with 2 extra digits
     int mbars = map(mA, 400, 2000, 0, 4000); //map to milli amps with 2 extra digits
     double anciennePression = pression;
     pression = ((double)mbars) / 1000.0; // pressure in bars
@@ -415,11 +424,6 @@ void checkMesocosmes() {
 bool checkSun() {
     RTC.read();
     uint32_t currentTime = RTC.getTime();
-
-    Serial.print("current Time :"); Serial.println(currentTime);
-    Serial.print("masterData.nextSunUp:"); Serial.println(masterData.nextSunUp);
-    Serial.print("masterData.nextSunDown :"); Serial.println(masterData.nextSunDown);
-
     bool sun = false;
 
     if (currentTime < masterData.nextSunDown) {
@@ -441,54 +445,16 @@ bool checkSun() {
         }
     }
 
+
     if (sun != masterData.currentSun) {
         updateSunTimes();
     }
     masterData.currentSun = sun;
 
-    Serial.print("current Sun :"); Serial.println(masterData.currentSun);
     digitalWrite(PIN_LED, masterData.currentSun);
     return masterData.currentSun;
 }
 
-bool checkTide() {
-    RTC.read();
-    uint32_t currentTime = RTC.getTime();
-    Serial.print("current Time :"); Serial.println(currentTime);
-    Serial.print("masterData.nextTideHigh:"); Serial.println(masterData.nextTideHigh);
-    Serial.print("masterData.nextTideLow :"); Serial.println(masterData.nextTideLow);
-
-    bool tide = false;
-
-    if (currentTime < masterData.nextTideLow) {
-        if (currentTime < masterData.nextTideHigh) {
-            if (masterData.nextTideLow < masterData.nextTideHigh) tide = true;
-            else tide = false;
-        }
-        else {
-            tide = true;
-        }
-    }
-    else {
-        if (currentTime > masterData.nextTideHigh) {
-            if (masterData.nextTideLow < masterData.nextTideHigh) tide = true;
-            else tide = false;
-        }
-        else {
-            tide = false;
-        }
-    }
-    tide = !tide;//because tide UP = valve closed
-
-    if (tide != masterData.currentTide) {
-        updateTideTimes();
-    }
-    masterData.currentTide = tide;
-
-    Serial.print("current tide:"); Serial.println(masterData.currentTide);
-    digitalWrite(PIN_VANNE_EXONDATION, masterData.currentTide);
-    return masterData.currentTide;
-}
 
 void updateSunTimes() {
     const char* path = "param/sun.csv";
@@ -518,71 +484,6 @@ void updateSunTimes() {
                 masterData.nextSunUp = dateToTimestamp(currentYear, month, day, startHour, startMinute);
                 masterData.nextSunDown = dateToTimestamp(currentYear, month, day, endHour, endMinute);
 
-                Serial.print("masterData.nextSunUp:"); Serial.println(masterData.nextSunUp);
-                Serial.print("masterData.nextSunDown :"); Serial.println(masterData.nextSunDown);
-
-                /*Serial.print("day:"); Serial.println(day);
-                Serial.print("month:"); Serial.println(month);
-                Serial.print("year:"); Serial.println(year);
-                Serial.print("start:"); Serial.println(start);
-                Serial.print("end:"); Serial.println(end);
-                Serial.print("startHour:"); Serial.println(startHour);
-                Serial.print("start Minute:"); Serial.println(startMinute);
-                Serial.print("end Hour:"); Serial.println(endHour);
-                Serial.print("end Minute:"); Serial.println(endMinute);*/
-                break;
-            }
-
-            line = dataFile.readStringUntil('\n');
-        }
-        dataFile.close();
-
-    }
-}
-
-void updateTideTimes() {
-    //masterData.currentTide = true;
-    //masterData.nextTideHigh = RTC.getTime() + 1000;
-    //masterData.nextTideLow = RTC.getTime() + 2000;
-    const char* path = "param/tide.csv";
-    File dataFile = SD.open(path, FILE_READ);
-    uint8_t currentDay = RTC.getMonthDay();
-    uint8_t currentMonth = RTC.getMonth();
-    uint16_t currentYear = RTC.getYear();
-
-
-    if (dataFile) {
-        String line = dataFile.readStringUntil('\n');
-        unsigned long timeStamp = 0;
-        while (line.length() > 0) {
-            //Serial.print("line:"); Serial.println(line);
-            String date = line.substring(0, line.indexOf(';'));
-            int day = date.substring(0, line.indexOf('/')).toInt();
-            int month = date.substring(line.indexOf('/') + 1, line.lastIndexOf('/')).toInt();
-            String time = line.substring(line.indexOf(';') + 1, line.lastIndexOf(';'));
-            int hour = time.substring(0, time.indexOf(':')).toInt();
-            int minute = time.substring(time.indexOf(':') + 1).toInt();
-            timeStamp = dateToTimestamp(currentYear, month, day, hour, minute);
-
-            if (timeStamp > RTC.getTime()) {
-                double height = line.substring(line.lastIndexOf(';') + 1).toDouble();
-                if (height < 5) masterData.nextTideLow = timeStamp;
-                else masterData.nextTideHigh = timeStamp;
-                line = dataFile.readStringUntil('\n');
-
-                date = line.substring(0, line.indexOf(';'));
-                day = date.substring(0, line.indexOf('/')).toInt();
-                month = date.substring(line.indexOf('/') + 1, line.lastIndexOf('/')).toInt();
-                time = line.substring(line.indexOf(';') + 1, line.lastIndexOf(';'));
-                hour = time.substring(0, time.indexOf(':')).toInt();
-                minute = time.substring(time.indexOf(':') + 1).toInt();
-                timeStamp = dateToTimestamp(currentYear, month, day, hour, minute);
-                height = line.substring(line.lastIndexOf(';') + 1).toDouble();
-                if (height < 5) masterData.nextTideLow = timeStamp;
-                else masterData.nextTideHigh = timeStamp;
-
-                Serial.print("masterData.nextTideLow:"); Serial.println(masterData.nextTideLow);
-                Serial.print("masterData.nextTideHigh :"); Serial.println(masterData.nextTideHigh);
 
                 break;
             }
@@ -593,6 +494,7 @@ void updateTideTimes() {
 
     }
 }
+
 
 void printToSD() {
     if (elapsed(&tempowriteSD.debut, tempowriteSD.interval)) {
@@ -640,7 +542,7 @@ void printToSD() {
         // if the file is available, write to it:
         if (dataFile) {
             char sep = ';';
-            dataFile.print(RTC.getTime()); dataFile.print(sep); dataFile.print(masterData.currentSun); dataFile.print(sep); dataFile.print(masterData.currentTide); dataFile.print(sep); dataFile.print(masterData.oxy); dataFile.print(sep); dataFile.print(masterData.cond); dataFile.print(sep); dataFile.print(masterData.turb); dataFile.print(sep); dataFile.print(masterData.fluo); dataFile.print(sep); dataFile.print(masterData.temperature); dataFile.print(sep); dataFile.print(masterData.pH); dataFile.print(sep);
+            dataFile.print(RTC.getTime()); dataFile.print(sep); dataFile.print(masterData.currentSun); dataFile.print(sep); dataFile.print("0"); dataFile.print(sep); dataFile.print(masterData.oxy); dataFile.print(sep); dataFile.print(masterData.cond); dataFile.print(sep); dataFile.print(masterData.turb); dataFile.print(sep); dataFile.print(masterData.fluo); dataFile.print(sep); dataFile.print(masterData.temperature); dataFile.print(sep); dataFile.print(masterData.pH); dataFile.print(sep);
 
             for (int i = 0; i < 4; i++) {
                 dataFile.print(condition[i].mesureTemperature); dataFile.print(sep);
@@ -741,14 +643,12 @@ int regulationpH() {
         if (elapsed(&tempoCO2ValvePWM_on.debut, onTime)) {
             tempoCO2ValvePWM_off.debut = millis();
             toggleCO2Valve = false;
-            Serial.println("TOGGLE OFF");
         }
     }
     else {
         if (elapsed(&tempoCO2ValvePWM_off.debut, offTime)) {
             tempoCO2ValvePWM_on.debut = millis();
             toggleCO2Valve = true;
-            Serial.println("TOGGLE ON");
         }
     }
     digitalWrite(PIN_VANNE_CO2, toggleCO2Valve);
@@ -769,7 +669,7 @@ double readTemp(int lissage, uint8_t pin, double temp) {
 
 
 int regulationTemperaturePAC() {
-    
+
     masterData.tempPAC = readTemp(10, PIN_TEMP_PAC, masterData.tempPAC);
 
     if (elapsed(&tempoRR.debut, tempoRR.interval)) {
@@ -781,19 +681,19 @@ int regulationTemperaturePAC() {
         if (meanPIDOut_temp < 70) meanPIDOut_temp = 70;
 
         meanPIDOut_temp += adjust;
-        Serial.print("lastTemp"); Serial.println(lastTemp);
-        Serial.print("Hamilton[3].temp_sensorValue"); Serial.println(masterData.tempPAC);
-        Serial.print("diff"); Serial.println(diff);
-        Serial.print("err"); Serial.println(err);
-        Serial.print("adjust"); Serial.println(adjust);
-        Serial.print("meanPIDOut_temp"); Serial.println(meanPIDOut_temp);
+        /* Serial.print("lastTemp"); Serial.println(lastTemp);
+         Serial.print("Hamilton[3].temp_sensorValue"); Serial.println(masterData.tempPAC);
+         Serial.print("diff"); Serial.println(diff);
+         Serial.print("err"); Serial.println(err);
+         Serial.print("adjust"); Serial.println(adjust);
+         Serial.print("meanPIDOut_temp"); Serial.println(meanPIDOut_temp);*/
         lastTemp = masterData.tempPAC;
     }
     regulTempEC.sortiePID_pc = (int)map(meanPIDOut_temp, 50, 255, 0, 100);
     if (regulTempEC.sortiePID_pc < 0) regulTempEC.sortiePID_pc = 0;
     analogWrite(PIN_V3V_PAC, meanPIDOut_temp);
 
-    return meanPIDOut_temp;   
+    return meanPIDOut_temp;
 
 }
 
@@ -810,17 +710,8 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t lenght)
         webSocket.sendTXT(num, F("Connected"));
         break;
     case WStype_TEXT:
-
-        //Serial.print(num); Serial.print(F(" Payload:")); Serial.println((char*)payload);
-        Serial.print("Payload received from "); Serial.println(num); Serial.println(": "); Serial.println((char*)payload);
         readJSON((char*)payload, num);
 
-
-        // send message to client
-        // webSocket.sendTXT(num, "message here");
-
-        // send data to all connected clients
-        // webSocket.broadcastTXT("message here");
         break;
     case WStype_ERROR:
         Serial.print(num); Serial.println(F(" ERROR!"));
@@ -829,21 +720,35 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t lenght)
 }
 
 void readJSON(char* json, uint8_t num) {
-    StaticJsonDocument<512> doc;
-    deserializeJson(doc, json);
+    StaticJsonDocument<jsonDocSize_data> doc;
+    char buffer[bufferSize];
+    //deserializeJson(doc, json);
+   
+    String str = String(json);
 
-    uint8_t command = doc["command"];
-    uint8_t condID = doc["condID"];
-    uint8_t senderID = doc["senderID"];
+    DeserializationError error = deserializeJson(doc, json);
 
+    if (error) {
+        Serial.print(F("deserializeJson() failed: "));
+        Serial.println(error.f_str());
+        //return;
+    }
 
-    if (senderID == 4) {
-        uint32_t time = doc["time"];
-        if (time > 0) {
-            RTC.setTime(time);
+    uint8_t command = doc[cmd];
+    uint8_t condID = doc[cID];
+    uint8_t senderID = doc[sID];
+
+    uint32_t heure; 
+   if (senderID == 4) {
+       Serial.print("payload:"); Serial.println(str);
+        heure = doc[time];
+        if (heure > 0) {
+            RTC.setTime(heure);
             RTC.write();
         }
     }
+    RTC.read();
+    heure = RTC.getTime();
 
     switch (command) {
     case REQ_PARAMS:
@@ -852,17 +757,19 @@ void readJSON(char* json, uint8_t num) {
             condition[condID].regulpH.consigne = condition[condID].regulpH.offset + masterData.pH;
             condition[condID].regulTemp.consigne = condition[condID].regulTemp.offset + masterData.temperature;
         }
-        condition[condID].serializeParams(buffer, RTC.getTime(), 0);
-        //Serial.print("SEND PARAMS:"); Serial.println(buffer);
+        condition[condID].serializeParams(heure, 0, buffer);
         webSocket.sendTXT(num, buffer);
+        Serial.print("RESPONSE:"); Serial.println(buffer);
         break;
     case REQ_DATA:
         if (condID > 0) {
             condition[condID].regulpH.consigne = condition[condID].regulpH.offset + masterData.pH;
             condition[condID].regulTemp.consigne = condition[condID].regulTemp.offset + masterData.temperature;
         }
-        condition[condID].serializeData(buffer, RTC.getTime(), 0);
+
+        condition[condID].serializeData(heure, 0, buffer);
         webSocket.sendTXT(num, buffer);
+        Serial.print("RESPONSE:"); Serial.println(buffer);
         break;
     case SEND_PARAMS:
         condition[condID].load();
@@ -877,7 +784,7 @@ void readJSON(char* json, uint8_t num) {
 
         //if (condID > 0) webSocket.broadcastTXT(buffer); //On forward le parametrage
         if (senderID == 4) {
-            condition[condID].serializeParams(buffer, RTC.getTime(), 0);
+            condition[condID].serializeParams(heure, 0, buffer);
             webSocket.sendTXT(num, buffer);
 
         }
@@ -886,8 +793,10 @@ void readJSON(char* json, uint8_t num) {
 
         break;
     case REQ_MASTER_PARAMS:
-        SerializeMasterParams(buffer, RTC.getTime());
+        Serial.println(F("REQ MASTER PARAMS"));
+        SerializeMasterParams(heure, buffer);
         webSocket.sendTXT(num, buffer);
+        if (senderID == 4) { Serial.print(F("RESPONSE:")); Serial.println(buffer); }
         break;
     case SEND_MASTER_PARAMS:
         deserializeMasterParams(doc);
@@ -895,15 +804,22 @@ void readJSON(char* json, uint8_t num) {
             regulPression[i].save(regulPression[i].startAddress);
         }
         setPIDparams();
-        SerializeMasterParams(buffer, RTC.getTime());
+        SerializeMasterParams(heure, buffer);
         webSocket.sendTXT(num, buffer);
+        if (senderID == 4) { Serial.print(F("RESPONSE:")); Serial.println(buffer); }
         break;
     case SEND_PAC_PARAMS:
         deserializePACParams(doc);
         regulTempEC.save(regulTempEC.startAddress);
         setPIDparams();
-        SerializeMasterParams(buffer, RTC.getTime());
+        SerializePACParams(heure, buffer);
         webSocket.sendTXT(num, buffer);
+        if (senderID == 4) { Serial.print(F("RESPONSE:")); Serial.println(buffer); }
+        break;
+    case REQ_PAC_PARAMS:
+        SerializePACParams(heure, buffer);
+        webSocket.sendTXT(num, buffer);
+        if (senderID == 4) { Serial.print(F("RESPONSE:")); Serial.println(buffer); }
         break;
     case SEND_DATA:
         condition[condID].load();
@@ -912,13 +828,14 @@ void readJSON(char* json, uint8_t num) {
             condition[condID].regulpH.consigne = condition[condID].regulpH.offset + masterData.pH;
             condition[condID].regulTemp.consigne = condition[condID].regulTemp.offset + masterData.temperature;
         }
-        condition[condID].serializeParams(buffer, RTC.getTime(), 0);
+        condition[condID].serializeParams(heure, 0, buffer);
         webSocket.sendTXT(num, buffer);
         //webSocket.sendTXT(num, json);
         break;
     case REQ_MASTER_DATA:
-        SerializeMasterData(buffer, RTC.getTime());
+        SerializeMasterData(heure, buffer);
         webSocket.sendTXT(num, buffer);
+        if (senderID == 4) { Serial.print(F("RESPONSE:")); Serial.println(buffer); }
         break;
 
     case CALIBRATE_SENSOR:
@@ -937,8 +854,8 @@ void readJSON(char* json, uint8_t num) {
         }
         else {
             //webSocket.broadcastTXT(json);
-            String msg = "{command:4,condID:";
-            msg += String(condID) + ",senderID:4,";
+            String msg = "{cmd:4,cID:";
+            msg += String(condID) + ",sID:4,";
             msg += "sensorID:" + String(calib.sensorID);
             msg += ",calibParam:" + String(calib.calibParam);
             msg += ",value:" + String(calib.value);
@@ -953,88 +870,107 @@ void readJSON(char* json, uint8_t num) {
     }
 }
 
-void deserializeMasterParams(StaticJsonDocument<512> doc) {
+void deserializeMasterParams(StaticJsonDocument<300> doc) {
 
-    JsonObject regulPression0 = doc[F("regulPressionEA")];
-    regulPression[0].consigne = regulPression0[F("consigne")]; // 24.2
+    JsonObject regulPression0 = doc[F("rPressionEA")];
+    regulPression[0].consigne = regulPression0[F("cons")]; // 24.2
     regulPression[0].Kp = regulPression0[F("Kp")]; // 2.1
     regulPression[0].Ki = regulPression0[F("Ki")]; // 2.1
     regulPression[0].Kd = regulPression0[F("Kd")]; // 2.1
-    const char* regul0_autorisationForcage = regulPression0[F("autorisationForcage")];
+    const char* regul0_autorisationForcage = regulPression0[F("aForcage")];
     if (strcmp(regul0_autorisationForcage, "true") == 0 || strcmp(regul0_autorisationForcage, "True") == 0) regulPression[0].autorisationForcage = true;
     else regulPression[0].autorisationForcage = false;
-    regulPression[0].consigneForcage = regulPression0[F("consigneForcage")]; // 2.1
+    regulPression[0].consigneForcage = regulPression0[F("consForcage")]; // 2.1
     regulPression[0].offset = regulPression0[F("offset")];
 
-    JsonObject regulPression1 = doc[F("regulPressionEC")];
-    regulPression[1].consigne = regulPression1[F("consigne")]; // 24.2
+    JsonObject regulPression1 = doc[F("rPressionEC")];
+    regulPression[1].consigne = regulPression1[F("cons")]; // 24.2
     regulPression[1].Kp = regulPression1[F("Kp")]; // 2.1
     regulPression[1].Ki = regulPression1[F("Ki")]; // 2.1
     regulPression[1].Kd = regulPression1[F("Kd")]; // 2.1
-    const char* regul1_autorisationForcage = regulPression1[F("autorisationForcage")];
+    const char* regul1_autorisationForcage = regulPression1[F("aForcage")];
     if (strcmp(regul1_autorisationForcage, "true") == 0 || strcmp(regul1_autorisationForcage, "True") == 0) regulPression[1].autorisationForcage = true;
     else regulPression[1].autorisationForcage = false;
-    regulPression[1].consigneForcage = regulPression1[F("consigneForcage")]; // 2.1
+    regulPression[1].consigneForcage = regulPression1[F("consForcage")]; // 2.1
     regulPression[1].offset = regulPression1[F("offset")];
 
 
 }
 
 
-void deserializePACParams(StaticJsonDocument<512> doc) {
+void deserializePACParams(StaticJsonDocument<300> doc) {
 
-    JsonObject regulTemp = doc[F("regulTempEC")];
-    regulTempEC.consigne = regulTemp[F("consigne")]; // 24.2
+    Serial.println("DESERIALIZE PAC PARAMS");
+    JsonObject regulTemp = doc[F("rTempEC")];
+    regulTempEC.consigne = regulTemp[F("cons")]; // 24.2
     regulTempEC.Kp = regulTemp[F("Kp")]; // 2.1
     regulTempEC.Ki = regulTemp[F("Ki")]; // 2.1
     regulTempEC.Kd = regulTemp[F("Kd")]; // 2.1
-    const char* regulTemp_autorisationForcage = regulTemp[F("autorisationForcage")];
+    const char* regulTemp_autorisationForcage = regulTemp[F("aForcage")];
     if (strcmp(regulTemp_autorisationForcage, "true") == 0 || strcmp(regulTemp_autorisationForcage, "True") == 0) regulTempEC.autorisationForcage = true;
     else regulTempEC.autorisationForcage = false;
-    regulTempEC.consigneForcage = regulTemp[F("consigneForcage")]; // 2.1
+    regulTempEC.consigneForcage = regulTemp[F("consForcage")]; // 2.1
     regulTempEC.offset = regulTemp[F("offset")];
+
+    Serial.print("regulTempEC.consigne:"); Serial.println(regulTempEC.consigne);
 
 }
 
-bool SerializeMasterParams(char* buffer, uint32_t timeString) {
-    //Serial.println(F("SENDDATA"));
-    StaticJsonDocument<512> doc;
+bool SerializeMasterParams(uint32_t timeString, char* buffer) {
+    StaticJsonDocument<300> doc;
 
-    doc[F("command")] = SEND_MASTER_PARAMS;
-    doc[F("condID")] = 0;
-    doc[F("senderID")] = 0;
-    doc[F("time")] = timeString;
+    doc[cmd] = SEND_MASTER_PARAMS;
+    doc[cID] = 0;
+    doc[sID] = 0;
+    doc[time] = timeString;
 
-    JsonObject regulT = doc.createNestedObject(F("regulPressionEA"));
-    regulT[F("consigne")] = regulPression[0].consigne;
-    regulT[F("Kp")] = regulPression[0].Kp;
-    regulT[F("Ki")] = regulPression[0].Ki;
-    regulT[F("Kd")] = regulPression[0].Kd;
-    if (regulPression[0].autorisationForcage) regulT[F("autorisationForcage")] = "true";
-    else regulT[F("autorisationForcage")] = "false";
-    regulT[F("consigneForcage")] = regulPression[0].consigneForcage;
-    regulT[F("offset")] = regulPression[0].offset;
+    JsonObject regulT = doc.createNestedObject(rPressionEA);
+    regulT[cons] = regulPression[0].consigne;
+    regulT[Kp] = regulPression[0].Kp;
+    regulT[Ki] = regulPression[0].Ki;
+    regulT[Kd] = regulPression[0].Kd;
+    if (regulPression[0].autorisationForcage) regulT[aForcage] = F("true");
+    else regulT[aForcage] = F("false");
+    regulT[consForcage] = regulPression[0].consigneForcage;
+    regulT[offset] = regulPression[0].offset;
 
-    JsonObject regulp = doc.createNestedObject(F("regulPressionEC"));
-    regulp[F("consigne")] = regulPression[1].consigne;
-    regulp[F("Kp")] = regulPression[1].Kp;
-    regulp[F("Ki")] = regulPression[1].Ki;
-    regulp[F("Kd")] = regulPression[1].Kd;
-    if (regulPression[1].autorisationForcage) regulp[F("autorisationForcage")] = "true";
-    else regulp[F("autorisationForcage")] = "false";
-    regulp[F("consigneForcage")] = regulPression[1].consigneForcage;
-    regulp[F("offset")] = regulPression[1].offset;
+    JsonObject regulp = doc.createNestedObject(rPressionEC);
+    regulp[cons] = regulPression[1].consigne;
+    regulp[Kp] = regulPression[1].Kp;
+    regulp[Ki] = regulPression[1].Ki;
+    regulp[Kd] = regulPression[1].Kd;
+    if (regulPression[1].autorisationForcage) regulp[aForcage] = F("true");
+    else regulp[aForcage] = F("false");
+    regulp[consForcage] = regulPression[1].consigneForcage;
+    regulp[offset] = regulPression[1].offset;
 
-    JsonObject regulTemp = doc.createNestedObject(F("regulTempEC"));
-    regulTemp[F("consigne")] = regulTempEC.consigne;
-    regulTemp[F("Kp")] = regulTempEC.Kp;
-    regulTemp[F("Ki")] = regulTempEC.Ki;
-    regulTemp[F("Kd")] = regulTempEC.Kd;
-    if (regulTempEC.autorisationForcage) regulTemp[F("autorisationForcage")] = "true";
-    else regulTemp[F("autorisationForcage")] = "false";
-    regulTemp[F("consigneForcage")] = regulTempEC.consigneForcage;
-    regulTemp[F("offset")] = regulTempEC.offset;
-    serializeJson(doc, buffer, 600);
+   
+    serializeJson(doc, buffer, 300);
+    return true;
+}
+
+bool SerializePACParams(uint32_t timeString, char* buffer) {
+    StaticJsonDocument<300> doc;
+
+    doc[cmd] = SEND_PAC_PARAMS;
+    doc[cID] = 0;
+    doc[sID] = 0;
+    doc[time] = timeString;
+
+
+    Serial.print("SERIALIZE PAC PARAMS"); 
+    Serial.print("regulTempEC.consigne:"); Serial.println(regulTempEC.consigne);
+
+    JsonObject regulT = doc.createNestedObject("rTempEC");
+    regulT[cons] = regulTempEC.consigne;
+    regulT[Kp] = regulTempEC.Kp;
+    regulT[Ki] = regulTempEC.Ki;
+    regulT[Kd] = regulTempEC.Kd;
+    if (regulTempEC.autorisationForcage) regulT[aForcage] = F("true");
+    else regulT[aForcage] = F("false");
+    regulT[consForcage] = regulTempEC.consigneForcage;
+    regulT[offset] = regulTempEC.offset;
+    serializeJson(doc, buffer, 300);
     return true;
 }
 
@@ -1048,48 +984,46 @@ double readFluo() {
     return F;
 }
 
-bool SerializeMasterData(char* buffer, uint32_t timeString) {
-    //Serial.println(F("SENDDATA"));
-    StaticJsonDocument<512> doc;
+bool SerializeMasterData(uint32_t timeString, char* buffer) {
 
-    doc[F("command")] = SEND_MASTER_DATA;
-    doc[F("condID")] = 0;
-    doc[F("senderID")] = 0;
-    doc[F("time")] = timeString;
+    StaticJsonDocument<300> doc;
+    doc[cmd] = SEND_MASTER_DATA;
+    doc[cID] = 0;
+    doc[sID] = 0;
+    doc[time] = timeString;
 
-    if (masterData.currentSun) doc[F("sun")] = "true";
-    else doc[F("sun")] = "false";
-    if (masterData.currentTide) doc[F("tide")] = "true";
-    else doc[F("tide")] = "false";
-    doc[F("oxy")] = masterData.oxy;
-    doc[F("cond")] = masterData.cond;
-    doc[F("turb")] = masterData.turb;
-    doc[F("fluo")] = masterData.fluo;
-    doc[F("pH")] = masterData.pH;
-    doc[F("salinite")] = masterData.salinite;
-    doc[F("temperature")] = masterData.temperature;
-    doc[F("pressionEA")] = masterData.pression[0];
-    doc[F("pressionEC")] = masterData.pression[1];
-    doc[F("sortiePID_EA")] = regulPression[0].sortiePID_pc;
-    doc[F("sortiePID_EC")] = regulPression[1].sortiePID_pc;
-    doc[F("sortiePID_TEC")] = regulTempEC.sortiePID_pc;
+    if (masterData.currentSun) doc[sun] = F("true");
+    else doc[sun] = F("false");
+    doc[oxy] = masterData.oxy;
+    doc[cond] = masterData.cond;
+    doc[turb] = masterData.turb;
+    doc[fluo] = masterData.fluo;
+    doc[pH] = masterData.pH;
+    doc[sal] = masterData.salinite;
+    doc[temp] = masterData.temperature;
+    doc[pressionEA] = masterData.pression[0];
+    doc[pressionEC] = masterData.pression[1];
+    doc[sPID_EA] = regulPression[0].sortiePID_pc;
+    doc[sPID_EC] = regulPression[1].sortiePID_pc;
+    doc[sPID_TEC] = regulTempEC.sortiePID_pc;
 
-    doc[F("nextSunUp")] = masterData.nextSunUp;
-    doc[F("nextSunDown")] = masterData.nextSunDown;
-    doc[F("nextTideHigh")] = masterData.nextTideHigh;
-    doc[F("nextTideLow")] = masterData.nextTideLow;
+    doc[nextSunUp] = masterData.nextSunUp;
+    doc[nextSunDown] = masterData.nextSunDown;
 
-    serializeJson(doc, buffer, 600);
+    serializeJson(doc, buffer, bufferSize);
     return true;
 }
 
 void sendParams() {
+    StaticJsonDocument<300> doc;
+
+    char buffer[500];
     for (int i = 1; i < 4; i++) {
         condition[i].load();
         condition[i].condID = i;
         condition[i].regulpH.consigne = condition[i].regulpH.offset + masterData.pH;
         condition[i].regulTemp.consigne = condition[i].regulTemp.offset + masterData.temperature;
-        condition[i].serializeParams(buffer, RTC.getTime(), 0);
+        condition[i].serializeParams(RTC.getTime(), 0, buffer);
         //webSocket.broadcastTXT(buffer);
     }
 }
@@ -1127,26 +1061,37 @@ void readMBSensors() {
         else {
             if (sensorIndex < 5) { // HAMILTON: indexes O to 2 are mesocosms, index 4 is input measure tank, index 3 is acidification tank
                 //Hamilton.setSensor(sensorIndex + 1, &master);
-                Hamilton.query.u8id = sensorIndex + 1;
-                if (pH) {
+                mbSensor.query.u8id = sensorIndex + 1;
+                if (pHSensor) {
 
-                    if (Hamilton.readPH()) {
+                    if (mbSensor.readPH(&master)) {
 
-                        Serial.print(F("pH:")); Serial.println(Hamilton.pH_sensorValue);
-                        if (sensorIndex < 3) condition[0].Meso[sensorIndex].pH = Hamilton.pH_sensorValue;
-                        if (sensorIndex == 3) condition[0].mesurepH = Hamilton.pH_sensorValue;
-                        if (sensorIndex == 4) masterData.pH = Hamilton.pH_sensorValue;
-                        pH = false;
+                        Serial.print(F("pH:")); Serial.println(mbSensor.pH_sensorValue);
+                        if (mbSensor.pH_sensorValue > 0) {
+                            if (sensorIndex < 3) condition[0].Meso[sensorIndex].pH = mbSensor.pH_sensorValue;
+                            if (sensorIndex == 3) condition[0].mesurepH = mbSensor.pH_sensorValue;
+                            if (sensorIndex == 4) masterData.pH = mbSensor.pH_sensorValue;
+
+                        }
+                        mbSensor.pH_sensorValue = -99;
+                        pHSensor = false;
                     }
                 }
                 else {
-                    if (Hamilton.readTemp()) {
+                    if (mbSensor.readTemp(&master)) {
+                        Serial.print(F("temp:")); Serial.println(mbSensor.temp_sensorValue);
+                        if (mbSensor.temp_sensorValue > 0) {
+                            if (sensorIndex < 3) condition[0].Meso[sensorIndex].temperature = mbSensor.temp_sensorValue;
+                            if (sensorIndex == 3) condition[0].mesureTemperature = mbSensor.temp_sensorValue;
+                            if (sensorIndex == 4) {
+                                masterData.temperature = mbSensor.temp_sensorValue;
+                                Serial.print(F("masterdata temp:")); Serial.println(masterData.temperature);
+                            }
 
-                        if (sensorIndex < 3) condition[0].Meso[sensorIndex].temperature = Hamilton.temp_sensorValue;
-                        if (sensorIndex == 3) condition[0].mesureTemperature = Hamilton.temp_sensorValue;
-                        if (sensorIndex == 4) masterData.temperature = Hamilton.temp_sensorValue;
+                        }
+                        mbSensor.temp_sensorValue = -99;
                         sensorIndex++;
-                        pH = true;
+                        pHSensor = true;
                     }
                 }
             }
@@ -1155,15 +1100,15 @@ void readMBSensors() {
                 case 5:
                     mbSensor.query.u8id = 10;//PODOC
                     if (state == 0) {
-                        if (mbSensor.requestValues()) {
+                        if (mbSensor.requestValues(&master)) {
                             state = 1;
                         }
                     }
-                    else if (mbSensor.readValues()) {
-                        /*Serial.print(F("Temperature:")); Serial.println(mbSensor.params[0]);
+                    else if (mbSensor.readValues(&master)) {
+                       Serial.print(F("Temperature:")); Serial.println(mbSensor.params[0]);
                         Serial.print(F("oxy %:")); Serial.println(mbSensor.params[1]);
                         Serial.print(F("oxy mg/L:")); Serial.println(mbSensor.params[2]);
-                        Serial.print(F("oxy ppm:")); Serial.println(mbSensor.params[3]);*/
+                        Serial.print(F("oxy ppm:")); Serial.println(mbSensor.params[3]);
                         masterData.oxy = mbSensor.params[1];
                         state = 0;
                         sensorIndex++;
@@ -1172,32 +1117,33 @@ void readMBSensors() {
                 case 6:
                     mbSensor.query.u8id = 40;//NTU
                     if (state == 0) {
-                        if (mbSensor.requestValues()) {
+                        if (mbSensor.requestValues(&master)) {
                             state = 1;
                         }
                     }
-                    else if (mbSensor.readValues()) {
-                        //Serial.print(F("Temperature:")); Serial.println(NTU.params[0]);
-                        //Serial.print(F("NTU:")); Serial.println(NTU.params[1]);
-                        //Serial.print(F("FNU:")); Serial.println(NTU.params[2]);
-                        //Serial.print(F("mg/L:")); Serial.println(NTU.params[3]);
+                    else if (mbSensor.readValues(&master)) {
+                        Serial.print(F("Temperature:")); Serial.println(mbSensor.params[0]);
+                        Serial.print(F("NTU:")); Serial.println(mbSensor.params[1]);
+                        Serial.print(F("FNU:")); Serial.println(mbSensor.params[2]);
+                        Serial.print(F("mg/L:")); Serial.println(mbSensor.params[3]);
                         masterData.turb = mbSensor.params[1];
                         state = 0;
-                        sensorIndex++;
+                        //sensorIndex++;
+                        sensorIndex=0;
                     }
                     break;
                 case 7:
-                    mbSensor.query.u8id = 30;//NTU
+                    mbSensor.query.u8id = 30;//Cond
                     if (state == 0) {
-                        if (mbSensor.requestValues()) {
+                        if (mbSensor.requestValues(&master)) {
                             state = 1;
                         }
                     }
-                    else if (mbSensor.readValues()) {
-                        /*Serial.print(F("Temperature:")); Serial.println(mbSensor.params[0]);
+                    else if (mbSensor.readValues(&master)) {
+                        Serial.print(F("Temperature:")); Serial.println(mbSensor.params[0]);
                         Serial.print(F("conductivite:")); Serial.println(mbSensor.params[1]);
                         Serial.print(F("salinite:")); Serial.println(mbSensor.params[2]);
-                        Serial.print(F("TDS:")); Serial.println(mbSensor.params[3]);*/
+                        Serial.print(F("TDS:")); Serial.println(mbSensor.params[3]);
                         masterData.cond = mbSensor.params[1];
                         masterData.salinite = mbSensor.params[2];
                         state = 0;
@@ -1230,11 +1176,11 @@ void calibrateSensor() {
         Serial.print("calib.value:"); Serial.println(calib.value);
 
         Serial.print("HamiltonCalibStep:"); Serial.println(HamiltonCalibStep);
-        Hamilton.query.u8id = calib.sensorID + 1;
-        Serial.print("Hamilton.query.u8id:"); Serial.println(Hamilton.query.u8id);
+        mbSensor.query.u8id = calib.sensorID + 1;
+        Serial.print("Hamilton.query.u8id:"); Serial.println(mbSensor.query.u8id);
         if (calib.calibParam == 99) {
             if (state == 0) {
-                if (Hamilton.factoryReset()) state = 1;
+                if (mbSensor.factoryReset(&master)) state = 1;
             }
             else {
                 calib.calibEnCours = false;
@@ -1242,7 +1188,7 @@ void calibrateSensor() {
             }
         }
         else {
-            HamiltonCalibStep = Hamilton.calibrate(calib.value, HamiltonCalibStep);
+            HamiltonCalibStep = mbSensor.calibrate(calib.value, HamiltonCalibStep, &master);
             if (HamiltonCalibStep == 4) {
                 HamiltonCalibStep = 0;
                 calib.calibEnCours = false;
@@ -1256,7 +1202,7 @@ void calibrateSensor() {
         mbSensor.query.u8id = 10;
         if (calib.calibParam == 99) {
             if (state == 0) {
-                if (mbSensor.factoryReset()) state = 1;
+                if (mbSensor.factoryReset(&master)) state = 1;
             }
             else {
                 calib.calibEnCours = false;
@@ -1273,11 +1219,11 @@ void calibrateSensor() {
                 else {
                     offset = 522;
                 }
-                if (mbSensor.calibrateCoeff(calib.value, offset)) state = 1;
+                if (mbSensor.calibrateCoeff(calib.value, offset, &master)) state = 1;
             }
             else {
                 offset = 654;
-                if (mbSensor.validateCalibration(offset)) {
+                if (mbSensor.validateCalibration(offset, &master)) {
                     state = 0;
                     calib.calibEnCours = false;
                 }
@@ -1289,7 +1235,7 @@ void calibrateSensor() {
         mbSensor.query.u8id = 40;
         if (calib.calibParam == 99) {
             if (state == 0) {
-                if (mbSensor.factoryReset()) state = 1;
+                if (mbSensor.factoryReset(&master)) state = 1;
             }
             else {
                 calib.calibEnCours = false;
@@ -1305,11 +1251,11 @@ void calibrateSensor() {
                 else {
                     offset = 530;// Gamme 4 jusqu'a 4000 NTU, sinon changer d'adresse
                 }
-                if (mbSensor.calibrateCoeff(calib.value, offset)) state = 1;
+                if (mbSensor.calibrateCoeff(calib.value, offset, &master)) state = 1;
             }
             else {
                 offset = 654;
-                if (mbSensor.validateCalibration(offset)) {
+                if (mbSensor.validateCalibration(offset, &master)) {
                     state = 0;
                     calib.calibEnCours = false;
                 }
@@ -1321,7 +1267,7 @@ void calibrateSensor() {
         mbSensor.query.u8id = 30;
         if (calib.calibParam == 99) {
             if (state == 0) {
-                if (mbSensor.factoryReset()) state = 1;
+                if (mbSensor.factoryReset(&master)) state = 1;
             }
             else {
                 calib.calibEnCours = false;
@@ -1337,11 +1283,11 @@ void calibrateSensor() {
                 else {
                     offset = 530;
                 }
-                if (mbSensor.calibrateCoeff(calib.value, offset)) state = 1;
+                if (mbSensor.calibrateCoeff(calib.value, offset, &master)) state = 1;
             }
             else {
                 offset = 654;
-                if (mbSensor.validateCalibration(offset)) {
+                if (mbSensor.validateCalibration(offset, &master)) {
                     state = 0;
                     calib.calibEnCours = false;
                 }

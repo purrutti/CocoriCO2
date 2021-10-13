@@ -12,30 +12,16 @@ public:
     bool querySent = false;
     byte status[5];
 
+
+    float pH_sensorValue;
+    float temp_sensorValue;
+
     uint16_t data[16];
     modbus_t query;
-
-    /*uint16_t dataW[1];
-    modbus_t queryW;
-
-    uint16_t dataR[10];
-    modbus_t queryR;
-
-    uint16_t dataStatus[1];
-    modbus_t queryStatus;
-
-    uint16_t dataCalibration[2];
-    modbus_t queryCalibration;
-
-    uint16_t dataCalValidation[16];
-    modbus_t queryCalValidation;*/
-
-   // uint16_t calibrationAddresses[12];
-    //uint16_t validationAddresses[6];
     ModbusSensor() {}
 
-    ModbusSensor(uint8_t slaveAddress, Modbus *m) {
-        
+    ModbusSensor(uint8_t slaveAddress) {
+
 
         query.u8id = slaveAddress; // slave address
         query.u8fct = 6; // function code (this one is registers read)
@@ -44,34 +30,6 @@ public:
         query.au16reg = data; // pointer to a memory array in the Arduino
         data[0] = 5;
 
-
-        /*queryW.u8id = slaveAddress; // slave address
-        queryW.u8fct = 6; // function code (this one is registers read)
-        queryW.u16RegAdd = 1; // start address in slave
-        queryW.u16CoilsNo = 1; // number of elements (coils or registers) to read
-        queryW.au16reg = dataW; // pointer to a memory array in the Arduino
-        dataW[0] = 5;
-
-        queryR.u8id = slaveAddress; // slave address
-        queryR.u8fct = 3; // function code (this one is registers read)
-        queryR.u16RegAdd = 83; // start address in slave
-        queryR.u16CoilsNo = 10; // number of elements (coils or registers) to read
-        queryR.au16reg = dataR; // pointer to a memory array in the Arduino
-
-        queryCalibration.u8id = slaveAddress; // slave address
-        queryCalibration.u8fct = 16; // function code (this one is registers read)
-        queryCalibration.u16RegAdd = 512; // start address in slave
-        queryCalibration.u16CoilsNo = 2; // number of elements (coils or registers) to read
-        queryCalibration.au16reg = dataCalibration; // pointer to a memory array in the Arduino
-
-        queryCalValidation.u8id = slaveAddress; // slave address
-        queryCalValidation.u8fct = 16; // function code (this one is registers read)
-        queryCalValidation.u16RegAdd = 638; // start address in slave
-        queryCalValidation.u16CoilsNo = 16; // number of elements (coils or registers) to read
-        queryCalValidation.au16reg = dataCalValidation; // pointer to a memory array in the Arduino
-        */
-
-        master = m;
 
         /*
         512: offset temperature
@@ -99,11 +57,7 @@ public:
         //for (int i = 0; i < 12; i++) calibrationAddresses[i] = 512 + 2 * i;
         //for (int i = 0; i < 6; i++) validationAddresses[i] = 638 + 16 * i;
     }
-    
 
-
-
-    Modbus *master;
 
     void setQuery(uint8_t fct, uint16_t RegAdd, uint16_t CoilsNb) {
         query.u8fct = fct; // function code (this one is registers read)
@@ -128,7 +82,7 @@ public:
 
 
 
-    bool requestValues()
+    bool requestValues(Modbus* master)
     {
         setQueryW();
         if (!querySent) {
@@ -145,7 +99,7 @@ public:
         return 0;
     }
 
-    bool readValues()
+    bool readValues(Modbus* master)
     {
         setQueryR();
         if (!querySent) {
@@ -168,13 +122,15 @@ public:
                 u.b[0] = data[7];
                 u.b[1] = data[6];
                 params[3] = u.fval;
-                return 1;
+                clearData();
+                if(params[1]>0) return 1;
+                return 0;
             }
         }
         return 0;
     }
 
-    bool calibrateCoeff(float value, int offset)
+    bool calibrateCoeff(float value, int offset, Modbus* master)
     {
         setQueryCalibration(offset);
         u.fval = value;
@@ -203,7 +159,7 @@ public:
         return 0;
     }
 
-    bool factoryReset()
+    bool factoryReset(Modbus* master)
     {
         Serial.println("factory reset");
         setQuery(16, 2, 1);
@@ -225,7 +181,7 @@ public:
         return 0;
     }
 
-    bool validateCalibration(int offset)
+    bool validateCalibration(int offset, Modbus* master)
     {
         setQueryCalValidation();
         setQuery(16, offset, 16);
@@ -254,6 +210,220 @@ public:
                 querySent = false;
 
                 for (int i = 0; i < 16; i++) data[i] = 0;
+                return 1;
+            }
+        }
+        return 0;
+    }
+
+
+    /*
+    FOR HAMILTON SENSORS
+    */
+
+    void clearData() {
+        for (int i = 0; i < 16; i++) data[i] = 0;
+    }
+
+    void setQuerypH() {
+        setQuery(3, 2089, 10);
+    }
+    void setQueryTemp() {
+        setQuery(3, 2409, 10);
+    }
+    void setQuerySetLevel() {
+        setQuery(16, 4287, 4);
+        query.au16reg[0] = 48;
+        query.au16reg[1] = 0;
+        query.au16reg[2] = 31182;
+        query.au16reg[3] = 244;
+    }
+    void setQueryCalibrationCommand() {
+        setQuery(16, 5339, 2);
+    }
+    void setQueryCalibrationValue() {
+        setQuery(16, 5321, 2);
+    }
+    void setQueryCalibrationStatus() {
+        setQuery(16, 5317, 6);
+    }
+
+    bool setLevel(Modbus* master)
+    {
+        setQuerySetLevel();
+        if (!querySent) {
+            master->query(query);
+            querySent = true;
+        }
+        else {
+            master->poll();
+            if (master->getState() == COM_IDLE) {
+                querySent = false;
+                return 1;
+            }
+        }
+        return 0;
+    }
+
+    bool readPH(Modbus* master)
+    {
+        setQuerypH();
+        if (!querySent) {
+            master->query(query);
+            querySent = true;
+        }
+        else {
+            master->poll();
+            if (master->getState() == COM_IDLE) {
+                u.b[0] = data[2];
+                u.b[1] = data[3];
+                pH_sensorValue = u.fval;
+                querySent = false;
+                clearData();
+                return 1;
+
+            }
+        }
+
+        return 0;
+
+    }
+
+    bool readTemp(Modbus* master)
+    {
+        setQueryTemp();
+        if (!querySent) {
+            master->query(query);
+            querySent = true;
+        }
+        else {
+            master->poll();
+            if (master->getState() == COM_IDLE) {
+                u.b[0] = data[2];
+                u.b[1] = data[3];
+                temp_sensorValue = u.fval;
+                querySent = false;
+                clearData();
+                return 1;
+            }
+        }
+
+        return 0;
+
+    }
+    /*
+    int cmd: 1 = initial measurment
+    2 = cancel an active calbration
+    3 = restore standard calbration
+    4 = restore product calibration*/
+    bool sendCalibrationCommand(int cmd, Modbus* master)
+    {
+        setQueryCalibrationCommand();
+        data[0] = cmd;
+        data[1] = 0;
+        if (!querySent) {
+            master->query(query);
+            querySent = true;
+        }
+        else {
+            master->poll();
+            if (master->getState() == COM_IDLE) {
+                querySent = false;
+                return 1;
+            }
+        }
+        return 0;
+    }
+
+    bool sendCalibrationValue(float value, Modbus* master)
+    {
+        setQueryCalibrationValue();
+        u.fval = value;
+        data[0] = u.b[0];
+        data[1] = u.b[1];
+        //Serial.print("calb value:"); Serial.print(dataCalibrationValue[0]); Serial.print(","); Serial.print(dataCalibrationValue[1]);
+        if (!querySent) {
+            master->query(query);
+            querySent = true;
+        }
+        else {
+            master->poll();
+            if (master->getState() == COM_IDLE) {
+                querySent = false;
+                return 1;
+            }
+        }
+        return 0;
+    }
+
+    bool getCalibrationStatus(Modbus* master)
+    {
+        setQueryCalibrationStatus();
+        if (!querySent) {
+            master->query(query);
+            querySent = true;
+        }
+        else {
+            master->poll();
+            if (master->getState() == COM_IDLE) {
+                querySent = false;
+                for (int i = 0; i < 6; i++) {
+                    Serial.print("status "); Serial.print(i); Serial.print(":"); Serial.println(data[i]);
+                }
+                return 1;
+            }
+        }
+        return 0;
+    }
+
+    int calibrate(float value, int step, Modbus* master) {
+        Serial.println(F("CALIB HAMILTON"));
+        switch (step) {
+        case 0:
+            //PAS NECESSAIRE??
+            if (setLevel(master)) {
+                step++;
+                Serial.println(F("set Level S OK"));
+            }
+            break;
+        case 1:
+            if (sendCalibrationCommand(1, master)) {//1 = request calibration; 2 = cancel calibration
+                step++;
+                Serial.println(F("send calib OK"));
+            }
+            break;
+        case 2:
+            if (sendCalibrationValue(value, master)) {
+                step++;
+                Serial.println(F("send calib value OK"));
+            }
+            break;
+        case 3:
+            if (getCalibrationStatus(master)) {
+                step++;
+                Serial.println(F("get status OK"));
+            }
+            break;
+        }
+        return step;
+    }
+
+    bool HamiltonFactoryReset(Modbus* master)
+    {
+        Serial.println(F("factory reset"));
+        setQuery(16, 8191, 2);
+        data[0] = 911;
+
+        if (!querySent) {
+            master->query(query);
+            querySent = true;
+            Serial.println(F("query sent"));
+        }
+        else {
+            master->poll();
+            if (master->getState() == COM_IDLE) {
+                querySent = false;
+                Serial.println(F("query OK"));
                 return 1;
             }
         }

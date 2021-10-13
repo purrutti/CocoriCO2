@@ -5,6 +5,10 @@
 
 #include <PID_v1.h>
 
+const size_t jsonDocSize_params = 300;
+const size_t jsonDocSize_data = 512;
+
+const int bufferSize = 500;
 
 bool customRegul = true;
 double regulFilter = 0.01;
@@ -13,6 +17,54 @@ double lastTemp = 18;
 
 double meanPIDOut_temp = 120;
 int meanPIDOut_pH = 0;
+
+
+
+const char* cmd = "cmd";
+const char* cID = "cID";
+const char* sID = "sID";
+const char* time = "time";
+
+const char* rPressionEA = "rPressionEA";
+const char* cons = "cons";
+const char* Kp = "Kp";
+const char* Ki = "Ki";
+const char* Kd = "Kd";
+const char* aForcage = "aForcage";
+const char* consForcage = "consForcage";
+const char* offset = "offset";
+const char* rPressionEC = "rPressionEC";
+const char* rTempEC = "rTempEC";
+
+const char* sun = "sun";
+const char* oxy = "oxy";
+const char* cond = "cond";
+const char* turb = "turb";
+const char* fluo = "fluo";
+const char* pH = "pH";
+const char* sal = "sal";
+const char* temp = "temp";
+const char* pressionEA = "pressionEA";
+const char* pressionEC = "pressionEC";
+const char* sPID_EA = "sPID_EA";
+const char* sPID_EC = "sPID_EC";
+const char* sPID_TEC = "sPID_TEC";
+const char* nextSunUp = "nextSunUp";
+const char* nextSunDown = "nextSunDown";
+
+const char* sPID_pc = "sPID_pc";
+const char* sMesoID = "MesoID";
+const char* debit = "debit";
+const char* LevelH = "LevelH";
+const char* LevelL = "LevelL";
+const char* LevelLL = "LevelLL";
+
+const char* rTemp = "rTemp";
+const char* rpH = "rpH";
+const char* sdata = "data";
+
+
+
 
 class Regul {
 public:
@@ -91,130 +143,132 @@ public:
     }
 
 
-    bool serializeData(char* buffer, uint32_t timeString, uint8_t sender) {
+    bool serializeData(uint32_t timeString, uint8_t sender, char* buffer) {
         //Serial.println("SENDDATA");
         //DynamicJsonDocument doc(512);
+
         StaticJsonDocument<512> doc;
 
-        doc[F("command")] = 3;
-        doc[F("condID")] = condID;
-        doc[F("senderID")] = sender;
-        doc[F("temperature")] = mesureTemperature;
-        doc[F("pH")] = mesurepH;
+        doc[cmd] = 3;
+        doc[cID] = condID;
+        doc[sID] = sender;
+        doc[temp] = mesureTemperature;
+        doc[pH] = mesurepH;
 
 
         //Serial.print(F("CONDID:")); Serial.println(condID);
         //Serial.print(F("socketID:")); Serial.println(socketID);
-        doc[F("time")] = timeString;
+        doc[time] = timeString;
 
-        JsonArray data = doc.createNestedArray(F("data"));
+        JsonArray data = doc.createNestedArray(sdata);
         JsonObject dataArray[3];
 
-        JsonObject regulT = doc.createNestedObject(F("regulTemp"));
-        regulT[F("consigne")] = regulTemp.consigne;
-        regulT[F("sortiePID_pc")] = regulTemp.sortiePID_pc;
+        JsonObject regulT = doc.createNestedObject(rTemp);
+        regulT[cons] = regulTemp.consigne;
+        regulT[sPID_pc] = regulTemp.sortiePID_pc;
 
-        JsonObject regulp = doc.createNestedObject(F("regulpH"));
-        regulp[F("consigne")] = regulpH.consigne;
-        regulp[F("sortiePID_pc")] = regulpH.sortiePID_pc;
+        JsonObject regulp = doc.createNestedObject(rpH);
+        regulp[cons] = regulpH.consigne;
+        regulp[sPID_pc] = regulpH.sortiePID_pc;
 
         for (int i = 0; i < 3; i++) {
             dataArray[i] = data.createNestedObject();
-            dataArray[i][F("MesoID")] = Meso[i]._mesocosmeIndex;
-            dataArray[i][F("temperature")] = Meso[i].temperature;
-            dataArray[i][F("pH")] = Meso[i].pH;
+            dataArray[i][sMesoID] = Meso[i]._mesocosmeIndex;
+            dataArray[i][temp] = Meso[i].temperature;
+            dataArray[i][pH] = Meso[i].pH;
 
-            dataArray[i][F("debit")] = Meso[i].debit;
-            dataArray[i][F("LevelH")] = Meso[i].alarmeNiveauHaut;
-            dataArray[i][F("LevelL")] = Meso[i].alarmeNiveauBas;
-            dataArray[i][F("LevelLL")] = Meso[i].alarmeNiveauTresBas;
+            dataArray[i][debit] = Meso[i].debit;
+            dataArray[i][LevelH] = Meso[i].alarmeNiveauHaut;
+            dataArray[i][LevelL] = Meso[i].alarmeNiveauBas;
+            dataArray[i][LevelLL] = Meso[i].alarmeNiveauTresBas;
         }
-        serializeJson(doc, buffer, 600);
+        serializeJson(doc, buffer, bufferSize);
         return true;
     }
 
-    bool serializeParams(char* buffer, uint32_t timeString, uint8_t sender) {
-
+    bool serializeParams(uint32_t timeString, uint8_t sender, char* buffer) {
+        StaticJsonDocument<300> doc;
         //Serial.println(F("SEND PARAMS"));
-        StaticJsonDocument<512> doc;
 
-        doc[F("command")] = 2;
-        doc[F("condID")] = condID;
-        doc[F("senderID")] = sender;
-        doc[F("time")] = timeString;
+        doc[cmd] = 2;
+        doc[cID] = condID;
+        doc[sID] = sender;
+        doc[time] = timeString;
         /*doc["mesureTemp"] = Hamilton[3].temp_sensorValue;
         doc["mesurepH"] = Hamilton[3].pH_sensorValue;*/
 
-        JsonObject regulT = doc.createNestedObject(F("regulTemp"));
-        regulT[F("consigne")] = regulTemp.consigne;
-        regulT[F("Kp")] = regulTemp.Kp;
-        regulT[F("Ki")] = regulTemp.Ki;
-        regulT[F("Kd")] = regulTemp.Kd;
-        if (this->regulTemp.autorisationForcage) regulT[F("autorisationForcage")] = "true";
-        else regulT[F("autorisationForcage")] = "false";
-        regulT[F("consigneForcage")] = regulTemp.consigneForcage;
-        regulT[F("offset")] = regulTemp.offset;
+        JsonObject regulT = doc.createNestedObject(F("rTemp"));
+        regulT[cons] = regulTemp.consigne;
+        regulT[Kp] = regulTemp.Kp;
+        regulT[Ki] = regulTemp.Ki;
+        regulT[Kd] = regulTemp.Kd;
+        if (this->regulTemp.autorisationForcage) regulT[aForcage] = "true";
+        else regulT[aForcage] = "false";
+        regulT[consForcage] = regulTemp.consigneForcage;
+        regulT[offset] = regulTemp.offset;
 
-        JsonObject regulp = doc.createNestedObject(F("regulpH"));
-        regulp[F("consigne")] = regulpH.consigne;
-        regulp[F("Kp")] = regulpH.Kp;
-        regulp[F("Ki")] = regulpH.Ki;
-        regulp[F("Kd")] = regulpH.Kd;
-        if (regulpH.autorisationForcage) regulp[F("autorisationForcage")] = "true";
-        else regulp[F("autorisationForcage")] = "false";
-        regulp[F("consigneForcage")] = regulpH.consigneForcage;
-        regulp[F("offset")] = regulpH.offset;
-        serializeJson(doc, buffer, 600);
+        JsonObject regulp = doc.createNestedObject(F("rpH"));
+        regulp[cons] = regulpH.consigne;
+        regulp[Kp] = regulpH.Kp;
+        regulp[Ki] = regulpH.Ki;
+        regulp[Kd] = regulpH.Kd;
+        if (regulpH.autorisationForcage) regulp[aForcage] = "true";
+        else regulp[aForcage] = "false";
+        regulp[consForcage] = regulpH.consigneForcage;
+        regulp[offset] = regulpH.offset;
+        serializeJson(doc, buffer, bufferSize);
     }
 
-    void deserializeParams(StaticJsonDocument<512> doc) {
+    void deserializeParams(StaticJsonDocument<jsonDocSize_params> doc) {
 
-        JsonObject regulp = doc[F("regulpH")];
-        regulpH.consigne = regulp[F("consigne")]; // 24.2
-        regulpH.Kp = regulp[F("Kp")]; // 2.1
-        regulpH.Ki = regulp[F("Ki")]; // 2.1
-        regulpH.Kd = regulp[F("Kd")]; // 2.1
-        const char* regulpH_autorisationForcage = regulp[F("autorisationForcage")];
+        JsonObject regulp = doc[rpH];
+        regulpH.consigne = regulp[cons]; // 24.2
+        regulpH.Kp = regulp[Kp]; // 2.1
+        regulpH.Ki = regulp[Ki]; // 2.1
+        regulpH.Kd = regulp[Kd]; // 2.1
+        const char* regulpH_autorisationForcage = regulp[aForcage];
         if (strcmp(regulpH_autorisationForcage, "true") == 0 || strcmp(regulpH_autorisationForcage, "True") == 0) regulpH.autorisationForcage = true;
         else regulpH.autorisationForcage = false;
-        regulpH.consigneForcage = regulp[F("consigneForcage")]; // 2.1
-        regulpH.offset = regulp[F("offset")];
+        regulpH.consigneForcage = regulp[consForcage]; // 2.1
+        regulpH.offset = regulp[offset];
 
-        JsonObject regulT = doc[F("regulTemp")];
+        JsonObject regulT = doc[rTemp];
 
-        regulTemp.consigne = regulT[F("consigne")]; // 24.2
-        regulTemp.Kp = regulT[F("Kp")]; // 2.1
-        regulTemp.Ki = regulT[F("Ki")]; // 2.1
-        regulTemp.Kd = regulT[F("Kd")]; // 2.1
-        const char* regulTemp_autorisationForcage = regulT[F("autorisationForcage")];
+        regulTemp.consigne = regulT[cons]; // 24.2
+        regulTemp.Kp = regulT[Kp]; // 2.1
+        regulTemp.Ki = regulT[Ki]; // 2.1
+        regulTemp.Kd = regulT[Kd]; // 2.1
+        const char* regulTemp_autorisationForcage = regulT[aForcage];
         if (strcmp(regulTemp_autorisationForcage, "true") == 0 || strcmp(regulTemp_autorisationForcage, "True") == 0) regulTemp.autorisationForcage = true;
         else regulTemp.autorisationForcage = false;
-        regulTemp.consigneForcage = regulT[F("consigneForcage")]; // 2.1
-        regulTemp.offset = regulT[F("offset")];
+        regulTemp.consigneForcage = regulT[consForcage]; // 2.1
+        regulTemp.offset = regulT[offset];
 
     }
 
-    void deserializeData(StaticJsonDocument<512> doc) {
+    void deserializeData(StaticJsonDocument<jsonDocSize_data> doc) {
 
-        for (JsonObject elem : doc[F("data")].as<JsonArray>()) {
 
-            int MesoID = elem[F("MesoID")]; // 0, 2, 3
+        for (JsonObject elem : doc[sdata].as<JsonArray>()) {
+
+            int MesoID = elem[sMesoID]; // 0, 2, 3
             Meso[MesoID] = MesoID;
-            Meso[MesoID].temperature = elem[F("temperature")]; // 0, 0, 0
-            Meso[MesoID].pH = elem[F("pH")]; // 0, 0, 0
-            Meso[MesoID].debit = elem[F("debit")]; // 0, 0, 0
-            Meso[MesoID].alarmeNiveauHaut = elem[F("LevelH")]; // 0, 0, 0
-            Meso[MesoID].alarmeNiveauBas = elem[F("LevelL")]; // 0, 0, 0
-            Meso[MesoID].alarmeNiveauTresBas = elem[F("LevelLL")]; // 0, 0, 0
+            Meso[MesoID].temperature = elem[temp]; // 0, 0, 0
+            Meso[MesoID].pH = elem[pH]; // 0, 0, 0
+            Meso[MesoID].debit = elem[debit]; // 0, 0, 0
+            Meso[MesoID].alarmeNiveauHaut = elem[LevelH]; // 0, 0, 0
+            Meso[MesoID].alarmeNiveauBas = elem[LevelL]; // 0, 0, 0
+            Meso[MesoID].alarmeNiveauTresBas = elem[LevelLL]; // 0, 0, 0
         }
-        regulTemp.consigne = doc[F("regulTemp")][F("consigne")]; // 1
-        regulTemp.sortiePID_pc = doc[F("regulTemp")][F("sortiePID_pc")]; // 2
+        regulTemp.consigne = doc[rTemp][cons]; // 1
+        regulTemp.sortiePID_pc = doc[rTemp][sPID_pc]; // 2
 
-        regulpH.consigne = doc[F("regulpH")][F("consigne")]; // 3
-        regulpH.sortiePID_pc = doc[F("regulpH")][F("sortiePID_pc")]; // 4
+        regulpH.consigne = doc[rpH][cons]; // 3
+        regulpH.sortiePID_pc = doc[rpH][sPID_pc]; // 4
 
-        mesureTemperature = doc[F("temperature")];
-        mesurepH = doc[F("pH")];
+        mesureTemperature = doc[temp];
+        mesurepH = doc[pH];
+
 
     }
 

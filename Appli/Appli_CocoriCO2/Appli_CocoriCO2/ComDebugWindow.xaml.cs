@@ -104,8 +104,8 @@ namespace Appli_CocoriCO2
                 if (c.command == 2 && (c.regulpH != null)) //SEND_PARAMS
                 {
                     MW.conditions[c.condID].lastUpdated = c.lastUpdated;
-                    
-                   // MW.Labels[MW.Labels.Length-1] = c.lastUpdated.ToString();
+
+                    // MW.Labels[MW.Labels.Length-1] = c.lastUpdated.ToString();
                     //MW.seriesCollection[0].Values.Add(c.command);
 
                     double sortie = MW.conditions[c.condID].regulpH.sortiePID_pc;
@@ -115,22 +115,23 @@ namespace Appli_CocoriCO2
 
                     sortie = MW.conditions[c.condID].regulTemp.sortiePID_pc;
                     MW.conditions[c.condID].regulTemp = c.regulTemp;
-                   // MW.conditions[c.condID].regulTemp.consigne = consigne;
+                    // MW.conditions[c.condID].regulTemp.consigne = consigne;
                     MW.conditions[c.condID].regulTemp.sortiePID_pc = sortie;
                 }
-                else if (c.command == 3  && (c.Meso != null))
+                else if (c.command == 3 && (c.Meso != null))
                 {
                     ///MW.monitoringWindow.Labels.Add(c.lastUpdated.ToString());
 
-                    for (int i = 0; i < 3; i++) {
+                    for (int i = 0; i < 3; i++)
+                    {
                         MW.conditions[c.condID].Meso[i] = c.Meso[i];
                         if (MW.conditions[c.condID].Meso[i].debit < 0) MW.conditions[c.condID].Meso[i].debit = 0;
                     }
                     MW.conditions[c.condID].temperature = c.temperature;
                     MW.conditions[c.condID].pH = c.pH;
                     MW.conditions[c.condID].regulpH.sortiePID_pc = c.regulpH.sortiePID_pc;
-                    
-                    if(c.condID != 0)
+
+                    if (c.condID != 0)
                     {
                         MW.conditions[c.condID].regulpH.consigne = c.regulpH.consigne;
                         MW.conditions[c.condID].regulTemp.sortiePID_pc = c.regulTemp.sortiePID_pc;
@@ -147,6 +148,11 @@ namespace Appli_CocoriCO2
                 {
 
                     MW.masterParams = JsonConvert.DeserializeObject<MasterParams>(data);
+                }
+                else if (c.command == 9)
+                {
+
+                    MW.pacParams = JsonConvert.DeserializeObject<PACParams>(data);
                 }
 
                 MW.DisplayData(c.command);
@@ -167,7 +173,7 @@ namespace Appli_CocoriCO2
                 if (c.lastUpdated != lastFileWrite)
                 {
                     DateTime dt = DateTime.Now.ToUniversalTime();
-                    string filePath = Properties.Settings.Default["dataFileBasePath"].ToString()+ "_"+dt.ToString("yyyy-MM-dd") + ".csv";
+                    string filePath = Properties.Settings.Default["dataFileBasePath"].ToString() + "_" + dt.ToString("yyyy-MM-dd") + ".csv";
                     filePath = filePath.Replace('\\', '/');
 
                     saveToFile(filePath, dt);
@@ -179,16 +185,17 @@ namespace Appli_CocoriCO2
                     }
                     MW.conditionData.Clear();
                 }
-            }catch(Exception e)
+            }
+            catch (Exception e)
             {
                 MessageBox.Show("Error writing data: " + e.Message, "Error saving data");
             }
-            
+
         }
 
         private async Task writeDataPointAsync(int conditionId, int MesoID, string field, double value, DateTime dt)
         {
-            string tag; 
+            string tag;
             if (MesoID == -1) tag = "AmbientData";
             else tag = MesoID.ToString();
             var point = PointData
@@ -202,13 +209,14 @@ namespace Appli_CocoriCO2
             {
                 var writeApi = client.GetWriteApiAsync();
                 await writeApi.WritePointAsync(bucket, org, point);
-            
-            }catch(Exception e)
+
+            }
+            catch (Exception e)
             {
 
             }
 
-}
+        }
 
 
         private void saveToFile(string filePath, DateTime dt)
@@ -231,12 +239,12 @@ namespace Appli_CocoriCO2
                     }
                     for (int j = 0; j < 3; j++)
                     {
-                        header += "Condition["; header += i; header += "]_Meso["; header += j; header += "]_Temperature;"; 
-                        header += "Condition["; header += i; header += "]_Meso["; header += j; header += "]_pH;"; 
-                        header += "Condition["; header += i; header += "]_Meso["; header += j; header += "]_FlowRate;"; 
-                        header += "Condition["; header += i; header += "]_Meso["; header += j; header += "]_LevelH;"; 
-                        header += "Condition["; header += i; header += "]_Meso["; header += j; header += "]_LevelL;"; 
-                        header += "Condition["; header += i; header += "]_Meso["; header += j; header += "]_LevelLL;"; 
+                        header += "Condition["; header += i; header += "]_Meso["; header += j; header += "]_Temperature;";
+                        header += "Condition["; header += i; header += "]_Meso["; header += j; header += "]_pH;";
+                        header += "Condition["; header += i; header += "]_Meso["; header += j; header += "]_FlowRate;";
+                        header += "Condition["; header += i; header += "]_Meso["; header += j; header += "]_LevelH;";
+                        header += "Condition["; header += i; header += "]_Meso["; header += j; header += "]_LevelL;";
+                        header += "Condition["; header += i; header += "]_Meso["; header += j; header += "]_LevelLL;";
                     }
                 }
                 header += "\n";
@@ -323,9 +331,9 @@ namespace Appli_CocoriCO2
         {
             string ftpUsername = Properties.Settings.Default["ftpUsername"].ToString();
             string ftpPassword = Properties.Settings.Default["ftpPassword"].ToString();
-            string ftpDir= "ftp://"+Properties.Settings.Default["ftpDir"].ToString();
+            string ftpDir = "ftp://" + Properties.Settings.Default["ftpDir"].ToString();
 
-            string fn = fileName.Substring(fileName.LastIndexOf('/')+1);
+            string fn = fileName.Substring(fileName.LastIndexOf('/') + 1);
             ftpDir += fn;
             using (var client = new WebClient())
             {

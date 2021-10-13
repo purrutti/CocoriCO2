@@ -19,6 +19,7 @@
             <MenuItem Header="_Settings">
                 <MenuItem Name="AppSettings_btn" Header="Application Settings" Click="AppSettings_Click" />
                 <MenuItem Name="ExpSettings_btn" Header="Experiment Settings" Click="ExpSettings_Click" />
+                <MenuItem Name="AlarmsSettings_btn" Header="Alarms Settings" Click="AlarmsSettings_Click" />
             </MenuItem>
             <MenuItem Header="_Maintenance">
                 <MenuItem Name="Calibrate_btn" Header="_Calibrate sensors" Click="Calibrate_btn_Click"/>
@@ -27,6 +28,9 @@
             <MenuItem Header="_Data">
                 <MenuItem Name="Monitoring_btn" Header="_Live Monitoring" Click="Monitoring_btn_Click"/>
                 <MenuItem x:Name="RData" Header="_Historical Data" Click="RData_btn_Click"/>
+                <MenuItem Name="AlarmsList_btn" Header="Alarms List" Click="AlarmsList_Click" />
+                <Separator HorizontalAlignment="Left" Height="0" Width="208"/>
+                <MenuItem Name="Cleanup_btn" Header="Clean Up" Click="CleanUp_Click" />
             </MenuItem>
             <MenuItem Header="_About">
             </MenuItem>
@@ -37,6 +41,9 @@
             </StatusBarItem>
             <StatusBarItem Height="24" VerticalAlignment="Bottom" Width="347" HorizontalAlignment="Left">
                 <TextBlock x:Name="statusLabel1" />
+            </StatusBarItem>
+            <StatusBarItem Height="24" VerticalAlignment="Bottom" Width="347" HorizontalAlignment="Right">
+                <TextBlock x:Name="statusLabel2" />
             </StatusBarItem>
         </StatusBar>
         <Canvas Margin="0,50,0,26">

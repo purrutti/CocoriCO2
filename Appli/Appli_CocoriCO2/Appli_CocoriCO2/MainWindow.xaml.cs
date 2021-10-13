@@ -24,111 +24,102 @@ using System.Globalization;
 using LiveCharts;
 using LiveCharts.Configurations;
 using System.Diagnostics;
+using SlackAPI;
 
 namespace Appli_CocoriCO2
 {
     public class Ambiant
     {
 
-        [JsonProperty(Required = Required.Default)]
+        [JsonProperty("sun", Required = Required.Default)]
         public bool sun { get; set; }
-        [JsonProperty(Required = Required.Default)]
+        [JsonProperty("tide", Required = Required.Default)]
         public bool tide { get; set; }
-        [JsonProperty(Required = Required.Default)]
+        [JsonProperty("oxy", Required = Required.Default)]
         public double oxy { get; set; }
-        [JsonProperty(Required = Required.Default)]
+        [JsonProperty("cond", Required = Required.Default)]
         public double cond { get; set; }
-        [JsonProperty(Required = Required.Default)]
+        [JsonProperty("turb", Required = Required.Default)]
         public double turb { get; set; }
-        [JsonProperty(Required = Required.Default)]
+        [JsonProperty("fluo", Required = Required.Default)]
         public double fluo { get; set; }
-        [JsonProperty(Required = Required.Default)]
+        [JsonProperty("temp", Required = Required.Default)]
         public double temperature { get; set; }
-        [JsonProperty(Required = Required.Default)]
+        [JsonProperty("sal", Required = Required.Default)]
         public double salinite { get; set; }
-        [JsonProperty(Required = Required.Default)]
+        [JsonProperty("pH", Required = Required.Default)]
         public double pH { get; set; }
-        [JsonProperty(Required = Required.Default)]
+        [JsonProperty("sortiePID_EA", Required = Required.Default)]
         public double sortiePID_EA { get; set; }
-        [JsonProperty(Required = Required.Default)]
+        [JsonProperty("sortiePID_EC", Required = Required.Default)]
         public double sortiePID_EC { get; set; }
-        [JsonProperty(Required = Required.Default)]
+        [JsonProperty("pressionEA", Required = Required.Default)]
         public double pressionEA { get; set; }
-        [JsonProperty(Required = Required.Default)]
+        [JsonProperty("pressionEC", Required = Required.Default)]
         public double pressionEC { get; set; }
 
-        [JsonProperty(Required = Required.Default)]
+        [JsonProperty("nextSunUp", Required = Required.Default)]
         public long nextSunUp { get; set; }
-        [JsonProperty(Required = Required.Default)]
+        [JsonProperty("nextSunDown", Required = Required.Default)]
         public long nextSunDown { get; set; }
-        [JsonProperty(Required = Required.Default)]
-        public long nextTideHigh { get; set; }
-        [JsonProperty(Required = Required.Default)]
-        public long nextTideLow { get; set; }
-
-        [JsonProperty(Required = Required.Default)]
-        public double temperatureEC { get; set; }
-
-        [JsonProperty(Required = Required.Default)]
-        public double sortiePID_TEC { get; set; }
-        
-
 
         public long time { get; set; }
         public DateTime lastUpdated { get; set; }
     }
     public class Mesocosme
     {
-        [JsonProperty("MesoID",Required = Required.Default)]
-        public int mesocosmeID{ get; set; }
+        [JsonProperty("MesoID", Required = Required.Default)]
+        public int mesocosmeID { get; set; }
         [JsonProperty("LevelH", Required = Required.Default)]
         public bool alarmeNiveauHaut { get; set; }
         [JsonProperty("LevelL", Required = Required.Default)]
         public bool alarmeNiveauBas { get; set; }
         [JsonProperty("LevelLL", Required = Required.Default)]
         public bool alarmeNiveauTresBas { get; set; }
-        [JsonProperty(Required = Required.Default)]
+        [JsonProperty("debit", Required = Required.Default)]
         public double debit { get; set; }
-        [JsonProperty(Required = Required.Default)]
+        [JsonProperty("temp", Required = Required.Default)]
         public double temperature { get; set; }
-        [JsonProperty(Required = Required.Default)]
+        [JsonProperty("pH", Required = Required.Default)]
         public double pH { get; set; }
     }
     public class Regul
     {
-        [JsonProperty(Required = Required.Default)]
+        [JsonProperty("sPID", Required = Required.Default)]
         public double sortiePID { get; set; }
-        [JsonProperty(Required = Required.Default)]
+        [JsonProperty("cons", Required = Required.Default)]
         public double consigne { get; set; }
-        [JsonProperty(Required = Required.Default)]
+        [JsonProperty("Kp", Required = Required.Default)]
         public double Kp { get; set; }
-        [JsonProperty(Required = Required.Default)]
+        [JsonProperty("Ki", Required = Required.Default)]
         public double Ki { get; set; }
-        [JsonProperty(Required = Required.Default)]
+        [JsonProperty("Kd", Required = Required.Default)]
         public double Kd { get; set; }
-        [JsonProperty(Required = Required.Default)]
+        [JsonProperty("sPID_pc", Required = Required.Default)]
         public double sortiePID_pc { get; set; }
-        [JsonProperty(Required = Required.Default)]
+        [JsonProperty("aForcage", Required = Required.Default)]
         public bool autorisationForcage { get; set; }
-        [JsonProperty(Required = Required.Default)]
+        [JsonProperty("consForcage", Required = Required.Default)]
         public int consigneForcage { get; set; }
-        [JsonProperty(Required = Required.Default)]
+        [JsonProperty("offset", Required = Required.Default)]
         public double offset { get; set; }
 
     }
     public class Condition
     {
+        [JsonProperty("cmd", Required = Required.Default)]
         public int command { get; set; }
-        [JsonProperty("temperature", Required = Required.Default)]
+        [JsonProperty("temp", Required = Required.Default)]
         public double temperature { get; set; }
         [JsonProperty("pH", Required = Required.Default)]
         public double pH { get; set; }
+        [JsonProperty("cID", Required = Required.Default)]
         public int condID { get; set; }
-        [JsonProperty("data",Required = Required.Default)]
+        [JsonProperty("data", Required = Required.Default)]
         public Mesocosme[] Meso { get; set; }
-        [JsonProperty("regulTemp", Required = Required.Default)]
+        [JsonProperty("rTemp", Required = Required.Default)]
         public Regul regulTemp { get; set; }
-        [JsonProperty("regulpH", Required = Required.Default)]
+        [JsonProperty("rpH", Required = Required.Default)]
         public Regul regulpH { get; set; }
         public long time { get; set; }
         public DateTime lastUpdated { get; set; }
@@ -137,21 +128,136 @@ namespace Appli_CocoriCO2
 
     public class MasterParams
     {
-        [JsonProperty("regulPressionEA", Required = Required.Default)]
+        [JsonProperty("rPressionEA", Required = Required.Default)]
         public Regul regulPressionEA;
-        [JsonProperty("regulPressionEC", Required = Required.Default)]
+        [JsonProperty("rPressionEC", Required = Required.Default)]
         public Regul regulPressionEC;
-        [JsonProperty("regulTempEC", Required = Required.Default)]
-        public Regul regulTempEC;
         public MasterParams()
         {
             regulPressionEA = new Regul();
             regulPressionEC = new Regul();
+        }
+    }
+
+    public class PACParams
+    {
+
+        [JsonProperty("rTempEC", Required = Required.Default)]
+        public Regul regulTempEC;
+        public PACParams()
+        {
             regulTempEC = new Regul();
         }
     }
 
-    
+    public unsafe class Alarme
+    {
+        public string libelle { get; set; }
+        public DateTime dtTriggered { get; set; }
+        public DateTime dtRaised { get; set; }
+        public DateTime dtAcknowledged { get; set; }
+        public TimeSpan delay { get; set; }
+        public double threshold { get; set; }
+        public double delta { get; set; }
+        public double value { get; set; }
+        public bool enabled { get; set; }
+        public bool triggered { get; set; }
+        public bool raised { get; set; }
+        public bool acknowledged { get; set; }
+        public int comparaison { get; set; }
+        public bool checkAndRaise(double val) // raise alarm if value is upperThan threshold
+        {
+            value = val;
+            if (!enabled) return false;
+            bool upperThan, lowerThan;
+            switch (comparaison)
+            {
+                case 0:
+                    upperThan = true;
+                    lowerThan = false;
+                    break;
+                case 1:
+                    upperThan = false;
+                    lowerThan = true;
+                    break;
+                case 2:
+                    upperThan = true;
+                    lowerThan = true;
+                    break;
+                default:
+                    upperThan = false;
+                    lowerThan = false;
+                    break;
+            }
+
+
+            bool t = false;
+            if (triggered) t = true;
+            if (!triggered && upperThan && value >= (threshold + delta))
+            {
+                dtTriggered = DateTime.Now;
+                t = true;
+            }
+            if (!triggered && lowerThan && value <= (threshold - delta))
+            {
+                dtTriggered = DateTime.Now;
+                t = true;
+            }
+            triggered = t;
+
+            if (!raised && triggered && dtTriggered.Add(delay) < DateTime.Now)
+            {
+                raised = true;
+                dtRaised = DateTime.Now;
+                sendSlackMessage(this.libelle + " triggered at:" + dtTriggered.ToString());
+            }
+            if (raised) return true;
+            return false;
+        }
+
+        private void sendSlackMessage(String msg)
+        {
+            string TOKEN = Properties.Settings.Default["SlackToken"].ToString();  // token from last step in section above
+            var slackClient = new SlackTaskClient(TOKEN);
+
+            slackClient.PostMessageAsync(Properties.Settings.Default["SlackChannelID"].ToString(), msg);
+        }
+
+        public bool checkAndRaise(bool val, bool th) // raise alarm if value is upperThan threshold
+        {
+            if (!enabled) return false;
+
+
+            if (!triggered && val != th)
+            {
+                triggered = true;
+                dtTriggered = DateTime.Now;
+            }
+            else triggered = false;
+
+            if (!raised && triggered && dtTriggered.Add(delay) > DateTime.Now)
+            {
+                raised = true;
+                dtRaised = DateTime.Now;
+                sendSlackMessage(this.libelle + " triggered at:" + dtTriggered.ToString());
+
+            }
+            if (raised) return true;
+            return false;
+        }
+
+
+        public unsafe void set(string l, bool ena, int comp, double d, TimeSpan del)
+        {
+            libelle = l;
+            enabled = ena;
+            comparaison = comp;
+            delta = d;
+            delay = del;
+        }
+    }
+
+
     /// <summary>
     /// Logique d'interaction pour MainWindow.xaml
     /// </summary>
@@ -160,10 +266,12 @@ namespace Appli_CocoriCO2
         //public List<Condition> conditions;
         public ObservableCollection<Condition> conditions;
         public ObservableCollection<Condition> conditionData;
+        public ObservableCollection<Alarme> alarms;
         public Ambiant ambiantConditions = new Ambiant();
 
         //public List<Condition> conditionData;
         public ExpSettingsWindow expSettingsWindow;
+        public AlarmsListWindow alarmsListWindow;
         public ComDebugWindow comDebugWindow;
         public Calibration calibrationWindow;
         public CultureInfo ci;
@@ -174,29 +282,34 @@ namespace Appli_CocoriCO2
 #pragma warning restore CS0414 // Le champ 'MainWindow.autoReco' est assigné, mais sa valeur n'est jamais utilisée
         public int step;
 
-        public MasterParams masterParams;
+        public bool cleanupMode;
 
-        public string[] Labels = new[] {"0"};
+        public MasterParams masterParams;
+        public PACParams pacParams;
+
+        public string[] Labels = new[] { "0" };
         public MainWindow()
         {
             if (Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName).Length > 1)
             {
-                MessageBox.Show("FACE-IT Application is already running. Only one instance of this application is allowed");
+                MessageBox.Show("CocoriCO2 Application is already running. Only one instance of this application is allowed");
                 System.Windows.Application.Current.Shutdown();
             }
             else
             {
                 InitializeComponent();
                 var cts = new CancellationTokenSource();
-
+                cleanupMode = false;
 
 
 #pragma warning disable CS4014 // Dans la mesure où cet appel n'est pas attendu, l'exécution de la méthode actuelle continue avant la fin de l'appel. Envisagez d'appliquer l'opérateur 'await' au résultat de l'appel.
-                
+
 #pragma warning restore CS4014 // Dans la mesure où cet appel n'est pas attendu, l'exécution de la méthode actuelle continue avant la fin de l'appel. Envisagez d'appliquer l'opérateur 'await' au résultat de l'appel.
                 autoReco = false;
                 conditions = new ObservableCollection<Condition>();
                 conditionData = new ObservableCollection<Condition>();
+
+                alarms = new ObservableCollection<Alarme>();
                 for (int i = 0; i < 4; i++)
                 {
                     Condition c = new Condition();
@@ -215,9 +328,12 @@ namespace Appli_CocoriCO2
                 comDebugWindow = new ComDebugWindow();
                 calibrationWindow = new Calibration();
 
+
                 InitializeAsync();
+                InitializeAsyncAlarms();
 
                 masterParams = new MasterParams();
+                pacParams = new PACParams();
 
                 ci = new CultureInfo("en-US");
                 ci.NumberFormat.NumberDecimalDigits = 2;
@@ -227,9 +343,198 @@ namespace Appli_CocoriCO2
                 Thread.CurrentThread.CurrentUICulture = ci;
                 CultureInfo.DefaultThreadCurrentCulture = ci;
                 CultureInfo.DefaultThreadCurrentUICulture = ci;
+
+                setAlarms();
+
+                alarmsListWindow = new AlarmsListWindow();
             }
 
 
+        }
+
+        private void checkAlarme(string libelle, double value, double t)
+        {
+            try
+            {
+                Alarme a = alarms.Single(alarm => alarm.libelle == libelle);
+                a.threshold = t;
+                a.checkAndRaise(value);
+            }
+            catch (Exception e)
+            {
+
+            }
+
+        }
+
+        private void checkAlarme(string libelle, bool value, bool threshold)
+        {
+
+
+            try
+            {
+                Alarme a = alarms.Single(alarm => alarm.libelle == libelle);
+                a.checkAndRaise(value, threshold);
+            }
+            catch (Exception e)
+            {
+
+            }
+        }
+
+        private void checkAlarms()
+        {
+            if (cleanupMode) return;
+            double d;
+
+            string cond, meso;
+            checkAlarme("C0_AlarmPressureEA", ambiantConditions.pressionEA, masterParams.regulPressionEA.consigne);
+            checkAlarme("C0_AlarmPressureEC", ambiantConditions.pressionEC, masterParams.regulPressionEC.consigne);
+
+
+            cond = "C0";
+
+            checkAlarme(cond + "_AlarmpH", conditions[0].pH, conditions[0].regulpH.consigne);
+
+
+
+
+            for (int j = 0; j < 3; j++)//mesocosmes
+            {
+                meso = "M" + j;
+
+
+                if (ambiantConditions.tide)//vanne exondation ouverte
+                    checkAlarme(cond + meso + "_AlarmLevelL", conditions[0].Meso[j].alarmeNiveauBas, false);
+                else checkAlarme(cond + meso + "_AlarmLevelL", conditions[0].Meso[j].alarmeNiveauBas, true);
+
+
+
+                checkAlarme(cond + meso + "_AlarmLevelLL", conditions[0].Meso[j].alarmeNiveauTresBas, false);
+
+                Double.TryParse(Properties.Settings.Default["FlowrateSetpoint"].ToString(), out d);
+
+                checkAlarme(cond + meso + "_AlarmFlowrate", conditions[0].Meso[j].debit, d);
+                checkAlarme(cond + meso + "_AlarmpHMesocosm", conditions[0].Meso[j].pH, ambiantConditions.pH);
+                checkAlarme(cond + meso + "_AlarmTempMesocosm", conditions[0].Meso[j].temperature, ambiantConditions.temperature);
+
+            }
+
+
+            for (int i = 1; i < 4; i++) //conditions
+            {
+                cond = "C" + i;
+
+                checkAlarme(cond + "_AlarmpH", conditions[i].pH, conditions[i].regulpH.consigne);
+                checkAlarme(cond + "_AlarmTemperature", conditions[i].temperature, conditions[i].regulTemp.consigne);
+
+
+
+
+                for (int j = 0; j < 3; j++)//mesocosmes
+                {
+                    meso = "M" + j;
+
+                    checkAlarme(cond + meso + "_AlarmLevelH", conditions[i].Meso[j].alarmeNiveauHaut, false);
+
+                    if (ambiantConditions.tide)//vanne exondation ouverte
+                        checkAlarme(cond + meso + "_AlarmLevelL", conditions[i].Meso[j].alarmeNiveauBas, false);
+                    else checkAlarme(cond + meso + "_AlarmLevelL", conditions[i].Meso[j].alarmeNiveauBas, true);
+
+
+
+                    checkAlarme(cond + meso + "_AlarmLevelLL", conditions[i].Meso[j].alarmeNiveauTresBas, false);
+
+                    Double.TryParse(Properties.Settings.Default["FlowrateSetpoint"].ToString(), out d);
+
+                    checkAlarme(cond + meso + "_AlarmFlowrate", conditions[i].Meso[j].debit, d);
+                    checkAlarme(cond + meso + "_AlarmpHMesocosm", conditions[i].Meso[j].pH, conditions[i].regulpH.consigne);
+                    checkAlarme(cond + meso + "_AlarmTempMesocosm", conditions[i].Meso[j].temperature, conditions[i].regulTemp.consigne);
+
+                }
+            }
+
+            if (alarmsListWindow._lastHeaderClicked != null) alarmsListWindow.Sort(alarmsListWindow._lastHeaderClicked.Tag as string, alarmsListWindow._lastDirection);
+            else alarmsListWindow.Sort("raised", alarmsListWindow._lastDirection);
+        }
+
+        public unsafe void setAlarms()
+        {
+            alarms.Clear();
+
+
+            string cond;
+            string meso;
+            bool e;
+            double d;
+
+
+            cond = "C0";
+            Boolean.TryParse(Properties.Settings.Default["AlarmPressure"].ToString(), out e);
+            Double.TryParse(Properties.Settings.Default["PressureDelta"].ToString(), out d);
+            Alarme a = new Alarme();
+            a.set(cond + "_AlarmPressureEA", e, 2, d, TimeSpan.FromSeconds(30));
+            alarms.Add(a);
+            Alarme b = new Alarme();
+            b.set(cond + "_AlarmPressureEC", e, 2, d, TimeSpan.FromSeconds(30));
+            alarms.Add(b);
+
+            for (int i = 0; i < 4; i++) //conditions
+            {
+                cond = "C" + i;
+
+
+                Double.TryParse(Properties.Settings.Default["ConditionpHDelta"].ToString(), out d);
+                Boolean.TryParse(Properties.Settings.Default["AlarmpHCondition"].ToString(), out e);
+                Alarme c = new Alarme();
+                c.set(cond + "_AlarmpH", e, 2, d, TimeSpan.FromSeconds(30));
+                alarms.Add(c);
+
+                if (i > 0)
+                {
+                    Double.TryParse(Properties.Settings.Default["ConditionTempDelta"].ToString(), out d);
+                    Boolean.TryParse(Properties.Settings.Default["AlarmTempCondition"].ToString(), out e);
+                    Alarme f = new Alarme();
+                    f.set(cond + "_AlarmTemperature", e, 2, d, TimeSpan.FromSeconds(30));
+                    alarms.Add(f);
+                }
+
+                for (int j = 0; j < 3; j++)//mesocosmes
+                {
+                    meso = "M" + j;
+                    Boolean.TryParse(Properties.Settings.Default["AlarmLevelH"].ToString(), out e);
+                    Alarme g = new Alarme();
+                    g.set(cond + meso + "_AlarmLevelH", e, 0, 0, TimeSpan.FromSeconds(30));
+                    alarms.Add(g);
+                    Boolean.TryParse(Properties.Settings.Default["AlarmLevelL"].ToString(), out e);
+                    Alarme h = new Alarme();
+                    h.set(cond + meso + "_AlarmLevelL", e, 0, 0, TimeSpan.FromMinutes(90));
+                    alarms.Add(h);
+                    Boolean.TryParse(Properties.Settings.Default["AlarmLevelLL"].ToString(), out e);
+                    Alarme k = new Alarme();
+                    k.set(cond + meso + "_AlarmLevelLL", e, 0, 0, TimeSpan.FromSeconds(30));
+                    alarms.Add(k);
+
+                    Double.TryParse(Properties.Settings.Default["FlowrateDelta"].ToString(), out d);
+                    Boolean.TryParse(Properties.Settings.Default["AlarmFlowrate"].ToString(), out e);
+
+                    Alarme l = new Alarme();
+                    l.set(cond + meso + "_AlarmFlowrate", e, 2, d, TimeSpan.FromSeconds(30));
+                    alarms.Add(l);
+
+                    Double.TryParse(Properties.Settings.Default["MesocosmpHDelta"].ToString(), out d);
+                    Boolean.TryParse(Properties.Settings.Default["AlarmpHMesocosm"].ToString(), out e);
+                    Alarme m = new Alarme();
+                    m.set(cond + meso + "_AlarmpHMesocosm", e, 2, d, TimeSpan.FromSeconds(30));
+                    alarms.Add(m);
+                    Double.TryParse(Properties.Settings.Default["MesocosmTempDelta"].ToString(), out d);
+                    Boolean.TryParse(Properties.Settings.Default["AlarmtempMesocosm"].ToString(), out e);
+                    Alarme n = new Alarme();
+                    n.set(cond + meso + "_AlarmTempMesocosm", e, 2, d, TimeSpan.FromSeconds(30));
+                    alarms.Add(n);
+
+                }
+            }
         }
 
         private void checkConnection()
@@ -278,28 +583,28 @@ namespace Appli_CocoriCO2
             string msg = "";
 
             var Timestamp = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds();
-            if(conditions[0].regulpH.consigne == 0)
+            if (conditions[0].regulpH.consigne == 0)
             {
-                for(int i=0;i<5;i++) expSettingsWindow.load(i);
+                for (int i = 0; i < 6; i++) expSettingsWindow.load(i);
             }
             else
             {
                 switch (step)
                 {
                     case 0:
-                        msg = "{\"command\":1,\"condID\":0,\"senderID\":4}";
+                        msg = "{\"cmd\":1,\"cID\":0,\"sID\":4}";
                         break;
                     case 1:
-                        msg = "{\"command\":1,\"condID\":1,\"senderID\":4}";
+                        msg = "{\"cmd\":1,\"cID\":1,\"sID\":4}";
                         break;
                     case 2:
-                        msg = "{\"command\":1,\"condID\":2,\"senderID\":4}";
+                        msg = "{\"cmd\":1,\"cID\":2,\"sID\":4}";
                         break;
                     case 3:
-                        msg = "{\"command\":1,\"condID\":3,\"senderID\":4}";
+                        msg = "{\"cmd\":1,\"cID\":3,\"sID\":4}";
                         break;
                     case 4:
-                        msg = "{\"command\":5,\"condID\":0,\"senderID\":4,\"time\":" + Timestamp + "}";
+                        msg = "{\"cmd\":5,\"cID\":0,\"sID\":4,\"time\":" + Timestamp + "}";
                         break;
                 }
                 if (step < 4) step++; else step = 0;
@@ -307,9 +612,9 @@ namespace Appli_CocoriCO2
                 comDebugWindow.tb1.Text = msg;
 
                 Task<string> t2 = Send(ws, msg, comDebugWindow.tb2);
-                t2.Wait(50);
+                t2.Wait(20);
             }
-            
+
         }
 
 
@@ -344,10 +649,16 @@ namespace Appli_CocoriCO2
         public void DisplayData(int command)
         {
             label_time.Content = DateTime.Now.ToUniversalTime();
+            Cleanup_btn.Header = cleanupMode ? "Exit Cleanup Mode" : "Start Cleanup Mode";
+
+            statusLabel2.Text = cleanupMode ? "Cleanup Mode Active" : "";
+            statusLabel2.Foreground = cleanupMode ? new SolidColorBrush(Colors.Red) : new SolidColorBrush(Colors.Black);
+
+
             if (expSettingsWindow.ShowActivated)
             {
                 int selctedcondID = expSettingsWindow.comboBox_Condition.SelectedIndex;
-                if(selctedcondID == 4)
+                if (selctedcondID == 4)
                 {
                     expSettingsWindow.tb_pH_measure.Text = ambiantConditions.pressionEA.ToString(ci);
                     expSettingsWindow.tb_pH_PIDoutput.Text = ambiantConditions.sortiePID_EA.ToString(ci);
@@ -368,7 +679,7 @@ namespace Appli_CocoriCO2
             //expSettingsWindow.tb_pH_setPoint.Text = conditions[0].regulpH.consigne.ToString();
             if (command == 2)//PARAMS
             {
-                
+
             }
             else if (command == 3)//DATA
             {
@@ -399,7 +710,7 @@ namespace Appli_CocoriCO2
                 }
                 else if (!conditions[0].Meso[1].alarmeNiveauBas) label_C0M2_Alarm.Content = "Alarm: Low level";
                 else label_C0M2_Alarm.Content = !conditions[0].Meso[1].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
-                
+
 
                 if (ambiantConditions.tide)//vanne exondation ouverte
                 {
@@ -420,7 +731,7 @@ namespace Appli_CocoriCO2
                         if (conditions[1].Meso[0].alarmeNiveauBas) label_C1M1_Alarm.Content = "Alarm: Exondation not effective";
                     }
                     else if (!conditions[1].Meso[0].alarmeNiveauBas) label_C1M1_Alarm.Content = "Alarm: Low level";
-                    else                    label_C1M1_Alarm.Content = !conditions[1].Meso[0].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
+                    else label_C1M1_Alarm.Content = !conditions[1].Meso[0].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
                 }
 
                 if (conditions[1].Meso[1].alarmeNiveauHaut)
@@ -433,8 +744,8 @@ namespace Appli_CocoriCO2
                     {
                         if (conditions[1].Meso[1].alarmeNiveauBas) label_C1M2_Alarm.Content = "Alarm: Exondation not effective";
                     }
-                    else  if (!conditions[1].Meso[1].alarmeNiveauBas) label_C1M2_Alarm.Content = "Alarm: Low level";
-                    else                     label_C1M2_Alarm.Content = !conditions[1].Meso[1].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
+                    else if (!conditions[1].Meso[1].alarmeNiveauBas) label_C1M2_Alarm.Content = "Alarm: Low level";
+                    else label_C1M2_Alarm.Content = !conditions[1].Meso[1].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
                 }
                 if (conditions[1].Meso[2].alarmeNiveauHaut)
                 {
@@ -446,8 +757,8 @@ namespace Appli_CocoriCO2
                     {
                         if (conditions[1].Meso[2].alarmeNiveauBas) label_C1M3_Alarm.Content = "Alarm: Exondation not effective";
                     }
-                    else  if (!conditions[1].Meso[2].alarmeNiveauBas) label_C1M3_Alarm.Content = "Alarm: Low level";
-                    else                     label_C1M3_Alarm.Content = !conditions[1].Meso[2].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
+                    else if (!conditions[1].Meso[2].alarmeNiveauBas) label_C1M3_Alarm.Content = "Alarm: Low level";
+                    else label_C1M3_Alarm.Content = !conditions[1].Meso[2].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
                 }
                 if (conditions[2].Meso[0].alarmeNiveauHaut)
                 {
@@ -460,7 +771,7 @@ namespace Appli_CocoriCO2
                         if (conditions[2].Meso[0].alarmeNiveauBas) label_C2M1_Alarm.Content = "Alarm: Exondation not effective";
                     }
                     else if (!conditions[2].Meso[0].alarmeNiveauBas) label_C2M1_Alarm.Content = "Alarm: Low level";
-                    else                     label_C2M1_Alarm.Content = !conditions[2].Meso[0].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
+                    else label_C2M1_Alarm.Content = !conditions[2].Meso[0].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
                 }
                 if (conditions[2].Meso[1].alarmeNiveauHaut)
                 {
@@ -474,7 +785,7 @@ namespace Appli_CocoriCO2
                     }
                     else if (!conditions[2].Meso[1].alarmeNiveauBas) label_C2M2_Alarm.Content = "Alarm: Low level";
                     else
-                    label_C2M2_Alarm.Content = !conditions[2].Meso[1].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
+                        label_C2M2_Alarm.Content = !conditions[2].Meso[1].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
                 }
                 if (conditions[2].Meso[2].alarmeNiveauHaut)
                 {
@@ -487,7 +798,7 @@ namespace Appli_CocoriCO2
                         if (conditions[2].Meso[2].alarmeNiveauBas) label_C2M3_Alarm.Content = "Alarm: Exondation not effective";
                     }
                     else if (!conditions[2].Meso[2].alarmeNiveauBas) label_C2M3_Alarm.Content = "Alarm: Low level";
-                    else    label_C2M3_Alarm.Content = !conditions[2].Meso[2].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
+                    else label_C2M3_Alarm.Content = !conditions[2].Meso[2].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
                 }
 
                 if (conditions[3].Meso[0].alarmeNiveauHaut)
@@ -527,7 +838,7 @@ namespace Appli_CocoriCO2
                         if (conditions[3].Meso[2].alarmeNiveauBas) label_C3M3_Alarm.Content = "Alarm: Exondation not effective";
                     }
                     else if (!conditions[3].Meso[2].alarmeNiveauBas) label_C3M3_Alarm.Content = "Alarm: Low level";
-                    else  label_C3M3_Alarm.Content = !conditions[3].Meso[2].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
+                    else label_C3M3_Alarm.Content = !conditions[3].Meso[2].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
                 }
 
                 label_EA_pressure_measure.Content = string.Format(ci, "Pressure measure: {0:0.00} bars", ambiantConditions.pressionEA);
@@ -536,10 +847,6 @@ namespace Appli_CocoriCO2
                 label_EC_pressure_measure.Content = string.Format(ci, "Pressure measure: {0:0.00} bars", ambiantConditions.pressionEC);
                 label_EC_pressure_setpoint.Content = string.Format(ci, "Pressure setpoint: {0:0.00} bars", masterParams.regulPressionEC.consigne);
                 label_EC_sortiePID.Content = string.Format(ci, "Valve: \t{0:0}%", ambiantConditions.sortiePID_EC);
-
-                label_EC_temperature_measure.Content = string.Format(ci, "Temperature measure: {0:0.00} °C", ambiantConditions.temperatureEC);
-                label_EC_temperature_setpoint.Content = string.Format(ci, "Temperature setpoint: {0:0.00} °C", masterParams.regulTempEC.consigne);
-                label_EC_sortiePID.Content = string.Format(ci, "Valve: \t{0:0}%", ambiantConditions.sortiePID_TEC);
 
                 label_C0_pH_setpoint.Content = string.Format(ci, "pH setpoint: {0:0.00}", conditions[0].regulpH.consigne);
                 label_C0_pH_sortiePID.Content = string.Format(ci, "Valve: \t{0:0}%", conditions[0].regulpH.sortiePID_pc);
@@ -669,11 +976,10 @@ namespace Appli_CocoriCO2
             }
             else if (command == 6)//MASTER DATA
             {
-                label_C0_02.Content = string.Format(ci, "O2: \t{0:0.00}%", ambiantConditions.oxy);
-                label_C0_Cond.Content = string.Format(ci, "Cond.: \t{0:0.00} uS/cm", ambiantConditions.cond);
+                label_C0_02.Content = string.Format(ci, "O₂: \t{0:0.00}%", ambiantConditions.oxy);
                 label_C0_Salinity.Content = string.Format(ci, "Salinity: \t{0:0.00}", ambiantConditions.salinite);
                 label_C0_Turb.Content = string.Format(ci, "Turb.: \t{0:0.00}", ambiantConditions.turb);
-                label_C0_Fluo.Content = string.Format(ci, "Fluo.: \t{0:0.00}", ambiantConditions.fluo);
+                label_C0_Fluo.Content = string.Format(ci, "Fluo.: \t{0:0.00} µg/L", ambiantConditions.fluo);
                 label_C0_Temp.Content = string.Format(ci, "Temp.: \t{0:0.00}°C", ambiantConditions.temperature);
                 label_C0_pH.Content = string.Format(ci, "pH: \t{0:0.00}", ambiantConditions.pH);
                 if (ambiantConditions.tide) label_exondation_state.Content = string.Format(ci, "Exondation Valve: OPEN (low tide)");
@@ -681,14 +987,10 @@ namespace Appli_CocoriCO2
                 if (ambiantConditions.sun) label_ledstate.Content = string.Format(ci, "LED state: ON (Day)");
                 else label_ledstate.Content = string.Format(ci, "LED state: OFF (Night)");
 
-                DateTime dt = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(ambiantConditions.nextSunDown).ToUniversalTime(); 
+                DateTime dt = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(ambiantConditions.nextSunDown).ToUniversalTime();
                 label_nextSunDown.Content = "Sunset time: " + dt.ToString();
-                dt = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(ambiantConditions.nextSunUp).ToUniversalTime(); 
+                dt = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(ambiantConditions.nextSunUp).ToUniversalTime();
                 label_nextSunUp.Content = "Sunrise time: " + dt.ToString();
-                dt = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(ambiantConditions.nextTideHigh).ToUniversalTime(); 
-                label_nextTideHigh.Content = "Next High tide: " + dt.ToString();
-                dt = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(ambiantConditions.nextTideLow).ToUniversalTime(); 
-                label_nextTideLow.Content = "Next Low Tide: " + dt.ToString();
             }
         }
 
@@ -791,6 +1093,28 @@ namespace Appli_CocoriCO2
             }
         }
 
+        private async Task InitializeAsyncAlarms()
+        {
+
+            var dueTime = TimeSpan.FromSeconds(10);
+            var interval = TimeSpan.FromSeconds(5);
+
+            var cancel = new CancellationTokenSource();
+            cancel.Token.ThrowIfCancellationRequested();
+
+            // TODO: Add a CancellationTokenSource and supply the token here instead of None.
+            try
+            {
+
+                await RunPeriodicAsync(checkAlarms, dueTime, interval, cancel.Token);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                await InitializeAsyncAlarms();
+            }
+        }
+
 
 
         private void Connect_Click(object sender, RoutedEventArgs e)
@@ -833,7 +1157,7 @@ namespace Appli_CocoriCO2
 
         private void ExpSettings_Click(object sender, RoutedEventArgs e)
         {
-            for (int i = 0; i < 5; i++) expSettingsWindow.load(i);
+            for (int i = 0; i < 6; i++) expSettingsWindow.load(i);
             expSettingsWindow.Show();
             expSettingsWindow.Focus();
         }
@@ -844,7 +1168,7 @@ namespace Appli_CocoriCO2
             calibrationWindow.Focus();
         }
 
-        
+
 
         private void ComDebug_Click(object sender, RoutedEventArgs e)
         {
@@ -856,6 +1180,7 @@ namespace Appli_CocoriCO2
             Properties.Settings.Default.Save();
             comDebugWindow.Close();
             expSettingsWindow.Close();
+            alarmsListWindow.Close();
             System.Windows.Application.Current.Shutdown();
         }
 
@@ -871,12 +1196,43 @@ namespace Appli_CocoriCO2
 
         private void Monitoring_btn_Click(object sender, RoutedEventArgs e)
         {
-            System.Diagnostics.Process.Start(Properties.Settings.Default["InfluxDBWebpage"].ToString());            
+            System.Diagnostics.Process.Start(Properties.Settings.Default["InfluxDBWebpage"].ToString());
         }
 
         private void RData_btn_Click(object sender, RoutedEventArgs e)
         {
             System.Diagnostics.Process.Start(Properties.Settings.Default["RDataWebpage"].ToString());
+        }
+
+        private void AlarmsSettings_Click(object sender, RoutedEventArgs e)
+        {
+            Alarms alarmsWindow = new Alarms();
+            alarmsWindow.Show();
+        }
+
+        private void AlarmsList_Click(object sender, RoutedEventArgs e)
+        {
+            alarmsListWindow.Show();
+            alarmsListWindow.Focus();
+        }
+
+        private void CleanUp_Click(object sender, RoutedEventArgs e)
+        {
+            if (!cleanupMode)
+            {
+                if (MessageBox.Show("Are you sure you want to switch to Cleanup mode?", "Cleanup Mode", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+                {
+                    cleanupMode = !cleanupMode;
+                }
+            }
+            else
+            {
+                if (MessageBox.Show("Are you sure you want to exit Cleanup mode?", "Cleanup Mode", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+                {
+                    cleanupMode = !cleanupMode;
+                }
+            }
+
         }
     }
 }

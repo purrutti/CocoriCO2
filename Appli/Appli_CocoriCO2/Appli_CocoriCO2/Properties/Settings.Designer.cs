@@ -37,7 +37,7 @@ namespace Appli_CocoriCO2.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("10")]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
         public int dataQueryInterval {
             get {
                 return ((int)(this["dataQueryInterval"]));
@@ -166,6 +166,247 @@ namespace Appli_CocoriCO2.Properties {
             }
             set {
                 this["RDataWebpage"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string FluoSlope {
+            get {
+                return ((string)(this["FluoSlope"]));
+            }
+            set {
+                this["FluoSlope"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string FluoOffset {
+            get {
+                return ((string)(this["FluoOffset"]));
+            }
+            set {
+                this["FluoOffset"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("xapp-1-A02GU516K6E-2572202941058-01eb87f248250644435edd81f5b5d13c6401ae0a930b1f91" +
+            "631d4ce6718223b9")]
+        public string SlackToken {
+            get {
+                return ((string)(this["SlackToken"]));
+            }
+            set {
+                this["SlackToken"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("#CRCM")]
+        public string SlackChannelID {
+            get {
+                return ((string)(this["SlackChannelID"]));
+            }
+            set {
+                this["SlackChannelID"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool AlarmLevelH {
+            get {
+                return ((bool)(this["AlarmLevelH"]));
+            }
+            set {
+                this["AlarmLevelH"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool AlarmLevelL {
+            get {
+                return ((bool)(this["AlarmLevelL"]));
+            }
+            set {
+                this["AlarmLevelL"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool AlarmLevelLL {
+            get {
+                return ((bool)(this["AlarmLevelLL"]));
+            }
+            set {
+                this["AlarmLevelLL"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool AlarmPressure {
+            get {
+                return ((bool)(this["AlarmPressure"]));
+            }
+            set {
+                this["AlarmPressure"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool AlarmpHCondition {
+            get {
+                return ((bool)(this["AlarmpHCondition"]));
+            }
+            set {
+                this["AlarmpHCondition"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool AlarmTempCondition {
+            get {
+                return ((bool)(this["AlarmTempCondition"]));
+            }
+            set {
+                this["AlarmTempCondition"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool AlarmFlowrate {
+            get {
+                return ((bool)(this["AlarmFlowrate"]));
+            }
+            set {
+                this["AlarmFlowrate"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool AlarmpHMesocosm {
+            get {
+                return ((bool)(this["AlarmpHMesocosm"]));
+            }
+            set {
+                this["AlarmpHMesocosm"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool AlarmTempMesocosm {
+            get {
+                return ((bool)(this["AlarmTempMesocosm"]));
+            }
+            set {
+                this["AlarmTempMesocosm"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string PressureDelta {
+            get {
+                return ((string)(this["PressureDelta"]));
+            }
+            set {
+                this["PressureDelta"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string FlowrateDelta {
+            get {
+                return ((string)(this["FlowrateDelta"]));
+            }
+            set {
+                this["FlowrateDelta"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string FlowrateSetpoint {
+            get {
+                return ((string)(this["FlowrateSetpoint"]));
+            }
+            set {
+                this["FlowrateSetpoint"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string ConditionpHDelta {
+            get {
+                return ((string)(this["ConditionpHDelta"]));
+            }
+            set {
+                this["ConditionpHDelta"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string ConditionTempDelta {
+            get {
+                return ((string)(this["ConditionTempDelta"]));
+            }
+            set {
+                this["ConditionTempDelta"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string MesocosmpHDelta {
+            get {
+                return ((string)(this["MesocosmpHDelta"]));
+            }
+            set {
+                this["MesocosmpHDelta"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string MesocosmTempDelta {
+            get {
+                return ((string)(this["MesocosmTempDelta"]));
+            }
+            set {
+                this["MesocosmTempDelta"] = value;
             }
         }
     }

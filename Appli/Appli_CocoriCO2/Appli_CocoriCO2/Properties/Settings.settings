@@ -6,7 +6,7 @@
       <Value Profile="(Default)">192.168.1.1</Value>
     </Setting>
     <Setting Name="dataQueryInterval" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">10</Value>
+      <Value Profile="(Default)">1</Value>
     </Setting>
     <Setting Name="dataLogInterval" Type="System.String" Scope="User">
       <Value Profile="(Default)">1</Value>
@@ -37,6 +37,66 @@
     </Setting>
     <Setting Name="RDataWebpage" Type="System.String" Scope="User">
       <Value Profile="(Default)">http://www.obs-vlfr.fr/~gazeau/FACE-IT/FACE-IT.html</Value>
+    </Setting>
+    <Setting Name="FluoSlope" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="FluoOffset" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="SlackToken" Type="System.String" Scope="User">
+      <Value Profile="(Default)">xapp-1-A02GU516K6E-2572202941058-01eb87f248250644435edd81f5b5d13c6401ae0a930b1f91631d4ce6718223b9</Value>
+    </Setting>
+    <Setting Name="SlackChannelID" Type="System.String" Scope="User">
+      <Value Profile="(Default)">#CRCM</Value>
+    </Setting>
+    <Setting Name="AlarmLevelH" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="AlarmLevelL" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="AlarmLevelLL" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="AlarmPressure" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="AlarmpHCondition" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="AlarmTempCondition" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="AlarmFlowrate" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="AlarmpHMesocosm" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="AlarmTempMesocosm" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="PressureDelta" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="FlowrateDelta" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="FlowrateSetpoint" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="ConditionpHDelta" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="ConditionTempDelta" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="MesocosmpHDelta" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="MesocosmTempDelta" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
     </Setting>
   </Settings>
 </SettingsFile>

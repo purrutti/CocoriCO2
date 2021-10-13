@@ -29,13 +29,13 @@ namespace Appli_CocoriCO2
         {
             InitializeComponent();
             ci = new CultureInfo("en-US");
-                ci.NumberFormat.NumberDecimalDigits = 2;
-                ci.NumberFormat.NumberDecimalSeparator = ".";
-                ci.NumberFormat.NumberGroupSeparator = " ";
-                Thread.CurrentThread.CurrentCulture = ci;
-                Thread.CurrentThread.CurrentUICulture = ci;
-                CultureInfo.DefaultThreadCurrentCulture = ci;
-                CultureInfo.DefaultThreadCurrentUICulture = ci;
+            ci.NumberFormat.NumberDecimalDigits = 2;
+            ci.NumberFormat.NumberDecimalSeparator = ".";
+            ci.NumberFormat.NumberGroupSeparator = " ";
+            Thread.CurrentThread.CurrentCulture = ci;
+            Thread.CurrentThread.CurrentUICulture = ci;
+            CultureInfo.DefaultThreadCurrentCulture = ci;
+            CultureInfo.DefaultThreadCurrentUICulture = ci;
 
             comboBox_Condition.SelectedIndex = 0;
         }
@@ -57,15 +57,20 @@ namespace Appli_CocoriCO2
             if (((MainWindow)Application.Current.MainWindow).ws.State == WebSocketState.Open)
             {
 
-                if (index == 4 || index == 5)
+                if (index == 4)
                 {
 
-                    msg = "{command:7,condID:0, senderID:4}";
+                    msg = "{cmd:7,cID:0, sID:4}";
+                }
+                else if (index == 5)
+                {
+
+                    msg = "{cmd:10,cID:0, sID:4}";
                 }
                 else
                 {
                     //{command:0,condID:0,senderID:4}
-                    msg = "{command:0,condID:" + index + ", senderID:4}";
+                    msg = "{cmd:0,cID:" + index + ", sID:4}";
                 }
                 Task<string> t2 = Send(((MainWindow)Application.Current.MainWindow).ws, msg, ((MainWindow)Application.Current.MainWindow).comDebugWindow.tb2);
                 t2.Wait(50);
@@ -83,25 +88,25 @@ namespace Appli_CocoriCO2
             {
                 if (comboBox_Condition.SelectedIndex == 5)
                 {
-                    MW.masterParams.regulTempEC.autorisationForcage = (bool)checkBox_pH_Override.IsChecked;
-                    if (Int32.TryParse(tb_pH_consigneForcage.Text, out temp)) MW.masterParams.regulTempEC.consigneForcage = temp;
-                    if (Double.TryParse(tb_pH_setPoint.Text, out dTemp)) MW.masterParams.regulTempEC.consigne = dTemp;
-                    if (Double.TryParse(tb_pH_Kp.Text, out dTemp)) MW.masterParams.regulTempEC.Kp = dTemp;
-                    if (Double.TryParse(tb_pH_Ki.Text, out dTemp)) MW.masterParams.regulTempEC.Ki = dTemp;
-                    if (Double.TryParse(tb_pH_Kd.Text, out dTemp)) MW.masterParams.regulTempEC.Kd = dTemp;
+                    MW.pacParams.regulTempEC.autorisationForcage = (bool)checkBox_pH_Override.IsChecked;
+                    if (Int32.TryParse(tb_pH_consigneForcage.Text, out temp)) MW.pacParams.regulTempEC.consigneForcage = temp;
+                    if (Double.TryParse(tb_pH_setPoint.Text, out dTemp)) MW.pacParams.regulTempEC.consigne = dTemp;
+                    if (Double.TryParse(tb_pH_Kp.Text, out dTemp)) MW.pacParams.regulTempEC.Kp = dTemp;
+                    if (Double.TryParse(tb_pH_Ki.Text, out dTemp)) MW.pacParams.regulTempEC.Ki = dTemp;
+                    if (Double.TryParse(tb_pH_Kd.Text, out dTemp)) MW.pacParams.regulTempEC.Kd = dTemp;
 
 
-                    msg = "{command:9,condID:0,senderID:4,";
-                    msg += "\"regulTempEC\":{";
-                    msg += "\"consigne\":" + MW.masterParams.regulTempEC.consigne.ToString() + ",";
-                    msg += "\"Kp\":" + MW.masterParams.regulTempEC.Kp.ToString() + ",";
-                    msg += "\"Ki\":" + MW.masterParams.regulTempEC.Ki.ToString() + ",";
-                    msg += "\"Kd\":" + MW.masterParams.regulTempEC.Kd.ToString() + ",";
-                    msg += "\"consigneForcage\":" + MW.masterParams.regulTempEC.consigneForcage + ",";
-                    msg += "\"autorisationForcage\":\"" + MW.masterParams.regulTempEC.autorisationForcage + "\"}";
+                    msg = "{cmd:9,cID:0,sID:4,";
+                    msg += "\"rTempEC\":{";
+                    msg += "\"cons\":" + MW.pacParams.regulTempEC.consigne.ToString() + ",";
+                    msg += "\"Kp\":" + MW.pacParams.regulTempEC.Kp.ToString() + ",";
+                    msg += "\"Ki\":" + MW.pacParams.regulTempEC.Ki.ToString() + ",";
+                    msg += "\"Kd\":" + MW.pacParams.regulTempEC.Kd.ToString() + ",";
+                    msg += "\"consForcage\":" + MW.pacParams.regulTempEC.consigneForcage + ",";
+                    msg += "\"aForcage\":\"" + MW.pacParams.regulTempEC.autorisationForcage + "\"}";
                     msg += "}";
                 }
-                else if(comboBox_Condition.SelectedIndex == 4)
+                else if (comboBox_Condition.SelectedIndex == 4)
                 {
                     MW.masterParams.regulPressionEA.autorisationForcage = (bool)checkBox_pH_Override.IsChecked;
                     if (Int32.TryParse(tb_pH_consigneForcage.Text, out temp)) MW.masterParams.regulPressionEA.consigneForcage = temp;
@@ -118,22 +123,22 @@ namespace Appli_CocoriCO2
                     if (Double.TryParse(tb_Temp_Kd.Text, out dTemp)) MW.masterParams.regulPressionEC.Kd = dTemp;
                     if (Double.TryParse(tb_dT_setPoint.Text, out dTemp)) MW.masterParams.regulPressionEC.offset = dTemp;
 
-                    msg = "{command:8,condID:0,senderID:4,";
-                    msg += "\"regulPressionEA\":{";
-                    msg += "\"consigne\":" + MW.masterParams.regulPressionEA.consigne.ToString() + ",";
+                    msg = "{cmd:8,cID:0,sID:4,";
+                    msg += "\"rPressionEA\":{";
+                    msg += "\"cons\":" + MW.masterParams.regulPressionEA.consigne.ToString() + ",";
                     msg += "\"Kp\":" + MW.masterParams.regulPressionEA.Kp.ToString() + ",";
                     msg += "\"Ki\":" + MW.masterParams.regulPressionEA.Ki.ToString() + ",";
                     msg += "\"Kd\":" + MW.masterParams.regulPressionEA.Kd.ToString() + ",";
-                    msg += "\"consigneForcage\":" + MW.masterParams.regulPressionEA.consigneForcage + ",";
-                    msg += "\"autorisationForcage\":\"" + MW.masterParams.regulPressionEA.autorisationForcage + "\"},";
+                    msg += "\"consForcage\":" + MW.masterParams.regulPressionEA.consigneForcage + ",";
+                    msg += "\"aForcage\":\"" + MW.masterParams.regulPressionEA.autorisationForcage + "\"},";
 
-                    msg += "\"regulPressionEC\":{";
-                    msg += "\"consigne\":" + MW.masterParams.regulPressionEC.consigne.ToString() + ",";
+                    msg += "\"rPressionEC\":{";
+                    msg += "\"cons\":" + MW.masterParams.regulPressionEC.consigne.ToString() + ",";
                     msg += "\"Kp\":" + MW.masterParams.regulPressionEC.Kp.ToString() + ",";
                     msg += "\"Ki\":" + MW.masterParams.regulPressionEC.Ki.ToString() + ",";
                     msg += "\"Kd\":" + MW.masterParams.regulPressionEC.Kd.ToString() + ",";
-                    msg += "\"consigneForcage\":" + MW.masterParams.regulPressionEC.consigneForcage + ",";
-                    msg += "\"autorisationForcage\":\"" + MW.masterParams.regulPressionEC.autorisationForcage + "\"}";
+                    msg += "\"consForcage\":" + MW.masterParams.regulPressionEC.consigneForcage + ",";
+                    msg += "\"aForcage\":\"" + MW.masterParams.regulPressionEC.autorisationForcage + "\"}";
                     msg += "}";
                 }
                 else
@@ -153,7 +158,7 @@ namespace Appli_CocoriCO2
                     /*
                      * {"command":2,"condID":0,"time":"1611595972","regulTemp":{"consigne":0,"Kp":0,"Ki":0,"Kd":0},"regulpH":{"consigne":0,"Kp":0,"Ki":0,"Kd":0}}
                      * */
-                    msg = "{command:2,condID:" + comboBox_Condition.SelectedIndex + ",senderID:4,";
+                    msg = "{cmd:2,cID:" + comboBox_Condition.SelectedIndex + ",sID:4,";
 
                     if (c.condID > 0)
                     {
@@ -165,24 +170,24 @@ namespace Appli_CocoriCO2
                         if (Double.TryParse(tb_Temp_Ki.Text, out dTemp)) c.regulTemp.Ki = dTemp;
                         if (Double.TryParse(tb_Temp_Kd.Text, out dTemp)) c.regulTemp.Kd = dTemp;
                         if (Double.TryParse(tb_dT_setPoint.Text, out dTemp)) c.regulTemp.offset = dTemp;
-                        msg += "\"regulTemp\":{";
+                        msg += "\"rTemp\":{";
                         msg += "\"offset\":" + c.regulTemp.offset.ToString() + ",";
-                        msg += "\"consigne\":" + c.regulTemp.consigne.ToString() + ",";
+                        msg += "\"cons\":" + c.regulTemp.consigne.ToString() + ",";
                         msg += "\"Kp\":" + c.regulTemp.Kp.ToString() + ",";
                         msg += "\"Ki\":" + c.regulTemp.Ki.ToString() + ",";
                         msg += "\"Kd\":" + c.regulTemp.Kd.ToString() + ",";
-                        msg += "\"consigneForcage\":" + c.regulTemp.consigneForcage + ",";
-                        msg += "\"autorisationForcage\":\"" + c.regulTemp.autorisationForcage + "\"},";
+                        msg += "\"consForcage\":" + c.regulTemp.consigneForcage + ",";
+                        msg += "\"aForcage\":\"" + c.regulTemp.autorisationForcage + "\"},";
 
                     }
 
-                    msg += "\"regulpH\":{\"offset\":" + c.regulpH.offset.ToString() + ",";
-                    msg += "\"consigne\":" + c.regulpH.consigne.ToString() + ",";
+                    msg += "\"rpH\":{\"offset\":" + c.regulpH.offset.ToString() + ",";
+                    msg += "\"cons\":" + c.regulpH.consigne.ToString() + ",";
                     msg += "\"Kp\":" + c.regulpH.Kp.ToString() + ",";
                     msg += "\"Ki\":" + c.regulpH.Ki.ToString() + ",";
                     msg += "\"Kd\":" + c.regulpH.Kd.ToString() + ",";
-                    msg += "\"consigneForcage\":" + c.regulpH.consigneForcage + ",";
-                    msg += "\"autorisationForcage\":\"" + c.regulpH.autorisationForcage + "\"}";
+                    msg += "\"consForcage\":" + c.regulpH.consigneForcage + ",";
+                    msg += "\"aForcage\":\"" + c.regulpH.autorisationForcage + "\"}";
 
                     msg += "}";
                 }
@@ -256,6 +261,42 @@ namespace Appli_CocoriCO2
                 checkBox_Temp_Override.Visibility = v;
 
             }
+            else if (comboBox_Condition.SelectedIndex == 4)
+            {
+                label_pH_title.Content = "Ambient water pressure";
+                label_Temp_title.Content = "Hot water pressure";
+                label_pH_setpoint.Content = "pressure setpoint";
+                label_Temp_setpoint.Content = "pressure setpoint";
+                label_pH_measure.Content = "pressure measure";
+                label_Temp_measure.Content = "pressure measure";
+                tb_pH_setPoint.IsEnabled = true;
+                tb_Temp_setPoint.IsEnabled = true;
+
+
+                v = Visibility.Visible;
+                label_Temp_title.Visibility = v;
+                tb_dpH_setPoint.Visibility = Visibility.Hidden;
+                label_dpH.Visibility = Visibility.Hidden;
+                tb_dT_setPoint.Visibility = Visibility.Hidden;
+                label_dT.Visibility = Visibility.Hidden;
+                tb_Temp_setPoint.Visibility = v;
+                tb_Temp_Kp.Visibility = v;
+                tb_Temp_Ki.Visibility = v;
+                label_Temp_Kp.Visibility = v;
+                label_Temp_setpoint.Visibility = v;
+                label_Temp_Ki.Visibility = v;
+                tb_Temp_Kd.Visibility = v;
+                label_Temp_Kd.Visibility = v;
+                tb_Temp_measure.Visibility = v;
+                label_Temp_measure.Visibility = v;
+                tb_Temp_PIDoutput.Visibility = v;
+                label_Temp_sortiePID.Visibility = v;
+                label_pc1.Visibility = v;
+                label_pc2.Visibility = v;
+                tb_Temp_consigneForcage.Visibility = v;
+                checkBox_Temp_Override.Visibility = v;
+
+            }
             else
 
             {
@@ -300,7 +341,7 @@ namespace Appli_CocoriCO2
                 label_dT.Visibility = v;
             }
             //refreshParams();
-          }
+        }
 
         private void refreshParams()
         {
@@ -347,25 +388,26 @@ namespace Appli_CocoriCO2
                         tb_Temp_Kd.Text = MW.masterParams.regulPressionEC.Kd.ToString(ci);
                         checkBox_Temp_Override.IsChecked = MW.masterParams.regulPressionEC.autorisationForcage;
                     }
-                    else
+                    else//=5
                     {
-                        tb_dpH_setPoint.Text = MW.masterParams.regulTempEC.offset.ToString(ci);
-                        tb_pH_setPoint.Text = MW.masterParams.regulTempEC.consigne.ToString(ci);
-                        tb_pH_consigneForcage.Text = MW.masterParams.regulTempEC.consigneForcage.ToString(ci);
-                        tb_pH_Kp.Text = MW.masterParams.regulTempEC.Kp.ToString(ci);
-                        tb_pH_Ki.Text = MW.masterParams.regulTempEC.Ki.ToString(ci);
-                        tb_pH_Kd.Text = MW.masterParams.regulTempEC.Kd.ToString(ci);
-                        checkBox_pH_Override.IsChecked = MW.masterParams.regulTempEC.autorisationForcage;
+                        tb_dpH_setPoint.Text = MW.pacParams.regulTempEC.offset.ToString(ci);
+                        tb_pH_setPoint.Text = MW.pacParams.regulTempEC.consigne.ToString(ci);
+                        tb_pH_consigneForcage.Text = MW.pacParams.regulTempEC.consigneForcage.ToString(ci);
+                        tb_pH_Kp.Text = MW.pacParams.regulTempEC.Kp.ToString(ci);
+                        tb_pH_Ki.Text = MW.pacParams.regulTempEC.Ki.ToString(ci);
+                        tb_pH_Kd.Text = MW.pacParams.regulTempEC.Kd.ToString(ci);
+                        checkBox_pH_Override.IsChecked = MW.pacParams.regulTempEC.autorisationForcage;
                     }
-                        
+
 
                 }
-            }catch(Exception e)
+            }
+            catch (Exception e)
             {
 
             }
-            
-            
+
+
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
