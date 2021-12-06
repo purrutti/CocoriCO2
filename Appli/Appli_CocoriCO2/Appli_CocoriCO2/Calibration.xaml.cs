@@ -101,6 +101,7 @@ namespace Appli_CocoriCO2
                     btn_SendSlope.Visibility = Visibility.Hidden;
                     tb_Offset.IsEnabled = true;
                     tb_Slope.IsEnabled = true;
+                    btn_FactoryReset.IsEnabled = false;
                     break;
                 case 5:
                     label_measure.Content = string.Format("{0:0.00}", MW.ambiantConditions.oxy);
@@ -116,6 +117,7 @@ namespace Appli_CocoriCO2
                     lbl_std2.Visibility = Visibility.Visible;
                     tb_Slope.Visibility = Visibility.Visible;
                     btn_SendSlope.Visibility = Visibility.Visible;
+                    btn_FactoryReset.IsEnabled = true;
                     break;
                 case 6:
                     label_measure.Content = string.Format("{0:0.00} ", MW.ambiantConditions.turb);
@@ -127,6 +129,7 @@ namespace Appli_CocoriCO2
                     lbl_std2.Visibility = Visibility.Visible;
                     tb_Slope.Visibility = Visibility.Visible;
                     btn_SendSlope.Visibility = Visibility.Visible;
+                    btn_FactoryReset.IsEnabled = true;
                     break;
                 case 7:
                     label_measure.Content = string.Format("{0:0.00} ", MW.ambiantConditions.cond);
@@ -140,6 +143,7 @@ namespace Appli_CocoriCO2
                     lbl_std2.Visibility = Visibility.Visible;
                     tb_Slope.Visibility = Visibility.Visible;
                     btn_SendSlope.Visibility = Visibility.Visible;
+                    btn_FactoryReset.IsEnabled = true;
                     break;
             }
         }
@@ -223,7 +227,7 @@ namespace Appli_CocoriCO2
         private void sendReq(int condID, int sensorID, int calibParam, float value)
         {
             //{ command: 4, condID: 1,senderID: 4, MesoID: 1,sensorID: 2, calibParam: 1, value: 123,45}
-            string msg = "{command:4,condID:" + condID + ",senderID:4,sensorID:" + sensorID + ",calibParam:" + calibParam + ",value:" + value + "}";
+            string msg = "{cmd:4,cID:" + condID + ",sID:4,sensorID:" + sensorID + ",calibParam:" + calibParam + ",value:" + value + "}";
 
             ((MainWindow)Application.Current.MainWindow).comDebugWindow.tb1.Text = msg;
 
@@ -273,7 +277,9 @@ namespace Appli_CocoriCO2
         private void btn_FactoryReset_Click(object sender, RoutedEventArgs e)
         {
             int condID = comboBox_Condition.SelectedIndex;
-            int sensorID = comboBox_Sensor.SelectedIndex;
+            int sensorID;
+            if (condID == 0) sensorID = comboBox_Sensor_C0.SelectedIndex;
+            else sensorID = comboBox_Sensor.SelectedIndex;
             float value;
 
             float.TryParse(tb_Offset.Text, out value);

@@ -143,7 +143,8 @@ namespace Appli_CocoriCO2
                     MW.ambiantConditions = JsonConvert.DeserializeObject<Ambiant>(data);
                     MW.ambiantConditions.lastUpdated = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(MW.ambiantConditions.time);
                     MW.statusLabel1.Text = "Last updated: " + MW.ambiantConditions.lastUpdated.ToString() + " UTC";
-                }
+                    MW.ambiantConditions.salinite = calculateSalinity(MW.ambiantConditions.cond);
+                        }
                 else if (c.command == 8)
                 {
 
@@ -165,31 +166,49 @@ namespace Appli_CocoriCO2
             }
         }
 
+        private double calculateSalinity(double cond)
+        {
+            double[] a = new double[] { 0.008, -0.1692, 25.3851, 14.0941, -7.0261,2.7081 };
+            double[] b = new double[] { 0.0005, -0.0056,-0.0066, -0.0375, 0.0636, -0.0144 };
+            double[] c = new double[] { 0.6766097,0.0200564,0.000011043,-0.00000009698,0.00000000010031};
+
+            double k = 0.0162;
+
+            double rt = c[0] + c[1] * 25.0 + c[2] * 25.0 * 25.0 + c[3] * 25.0 * 25.0 * 25.0 + c[4] * 25.0 * 25.0 * 25.0 * 25.0;
+            double Rt = (cond/1000) / (42.914 * rt);
+            double S = a[0] + a[1] * Math.Pow(Rt, 0.5) + a[2] * Math.Pow(Rt, 1) + a[3] * Math.Pow(Rt, 1.5) + a[4] * Math.Pow(Rt, 2) + a[5] * Math.Pow(Rt, 2.5) + ((25.0 - 15)/(1+ k * (25.0 - 15))*(b[0] + b[1] * Math.Pow(Rt, 0.5) + b[2] * Math.Pow(Rt, 1) + b[3] * Math.Pow(Rt, 1.5) + b[4] * Math.Pow(Rt, 2) + b[5] * Math.Pow(Rt, 2.5)));
+            return S;
+        }
+
         private void saveData()
         {
-            try
+            if(MW.conditionData.Count > 0)
             {
-                Condition c = MW.conditionData.Last<Condition>();
-                if (c.lastUpdated != lastFileWrite)
+                try
                 {
-                    DateTime dt = DateTime.Now.ToUniversalTime();
-                    string filePath = Properties.Settings.Default["dataFileBasePath"].ToString() + "_" + dt.ToString("yyyy-MM-dd") + ".csv";
-                    filePath = filePath.Replace('\\', '/');
-
-                    saveToFile(filePath, dt);
-                    //if (c.lastUpdated.Day != lastFileWrite.Day) ftpTransfer(filePath);
-                    if (c.lastUpdated.Hour != lastFileWrite.Hour)// POur tester
+                    Condition c = MW.conditionData.Last<Condition>();
+                    if (c.lastUpdated != lastFileWrite)
                     {
-                        ftpTransfer(filePath);
-                        lastFileWrite = c.lastUpdated;
+                        DateTime dt = DateTime.Now.ToUniversalTime();
+                        string filePath = Properties.Settings.Default["dataFileBasePath"].ToString() + "_" + dt.ToString("yyyy-MM-dd") + ".csv";
+                        filePath = filePath.Replace('\\', '/');
+
+                        saveToFile(filePath, dt);
+                        //if (c.lastUpdated.Day != lastFileWrite.Day) ftpTransfer(filePath);
+                        if (c.lastUpdated.Hour != lastFileWrite.Hour)// POur tester
+                        {
+                            ftpTransfer(filePath);
+                            lastFileWrite = c.lastUpdated;
+                        }
+                        MW.conditionData.Clear();
                     }
-                    MW.conditionData.Clear();
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show("Error writing data: " + e.Message, "Error saving data");
                 }
             }
-            catch (Exception e)
-            {
-                MessageBox.Show("Error writing data: " + e.Message, "Error saving data");
-            }
+            
 
         }
 
@@ -199,7 +218,7 @@ namespace Appli_CocoriCO2
             if (MesoID == -1) tag = "AmbientData";
             else tag = MesoID.ToString();
             var point = PointData
-              .Measurement("CRCBN")
+              .Measurement("CRCM")
               .Tag("Condition", conditionId.ToString())
               .Tag("Mesocosm", tag)
               .Field(field, value)
@@ -224,7 +243,7 @@ namespace Appli_CocoriCO2
             if (!System.IO.File.Exists(filePath))
             {
                 //Write headers
-                String header = "Time;Sun;Tide;Ambient_O2;Ambient_Conductivity;Ambient_Salinity;Ambient_Turbidity;Ambient_Fluo;Ambient_Temperature;Ambient_pH;Cold_Water_Pressure;Hot_Water_Pressure;";
+                String header = "Time;Sun;Tide;Ambient_O2;Ambient_Conductivity;Ambient_Salinity;Ambient_Turbidity;Ambient_Fluo;Ambient_Temperature;Ambient_pH;Cold_Water_Pressure;Hot_Water_Pressure;Hot_Water_Temperature;Cleanup_Mode;";
 
                 for (int i = 0; i < 4; i++)
                 {
@@ -267,6 +286,8 @@ namespace Appli_CocoriCO2
             data += MW.ambiantConditions.pH; data += ";";
             data += MW.ambiantConditions.pressionEA; data += ";";
             data += MW.ambiantConditions.pressionEC; data += ";";
+            data += MW.ambiantConditions.tempPAC; data += ";";
+            data += MW.cleanupMode; data += ";";
 
             writeDataPointAsync(0, -1, "sun", sun, dt);
             writeDataPointAsync(0, -1, "tide", tide, dt);
@@ -280,6 +301,7 @@ namespace Appli_CocoriCO2
 
             writeDataPointAsync(0, -1, "Cold_Water_Pressure", MW.ambiantConditions.pressionEA, dt);
             writeDataPointAsync(0, -1, "Hot_Water_Pressure", MW.ambiantConditions.pressionEC, dt);
+            writeDataPointAsync(0, -1, "Hot_Water_Temperature", MW.ambiantConditions.tempPAC, dt);
 
             for (int i = 0; i < 4; i++)
             {
@@ -329,17 +351,25 @@ namespace Appli_CocoriCO2
 
         private void ftpTransfer(string fileName)
         {
-            string ftpUsername = Properties.Settings.Default["ftpUsername"].ToString();
-            string ftpPassword = Properties.Settings.Default["ftpPassword"].ToString();
-            string ftpDir = "ftp://" + Properties.Settings.Default["ftpDir"].ToString();
-
-            string fn = fileName.Substring(fileName.LastIndexOf('/') + 1);
-            ftpDir += fn;
-            using (var client = new WebClient())
+            try
             {
-                client.Credentials = new NetworkCredential(ftpUsername, ftpPassword);
-                client.UploadFile(ftpDir, WebRequestMethods.Ftp.UploadFile, fileName);
+                string ftpUsername = Properties.Settings.Default["ftpUsername"].ToString();
+                string ftpPassword = Properties.Settings.Default["ftpPassword"].ToString();
+                string ftpDir = "ftp://" + Properties.Settings.Default["ftpDir"].ToString();
+
+                string fn = fileName.Substring(fileName.LastIndexOf('/') + 1);
+                ftpDir += fn;
+                using (var client = new WebClient())
+                {
+                    client.Credentials = new NetworkCredential(ftpUsername, ftpPassword);
+                    client.UploadFile(ftpDir, WebRequestMethods.Ftp.UploadFile, fileName);
+                }
             }
+            catch (Exception e)
+            {
+                MessageBox.Show("Error sending data file on FTP server: " + e.Message, "Error sending FTP data");
+            }
+
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)

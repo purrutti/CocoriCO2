@@ -147,6 +147,19 @@
             <Label x:Name="label_EC_temperature_setpoint" Content="Temperature setpoint: ...." HorizontalAlignment="Left" Width="194" Height="28" VerticalAlignment="Top" Canvas.Top="682" />
             <Label x:Name="label_EC_temperature_measure" Content="Temperature measure: ...." HorizontalAlignment="Left" Width="194" Height="28" VerticalAlignment="Top" Canvas.Top="698" />
             <Label x:Name="label_TEC_sortiePID" Content="Valve: ...." HorizontalAlignment="Left" Width="194" Height="29" VerticalAlignment="Top" Canvas.Top="715" />
+            <Label Content="C0 M0" Canvas.Left="641" Canvas.Top="59" FontWeight="Bold" FontSize="20" Width="71"/>
+            <Label Content="C1 M0" Canvas.Left="641" Canvas.Top="228" FontWeight="Bold" FontSize="20" Width="71"/>
+            <Label Content="C2 M0" Canvas.Left="641" Canvas.Top="397" FontWeight="Bold" FontSize="20" Width="71"/>
+            <Label Content="C3 M0" Canvas.Left="641" Canvas.Top="563" FontWeight="Bold" FontSize="20" Width="71"/>
+            <Label Content="C1 M1" Canvas.Left="878" Canvas.Top="228" FontWeight="Bold" FontSize="20" Width="71"/>
+            <Label Canvas.Left="873" Canvas.Top="385" FontWeight="Bold" FontSize="20" Width="71"/>
+            <Label Content="C2 M1" Canvas.Left="878" Canvas.Top="397" FontWeight="Bold" FontSize="20" Width="71"/>
+            <Label Content="C3 M1" Canvas.Left="878" Canvas.Top="563" FontWeight="Bold" FontSize="20" Width="71"/>
+            <Label Content="C1 M2" Canvas.Left="1120" Canvas.Top="228" FontWeight="Bold" FontSize="20" Width="71"/>
+            <Label Content="C2 M2" Canvas.Left="1120" Canvas.Top="397" FontWeight="Bold" FontSize="20" Width="71"/>
+            <Label Content="C3 M2" Canvas.Left="1120" Canvas.Top="563" FontWeight="Bold" FontSize="20" Width="71"/>
+            <Label Content="C0 M1" Canvas.Left="878" Canvas.Top="59" FontWeight="Bold" FontSize="20" Width="71"/>
+            <Label Content="C0 M2" Canvas.Left="1120" Canvas.Top="59" FontWeight="Bold" FontSize="20" Width="71"/>
         </Canvas>
         <!--<Image Margin="10,25,0,0" Source="CocoriCO2 - P&amp;ID Container.png" Width="1280" Height="720" HorizontalAlignment="Left" VerticalAlignment="Top"/>
         

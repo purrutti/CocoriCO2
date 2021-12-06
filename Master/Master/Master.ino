@@ -44,7 +44,8 @@
 #define PIN_V2V_EA  4
 #define PIN_V2V_EC  5
 
-#define PIN_VANNE_CO2  38
+#define PIN_VANNE_CO2  42
+//#define PIN_VANNE_CO2  38
 #define PIN_VANNE_EXONDATION  36
 #define PIN_LED  37
 #define PIN_CAPTEUR_FLUO  59
@@ -236,7 +237,7 @@ void setup() {
 
     Serial.begin(115200);
     master.begin(9600); // baud-rate at 19200
-    master.setTimeOut(1000); // if there is no answer in 5000 ms, roll over
+    master.setTimeOut(2000); // if there is no answer in 5000 ms, roll over
 
     /*
     Condition 0 = Ambiant temperature
@@ -264,7 +265,7 @@ void setup() {
         //condition[i].regulTemp.consigne = 0;
     }
 
-    tempoSensorRead.interval = 100;
+    tempoSensorRead.interval = 50;
     tempoRegul.interval = 100;
     tempoCheckMeso.interval = 200;
     tempoSendValues.interval = 5000;
@@ -272,7 +273,7 @@ void setup() {
     tempoCheckSun.interval = 60 * 1000;
     tempoSendParams.interval = 5000;
     tempoCheckWaterLevelCO2.interval = 1000;
-    tempoRR.interval = 30000;
+    tempoRR.interval = 10000;
 
     tempoSensorRead.debut = millis() + 2000;
 
@@ -313,14 +314,60 @@ void setup() {
     currentMin = RTC.getMinute();
 
     setPIDparams();
+    Serial.print("SD BEGIN : ");
     Serial.print(SD.begin(53));
+    File root = SD.open("/");
+
+    printDirectory(root, 0);
     updateSunTimes();
     Serial.println(F("End SETUP"));
 
     checkSun();
 
-    Serial.print("Free RAM : "); Serial.println(getFreeSram());
+}
 
+void printDirectory(File dir, int numTabs) {
+
+    while (true) {
+
+        File entry = dir.openNextFile();
+
+        if (!entry) {
+
+            // no more files
+
+            break;
+
+        }
+
+        for (uint8_t i = 0; i < numTabs; i++) {
+
+            Serial.print('\t');
+
+        }
+
+        Serial.print(entry.name());
+
+        if (entry.isDirectory()) {
+
+            Serial.println("/");
+
+            printDirectory(entry, numTabs + 1);
+
+        }
+        else {
+
+            // files have sizes, directories do not
+
+            Serial.print("\t\t");
+
+            Serial.println(entry.size(), DEC);
+
+        }
+
+        entry.close();
+
+    }
 }
 
 void loop() {
@@ -446,13 +493,14 @@ bool checkSun() {
     }
     masterData.currentSun = sun;
 
+    //digitalWrite(PIN_LED, false);
     digitalWrite(PIN_LED, masterData.currentSun);
     return masterData.currentSun;
 }
 
 
 void updateSunTimes() {
-    const char* path = "param/sun.csv";
+    const char* path = "sun.csv";
     File dataFile = SD.open(path, FILE_READ);
     uint8_t currentDay = RTC.getMonthDay();
     uint8_t currentMonth = RTC.getMonth();
@@ -577,9 +625,14 @@ void setPIDparams() {
     condition[0].regulpH.pid.SetMode(AUTOMATIC);
     condition[0].regulpH.pid.SetControllerDirection(REVERSE);
 
+    regulTempEC.pid = PID((double*)&masterData.tempPAC, &regulTempEC.sortiePID, &regulTempEC.consigne, regulTempEC.Kp, regulTempEC.Ki, regulTempEC.Kd, DIRECT);
+    regulTempEC.pid.SetOutputLimits(50, 255);
+    regulTempEC.pid.SetMode(AUTOMATIC);
+    regulTempEC.pid.SetControllerDirection(DIRECT);
+
     for (int i = 0; i < 2; i++) {
         regulPression[i].pid = PID((double*)&masterData.pression[i], &regulPression[i].sortiePID, &regulPression[i].consigne, regulPression[i].Kp, regulPression[i].Ki, regulPression[i].Kd, DIRECT);
-        regulPression[i].pid.SetOutputLimits(50, 255);
+        regulPression[i].pid.SetOutputLimits(80, 255);
         regulPression[i].pid.SetMode(AUTOMATIC);
         regulPression[i].pid.SetControllerDirection(DIRECT);
     }
@@ -600,9 +653,10 @@ int regulationPression(uint8_t ID) {//0 = Eau ambiante, 1 = Eau Chaude
         //condition.load();
         regulPression[ID].pid.Compute();
         //condition[0].Meso[mesoID].salSortiePID_pc = (int)(condition[0].Meso[mesoID].salSortiePID / 2.55); 
-        regulPression[ID].sortiePID_pc = (int)map(regulPression[ID].sortiePID, 80, 255, 0, 100);
+        regulPression[ID].sortiePID_pc = (int)map(regulPression[ID].sortiePID, 50, 255, 0, 100);
         if (regulPression[ID].sortiePID_pc < 0)regulPression[ID].sortiePID_pc = 0;
         analogWrite(pinV2V_pression[ID], regulPression[ID].sortiePID);
+        //Serial.print("pression:"); Serial.print(ID); Serial.print("="); Serial.println(regulPression[ID].sortiePID_pc);
         return regulPression[ID].sortiePID_pc;
     }
 
@@ -653,11 +707,11 @@ int regulationpH() {
 double readTemp(int lissage, uint8_t pin, double temp) {
     int ana = analogRead(pin); // 0-1023 value corresponding to 0-10 V corresponding to 0-20 mA
     //actually, using 330 ohm resistor so 20mA = 6.6V
-    int ana2 = ana * 10 / 6.6;
-    int mA = map(ana2, 0, 1023, 0, 2000); //map to milli amps with 2 extra digits
-    int mbars = map(mA, 400, 2000, 0, 4000); //map to milli amps with 2 extra digits
+    //int ana2 = ana * 10 / 6.6;
+    int mA = map(ana, 0, 1023, 0, 2000); //map to milli amps with 2 extra digits
+    int t = map(mA, 400, 2000, 0, 5000); //map to milli amps with 2 extra digits
     double ancienneTemp = temp;
-    temp = ((double)mbars) / 1000.0; // pressure in bars
+    temp = ((double)t) / 100.0; // pressure in bars
     temp = (lissage * temp + (100.0 - lissage) * ancienneTemp) / 100.0;
     return temp;
 }
@@ -667,22 +721,41 @@ int regulationTemperaturePAC() {
 
     masterData.tempPAC = readTemp(10, PIN_TEMP_PAC, masterData.tempPAC);
 
-    if (elapsed(&tempoRR.debut, tempoRR.interval)) {
-        double diff = lastTemp - masterData.tempPAC;
-        double err = regulTempEC.consigne - masterData.tempPAC;
-
-        int adjust = (int)(regulTempEC.Kd * diff + regulTempEC.Ki * err);
-
-        meanPIDOut_temp += adjust;
-
-        if (meanPIDOut_temp > 255) meanPIDOut_temp = 255;
-        if (meanPIDOut_temp < 50) meanPIDOut_temp = 50;
-
-        lastTemp = masterData.tempPAC;
+    if (regulTempEC.autorisationForcage) {
+        if (regulTempEC.consigneForcage > 0 && regulTempEC.consigneForcage <= 100) {
+            analogWrite(PIN_V3V_PAC, (int)(regulTempEC.consigneForcage * 255 / 100));
+        }
+        else {
+            analogWrite(PIN_V3V_PAC, 0);
+        }
+        regulTempEC.sortiePID_pc = (int)map(regulTempEC.consigneForcage, 0, 255, 0, 100);
+        return regulTempEC.consigneForcage;
     }
-    regulTempEC.sortiePID_pc = (int)map(meanPIDOut_temp, 50, 255, 0, 100);
-    if (regulTempEC.sortiePID_pc < 0) regulTempEC.sortiePID_pc = 0;
-    analogWrite(PIN_V3V_PAC, meanPIDOut_temp);
+    else {
+        if (elapsed(&tempoRR.debut, tempoRR.interval)) {
+            double diff = lastTemp - masterData.tempPAC;
+            double err = regulTempEC.consigne - masterData.tempPAC;
+
+            int adjust = (int)(regulTempEC.Kd * diff + regulTempEC.Ki * err);
+            if (adjust > 2) adjust = 2;
+            if (adjust <- 2) adjust = -2;
+
+
+            meanPIDOut_temp += adjust;
+
+            if (meanPIDOut_temp > 255) meanPIDOut_temp = 255;
+            if (meanPIDOut_temp < 0) meanPIDOut_temp = 0;
+
+            //meanPIDOut_temp = map(meanPIDOut_temp, 0, 255, 100, 255);
+
+            lastTemp = masterData.tempPAC;
+        }
+        regulTempEC.sortiePID_pc = (int)map(meanPIDOut_temp, 50, 255, 0, 100);
+        if (regulTempEC.sortiePID_pc < 0) regulTempEC.sortiePID_pc = 0;
+        analogWrite(PIN_V3V_PAC, meanPIDOut_temp);
+    }
+
+    
 
     return meanPIDOut_temp;
 
@@ -1016,6 +1089,7 @@ float checkValue(float val, float min, float max, float def) {
 int state = 0;
 
 void readMBSensors() {
+    int errorCode = 0;
     if (elapsed(&tempoSensorRead.debut, tempoSensorRead.interval)) {
 
         readFluo();
@@ -1045,6 +1119,16 @@ void readMBSensors() {
                         pHSensor = false;
                     }
                 }
+                /*if (pHSensor) {
+
+                    if (mbSensor.readErrors(&master)) {
+
+                        Serial.print(F("pH:")); Serial.println(mbSensor.pH_sensorValue);
+                        
+                        mbSensor.pH_sensorValue = -99;
+                        pHSensor = false;
+                    }
+                }*/
                 else {
                     if (mbSensor.readTemp(&master)) {
                         Serial.print(F("temp:")); Serial.println(mbSensor.temp_sensorValue);
@@ -1053,7 +1137,6 @@ void readMBSensors() {
                             if (sensorIndex == 3) condition[0].mesureTemperature = mbSensor.temp_sensorValue;
                             if (sensorIndex == 4) {
                                 masterData.temperature = mbSensor.temp_sensorValue;
-                                Serial.print(F("masterdata temp:")); Serial.println(masterData.temperature);
                             }
 
                         }
@@ -1068,54 +1151,89 @@ void readMBSensors() {
                 case 5:
                     mbSensor.query.u8id = 10;//PODOC
                     if (state == 0) {
-                        if (mbSensor.requestValues(&master)) {
+                        errorCode = mbSensor.requestValues(&master);
+                        if (errorCode == 1) {
                             state = 1;
                         }
+                        else if(errorCode == -1) {
+                            state = 0;
+                            sensorIndex++;
+                        }
                     }
-                    else if (mbSensor.readValues(&master)) {
-                       Serial.print(F("Temperature:")); Serial.println(mbSensor.params[0]);
-                        Serial.print(F("oxy %:")); Serial.println(mbSensor.params[1]);
-                        Serial.print(F("oxy mg/L:")); Serial.println(mbSensor.params[2]);
-                        Serial.print(F("oxy ppm:")); Serial.println(mbSensor.params[3]);
-                        masterData.oxy = mbSensor.params[1];
-                        state = 0;
-                        sensorIndex++;
+                    else{
+                        errorCode = mbSensor.readValues(&master);
+                        if (errorCode == 1) {
+                            Serial.print(F("Temperature:")); Serial.println(mbSensor.params[0]);
+                            Serial.print(F("oxy %:")); Serial.println(mbSensor.params[1]);
+                            Serial.print(F("oxy mg/L:")); Serial.println(mbSensor.params[2]);
+                            Serial.print(F("oxy ppm:")); Serial.println(mbSensor.params[3]);
+                            masterData.oxy = mbSensor.params[1];
+                            state = 0;
+                            sensorIndex++;
+                        }
+                        else if (errorCode == 255){
+                            state = 0;
+                            sensorIndex++;
+                        }
                     }
                     break;
                 case 6:
                     mbSensor.query.u8id = 40;//NTU
                     if (state == 0) {
-                        if (mbSensor.requestValues(&master)) {
+                        errorCode = mbSensor.requestValues(&master);
+                        if (errorCode == 1) {
                             state = 1;
                         }
+                        else if (errorCode == 255) {
+                            state = 0;
+                            sensorIndex++;
+                        }
                     }
-                    else if (mbSensor.readValues(&master)) {
-                        Serial.print(F("Temperature:")); Serial.println(mbSensor.params[0]);
-                        Serial.print(F("NTU:")); Serial.println(mbSensor.params[1]);
-                        Serial.print(F("FNU:")); Serial.println(mbSensor.params[2]);
-                        Serial.print(F("mg/L:")); Serial.println(mbSensor.params[3]);
-                        masterData.turb = mbSensor.params[1];
-                        state = 0;
-                        //sensorIndex++;
-                        sensorIndex=0;
+                    else {
+                        errorCode = mbSensor.readValues(&master);
+                        if (errorCode == 1) {
+                            Serial.print(F("Temperature:")); Serial.println(mbSensor.params[0]);
+                            Serial.print(F("NTU:")); Serial.println(mbSensor.params[1]);
+                            Serial.print(F("FNU:")); Serial.println(mbSensor.params[2]);
+                            Serial.print(F("mg/L:")); Serial.println(mbSensor.params[3]);
+                            masterData.turb = mbSensor.params[1];
+                            state = 0;
+                            sensorIndex++;
+                        }
+                        else if (errorCode == 255) {
+                            state = 0;
+                            sensorIndex++;
+                        }
                     }
                     break;
                 case 7:
                     mbSensor.query.u8id = 30;//Cond
                     if (state == 0) {
-                        if (mbSensor.requestValues(&master)) {
+                        errorCode = mbSensor.requestValues(&master);
+                        if (errorCode == 1) {
                             state = 1;
                         }
+                        else if (errorCode == 255) {
+                            state = 0;
+                            sensorIndex = 0;
+                        }
                     }
-                    else if (mbSensor.readValues(&master)) {
-                        Serial.print(F("Temperature:")); Serial.println(mbSensor.params[0]);
-                        Serial.print(F("conductivite:")); Serial.println(mbSensor.params[1]);
-                        Serial.print(F("salinite:")); Serial.println(mbSensor.params[2]);
-                        Serial.print(F("TDS:")); Serial.println(mbSensor.params[3]);
-                        masterData.cond = mbSensor.params[1];
-                        masterData.salinite = mbSensor.params[2];
-                        state = 0;
-                        sensorIndex = 0;
+                    else {
+                        errorCode = mbSensor.readValues(&master);
+                        if (errorCode == 1) {
+                            Serial.print(F("Temperature:")); Serial.println(mbSensor.params[0]);
+                            Serial.print(F("conductivite:")); Serial.println(mbSensor.params[1]);
+                            Serial.print(F("salinite:")); Serial.println(mbSensor.params[2]);
+                            Serial.print(F("TDS:")); Serial.println(mbSensor.params[3]);
+                            masterData.cond = mbSensor.params[1];
+                            masterData.salinite = mbSensor.params[2];
+                            state = 0;
+                            sensorIndex=0;
+                        }
+                        else if (errorCode == 255) {
+                            state = 0;
+                            sensorIndex = 0;
+                        }
                     }
                     break;
                 case 8:

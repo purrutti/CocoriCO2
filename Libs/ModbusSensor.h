@@ -12,6 +12,8 @@ public:
     bool querySent = false;
     byte status[5];
 
+    int tries = 10;
+
 
     float pH_sensorValue;
     float temp_sensorValue;
@@ -82,15 +84,18 @@ public:
 
 
 
-    bool requestValues(Modbus* master)
+    uint8_t requestValues(Modbus* master)
     {
         setQueryW();
         if (!querySent) {
             master->query(query);
             querySent = true;
+            tries = 0;
         }
         else {
             master->poll();
+            tries++;
+            
             if (master->getState() == COM_IDLE) {
                 querySent = false;
                 return 1;
@@ -99,15 +104,16 @@ public:
         return 0;
     }
 
-    bool readValues(Modbus* master)
+    uint8_t readValues(Modbus* master)
     {
         setQueryR();
         if (!querySent) {
             master->query(query);
             querySent = true;
-        }
-        else {
+            tries = 0;
+        }else {
             master->poll();
+            tries++;
             if (master->getState() == COM_IDLE) {
                 querySent = false;
                 u.b[0] = data[1];
@@ -122,10 +128,18 @@ public:
                 u.b[0] = data[7];
                 u.b[1] = data[6];
                 params[3] = u.fval;
+
+
                 clearData();
-                if(params[1]>0) return 1;
-                return 0;
+                
+                if (params[0] > 0.1) return 1;
+                else return -1;
             }
+            /*if (tries < 10) return 0;
+            else {
+                querySent = false;
+                return -1;
+            }*/
         }
         return 0;
     }
@@ -248,6 +262,38 @@ public:
         setQuery(16, 5317, 6);
     }
 
+    void setQueryErrors() {
+        setQuery(3, 4800, 8);
+    }
+
+    bool readErrors(Modbus* master)
+    {
+        setQueryErrors();
+        if (!querySent) {
+            master->query(query);
+            querySent = true;
+        }
+        else {
+            master->poll();
+            if (master->getState() == COM_IDLE) {
+                u.b[0] = data[2];
+                u.b[1] = data[3];
+                pH_sensorValue = u.fval;
+                querySent = false;
+                for (int i = 0; i < 16; i++) {
+                    Serial.print("data["); Serial.print(i); Serial.print("]="); Serial.println(data[i]);
+                }
+
+                clearData();
+                return 1;
+
+            }
+        }
+
+        return 0;
+
+    }
+
     bool setLevel(Modbus* master)
     {
         setQuerySetLevel();
@@ -279,6 +325,7 @@ public:
                 u.b[1] = data[3];
                 pH_sensorValue = u.fval;
                 querySent = false;
+               
                 clearData();
                 return 1;
 
@@ -303,6 +350,7 @@ public:
                 u.b[1] = data[3];
                 temp_sensorValue = u.fval;
                 querySent = false;
+                
                 clearData();
                 return 1;
             }

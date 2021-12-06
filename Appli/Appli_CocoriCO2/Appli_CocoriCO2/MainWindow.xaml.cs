@@ -709,7 +709,7 @@ namespace Appli_CocoriCO2
                 {
                     if (conditions[0].Meso[0].alarmeNiveauBas) label_C0M1_Alarm.Content = "Alarm: Exondation not effective";
                 }
-                else if (!conditions[0].Meso[0].alarmeNiveauBas) label_C0M1_Alarm.Content = "Alarm: Low level";
+                else if (conditions[0].Meso[0].alarmeNiveauBas) label_C0M1_Alarm.Content = "Alarm: Low level";
                 else label_C0M1_Alarm.Content = !conditions[0].Meso[0].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
 
 
@@ -718,7 +718,7 @@ namespace Appli_CocoriCO2
                 {
                     if (conditions[0].Meso[1].alarmeNiveauBas) label_C0M2_Alarm.Content = "Alarm: Exondation not effective";
                 }
-                else if (!conditions[0].Meso[1].alarmeNiveauBas) label_C0M2_Alarm.Content = "Alarm: Low level";
+                else if (conditions[0].Meso[1].alarmeNiveauBas) label_C0M2_Alarm.Content = "Alarm: Low level";
                 else label_C0M2_Alarm.Content = !conditions[0].Meso[1].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
 
 
@@ -726,7 +726,7 @@ namespace Appli_CocoriCO2
                 {
                     if (conditions[0].Meso[2].alarmeNiveauBas) label_C0M3_Alarm.Content = "Alarm: Exondation not effective";
                 }
-                else if (!conditions[0].Meso[2].alarmeNiveauBas) label_C0M3_Alarm.Content = "Alarm: Low level";
+                else if (conditions[0].Meso[2].alarmeNiveauBas) label_C0M3_Alarm.Content = "Alarm: Low level";
                 else label_C0M3_Alarm.Content = !conditions[0].Meso[2].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
 
 
@@ -740,7 +740,7 @@ namespace Appli_CocoriCO2
                     {
                         if (conditions[1].Meso[0].alarmeNiveauBas) label_C1M1_Alarm.Content = "Alarm: Exondation not effective";
                     }
-                    else if (!conditions[1].Meso[0].alarmeNiveauBas) label_C1M1_Alarm.Content = "Alarm: Low level";
+                    else if (conditions[1].Meso[0].alarmeNiveauBas) label_C1M1_Alarm.Content = "Alarm: Low level";
                     else label_C1M1_Alarm.Content = !conditions[1].Meso[0].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
                 }
 
@@ -754,7 +754,7 @@ namespace Appli_CocoriCO2
                     {
                         if (conditions[1].Meso[1].alarmeNiveauBas) label_C1M2_Alarm.Content = "Alarm: Exondation not effective";
                     }
-                    else if (!conditions[1].Meso[1].alarmeNiveauBas) label_C1M2_Alarm.Content = "Alarm: Low level";
+                    else if (conditions[1].Meso[1].alarmeNiveauBas) label_C1M2_Alarm.Content = "Alarm: Low level";
                     else label_C1M2_Alarm.Content = !conditions[1].Meso[1].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
                 }
                 if (conditions[1].Meso[2].alarmeNiveauHaut)
@@ -767,7 +767,7 @@ namespace Appli_CocoriCO2
                     {
                         if (conditions[1].Meso[2].alarmeNiveauBas) label_C1M3_Alarm.Content = "Alarm: Exondation not effective";
                     }
-                    else if (!conditions[1].Meso[2].alarmeNiveauBas) label_C1M3_Alarm.Content = "Alarm: Low level";
+                    else if (conditions[1].Meso[2].alarmeNiveauBas) label_C1M3_Alarm.Content = "Alarm: Low level";
                     else label_C1M3_Alarm.Content = !conditions[1].Meso[2].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
                 }
                 if (conditions[2].Meso[0].alarmeNiveauHaut)
@@ -780,7 +780,7 @@ namespace Appli_CocoriCO2
                     {
                         if (conditions[2].Meso[0].alarmeNiveauBas) label_C2M1_Alarm.Content = "Alarm: Exondation not effective";
                     }
-                    else if (!conditions[2].Meso[0].alarmeNiveauBas) label_C2M1_Alarm.Content = "Alarm: Low level";
+                    else if (conditions[2].Meso[0].alarmeNiveauBas) label_C2M1_Alarm.Content = "Alarm: Low level";
                     else label_C2M1_Alarm.Content = !conditions[2].Meso[0].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
                 }
                 if (conditions[2].Meso[1].alarmeNiveauHaut)
@@ -793,7 +793,7 @@ namespace Appli_CocoriCO2
                     {
                         if (conditions[2].Meso[1].alarmeNiveauBas) label_C2M2_Alarm.Content = "Alarm: Exondation not effective";
                     }
-                    else if (!conditions[2].Meso[1].alarmeNiveauBas) label_C2M2_Alarm.Content = "Alarm: Low level";
+                    else if (conditions[2].Meso[1].alarmeNiveauBas) label_C2M2_Alarm.Content = "Alarm: Low level";
                     else
                         label_C2M2_Alarm.Content = !conditions[2].Meso[1].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
                 }
@@ -807,7 +807,7 @@ namespace Appli_CocoriCO2
                     {
                         if (conditions[2].Meso[2].alarmeNiveauBas) label_C2M3_Alarm.Content = "Alarm: Exondation not effective";
                     }
-                    else if (!conditions[2].Meso[2].alarmeNiveauBas) label_C2M3_Alarm.Content = "Alarm: Low level";
+                    else if (conditions[2].Meso[2].alarmeNiveauBas) label_C2M3_Alarm.Content = "Alarm: Low level";
                     else label_C2M3_Alarm.Content = !conditions[2].Meso[2].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
                 }
 
@@ -821,7 +821,7 @@ namespace Appli_CocoriCO2
                     {
                         if (conditions[3].Meso[0].alarmeNiveauBas) label_C3M1_Alarm.Content = "Alarm: Exondation not effective";
                     }
-                    else if (!conditions[3].Meso[0].alarmeNiveauBas) label_C3M1_Alarm.Content = "Alarm: Low level";
+                    else if (conditions[3].Meso[0].alarmeNiveauBas) label_C3M1_Alarm.Content = "Alarm: Low level";
                     else label_C3M1_Alarm.Content = !conditions[3].Meso[0].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
                 }
                 if (conditions[3].Meso[1].alarmeNiveauHaut)
@@ -834,7 +834,7 @@ namespace Appli_CocoriCO2
                     {
                         if (conditions[3].Meso[1].alarmeNiveauBas) label_C3M2_Alarm.Content = "Alarm: Exondation not effective";
                     }
-                    else if (!conditions[3].Meso[1].alarmeNiveauBas) label_C3M2_Alarm.Content = "Alarm: Low level";
+                    else if (conditions[3].Meso[1].alarmeNiveauBas) label_C3M2_Alarm.Content = "Alarm: Low level";
                     else label_C3M2_Alarm.Content = !conditions[3].Meso[1].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
                 }
                 if (conditions[3].Meso[2].alarmeNiveauHaut)
@@ -847,7 +847,7 @@ namespace Appli_CocoriCO2
                     {
                         if (conditions[3].Meso[2].alarmeNiveauBas) label_C3M3_Alarm.Content = "Alarm: Exondation not effective";
                     }
-                    else if (!conditions[3].Meso[2].alarmeNiveauBas) label_C3M3_Alarm.Content = "Alarm: Low level";
+                    else if (conditions[3].Meso[2].alarmeNiveauBas) label_C3M3_Alarm.Content = "Alarm: Low level";
                     else label_C3M3_Alarm.Content = !conditions[3].Meso[2].alarmeNiveauTresBas ? "" : "Alarm: Very Low level";
                 }
 
@@ -890,6 +890,7 @@ namespace Appli_CocoriCO2
                     label_EA_sortiePID.Foreground = Brushes.Red;
                 }
                 else label_EA_sortiePID.Foreground = Brushes.Black;
+                
                 if (masterParams.regulPressionEC.autorisationForcage)
                 {
                     label_EC_sortiePID.Content = string.Format(ci, "Valve: \t{0:0}%", masterParams.regulPressionEC.consigneForcage);
@@ -998,7 +999,16 @@ namespace Appli_CocoriCO2
                 else label_ledstate.Content = string.Format(ci, "LED state: OFF (Night)");
 
                 label_EC_temperature_measure.Content = string.Format(ci, "Temperature measure: \t{0:0.00}°C", ambiantConditions.tempPAC);
-                label_TEC_sortiePID.Content = string.Format(ci, "Valve: \t{0:0}%", ambiantConditions.sortiePID_TEC);
+                if (pacParams.regulTempEC.autorisationForcage)
+                {
+                    label_TEC_sortiePID.Content = string.Format(ci, "Valve: \t{0:0}%", pacParams.regulTempEC.consigneForcage);
+                    label_TEC_sortiePID.Foreground = Brushes.Red;
+                }
+                else
+                {
+                    label_TEC_sortiePID.Content = string.Format(ci, "Valve: \t{0:0}%", ambiantConditions.sortiePID_TEC);
+                    label_TEC_sortiePID.Foreground = Brushes.Black;
+                }
 
                 DateTime dt = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(ambiantConditions.nextSunDown).ToUniversalTime();
                 label_nextSunDown.Content = "Sunset time: " + dt.ToString();
