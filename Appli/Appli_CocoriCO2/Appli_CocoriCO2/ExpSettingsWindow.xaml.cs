@@ -90,7 +90,8 @@ namespace Appli_CocoriCO2
                 {
                     MW.pacParams.regulTempEC.autorisationForcage = (bool)checkBox_pH_Override.IsChecked;
                     if (Int32.TryParse(tb_pH_consigneForcage.Text, out temp)) MW.pacParams.regulTempEC.consigneForcage = temp;
-                    if (Double.TryParse(tb_pH_setPoint.Text, out dTemp)) MW.pacParams.regulTempEC.consigne = dTemp;
+                    if (Double.TryParse(tb_dpH_setPoint.Text, out dTemp)) MW.pacParams.regulTempEC.offset = dTemp;
+                    MW.pacParams.regulTempEC.consigne = MW.ambiantConditions.temperature + MW.pacParams.regulTempEC.offset;
                     if (Double.TryParse(tb_pH_Kp.Text, out dTemp)) MW.pacParams.regulTempEC.Kp = dTemp;
                     if (Double.TryParse(tb_pH_Ki.Text, out dTemp)) MW.pacParams.regulTempEC.Ki = dTemp;
                     if (Double.TryParse(tb_pH_Kd.Text, out dTemp)) MW.pacParams.regulTempEC.Kd = dTemp;
@@ -98,6 +99,7 @@ namespace Appli_CocoriCO2
 
                     msg = "{cmd:9,cID:0,sID:4,";
                     msg += "\"rTempEC\":{";
+                    msg += "\"offset\":" + MW.pacParams.regulTempEC.offset.ToString() + ",";
                     msg += "\"cons\":" + MW.pacParams.regulTempEC.consigne.ToString() + ",";
                     msg += "\"Kp\":" + MW.pacParams.regulTempEC.Kp.ToString() + ",";
                     msg += "\"Ki\":" + MW.pacParams.regulTempEC.Ki.ToString() + ",";
@@ -233,14 +235,15 @@ namespace Appli_CocoriCO2
             {
                 label_pH_title.Content = "Hot water temperature";
                 label_pH_setpoint.Content = "Temperature setpoint";
+                label_dpH.Content = "delta T°C setpoint";
                 label_pH_measure.Content = "Temperature measure";
-                tb_pH_setPoint.IsEnabled = true;
+                tb_pH_setPoint.IsEnabled = false;
 
 
                 v = Visibility.Hidden;
                 label_Temp_title.Visibility = v;
-                tb_dpH_setPoint.Visibility = Visibility.Hidden;
-                label_dpH.Visibility = Visibility.Hidden;
+                tb_dpH_setPoint.Visibility = Visibility.Visible;
+                label_dpH.Visibility = Visibility.Visible;
                 tb_dT_setPoint.Visibility = Visibility.Hidden;
                 label_dT.Visibility = Visibility.Hidden;
                 tb_Temp_setPoint.Visibility = v;
@@ -300,6 +303,7 @@ namespace Appli_CocoriCO2
             else
 
             {
+                label_dpH.Content = "delta pHsetpoint";
                 label_pH_setpoint.Content = "pH setpoint";
                 label_Temp_setpoint.Content = "Temperature setpoint";
                 label_pH_measure.Content = "pH measure";

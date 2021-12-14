@@ -673,6 +673,7 @@ namespace Appli_CocoriCO2
                 if (selctedcondID == 5)
                 {
                     expSettingsWindow.tb_pH_measure.Text = ambiantConditions.tempPAC.ToString(ci);
+                    expSettingsWindow.tb_pH_setPoint.Text = (ambiantConditions.temperature + pacParams.regulTempEC.offset).ToString(ci);
                     expSettingsWindow.tb_pH_PIDoutput.Text = ambiantConditions.sortiePID_TEC.ToString(ci);
                 }
                 else
