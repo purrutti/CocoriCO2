@@ -155,14 +155,21 @@ public:
 
     bool readTemp()
     {
+        Serial.println("read temp");
         setQueryTemp();
         if (!querySent) {
             master->query(query);
             querySent = true;
+            Serial.println("query sent");
         }
         else {
+            Serial.println("poll");
             master->poll();
             if (master->getState() == COM_IDLE) {
+                Serial.println("COM IDLE");
+                for (int i = 0; i < 16; i++) {
+                    Serial.print("data["); Serial.print(i); Serial.print("]:"); Serial.println(data[i]);
+                }
                 u.b[0] = data[2];
                 u.b[1] = data[3];
                 temp_sensorValue = u.fval;

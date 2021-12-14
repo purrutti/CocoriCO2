@@ -129,6 +129,10 @@ public:
                 u.b[1] = data[6];
                 params[3] = u.fval;
 
+                /*for (int i = 0; i < 16; i++) {
+                    Serial.print("data["); Serial.print(i); Serial.print("]="); Serial.println(data[i], HEX);
+                }*/
+
 
                 clearData();
                 
@@ -216,7 +220,6 @@ public:
         if (!querySent) {
             master->query(query);
             querySent = true;
-            Serial.println("query sent");
         }
         else {
             master->poll();
@@ -280,9 +283,7 @@ public:
                 u.b[1] = data[3];
                 pH_sensorValue = u.fval;
                 querySent = false;
-                for (int i = 0; i < 16; i++) {
-                    Serial.print("data["); Serial.print(i); Serial.print("]="); Serial.println(data[i]);
-                }
+                
 
                 clearData();
                 return 1;
@@ -325,6 +326,9 @@ public:
                 u.b[1] = data[3];
                 pH_sensorValue = u.fval;
                 querySent = false;
+                /*for (int i = 0; i < 16; i++) {
+                    Serial.print("data["); Serial.print(i); Serial.print("]="); Serial.println(data[i], HEX);
+                }*/
                
                 clearData();
                 return 1;

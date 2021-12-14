@@ -182,7 +182,10 @@ public:
             dataArray[i][LevelL] = Meso[i].alarmeNiveauBas;
             dataArray[i][LevelLL] = Meso[i].alarmeNiveauTresBas;
         }
+        
         serializeJson(doc, buffer, bufferSize);
+        Serial.print(F("SEND DATA:"));
+        Serial.println(buffer);
         return true;
     }
 

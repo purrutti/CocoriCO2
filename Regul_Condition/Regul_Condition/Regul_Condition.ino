@@ -8,9 +8,9 @@
 #include <TimeLib.h>
 #include <EEPROMex.h>
 #include <ArduinoJson.h>
-#include "C:\Users\pierr\Dropbox\Pierre\CNRS\repos\CocoriCO2\Libs/Mesocosmes.h"
-#include "C:\Users\pierr\Dropbox\Pierre\CNRS\repos\CocoriCO2\Libs/Hamilton.h"
-#include "C:\Users\pierr\Dropbox\Pierre\CNRS\repos\CocoriCO2\Libs/Condition.h"
+#include "C:\Users\Max\Desktop\CocoriCO2\Libs/Mesocosmes.h"
+#include "C:\Users\Max\Desktop\CocoriCO2\Libs/Hamilton.h"
+#include "C:\Users\Max\Desktop\CocoriCO2\Libs/Condition.h"
 #include <Ethernet.h>
 #include <WebSocketsClient.h>
 #include <RTC.h>
@@ -79,7 +79,7 @@ tempo tempoSendValues;
 tempo tempoRR;
 
 int sensorIndex = 0;
-bool pH = true;
+bool readpH = true;
 
 // Enter a MAC address for your controller below.
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield
@@ -94,8 +94,7 @@ char buffer[600];
 
 
 void webSocketEvent(WStype_t type, uint8_t* payload, size_t lenght) {
-    Serial.println(" WEBSOCKET EVENT:");
-    Serial.println(type);
+
     switch (type) {
     case WStype_DISCONNECTED:
         //Serial.print(num); Serial.println(" Disconnected!");
@@ -104,7 +103,7 @@ void webSocketEvent(WStype_t type, uint8_t* payload, size_t lenght) {
         Serial.println(" Connected!");
 
         // send message to client
-        webSocket.sendTXT("Connected");
+        webSocket.sendTXT(F("Connected"));
         break;
     case WStype_TEXT:
 
@@ -206,7 +205,7 @@ void setup() {
     tempoCheckMeso.interval = 200;
     tempoSendValues.interval = 5000;
 
-    tempoRR.interval = 30000;
+    tempoRR.interval = 5000;
 
     tempoSensorRead.debut = millis() + 2000;
     Serial.println("ETHER");
@@ -261,7 +260,7 @@ void loop() {
 void sendData() {
     if (elapsed(&tempoSendValues.debut, tempoSendValues.interval)) {
         Serial.println("SEND DATA");
-        condition.serializeData(buffer, RTC.getTime(), CONDID);
+        condition.serializeData(RTC.getTime(), CONDID,buffer);
         Serial.println(buffer);
         webSocket.sendTXT(buffer);
     }
@@ -347,13 +346,13 @@ void readMBSensors() {
             calibrateSensor();
         }
         else {
-            if (pH) {
+            if (readpH) {
                 if (Hamilton[sensorIndex].readPH()) {
                     Serial.print("sensor address:"); Serial.println(Hamilton[sensorIndex].query.u8id);
                     Serial.print(F("pH:")); Serial.println(Hamilton[sensorIndex].pH_sensorValue);
                     if (sensorIndex < 3) condition.Meso[sensorIndex].pH = Hamilton[sensorIndex].pH_sensorValue;
                     if (sensorIndex == 3) condition.mesurepH = Hamilton[sensorIndex].pH_sensorValue;
-                    pH = false;
+                    readpH = false;
                 }
             }
             else {
@@ -363,7 +362,7 @@ void readMBSensors() {
                     if (sensorIndex < 3) condition.Meso[sensorIndex].temperature = Hamilton[sensorIndex].temp_sensorValue;
                     if (sensorIndex == 3) condition.mesureTemperature = Hamilton[sensorIndex].temp_sensorValue;
                     sensorIndex == 3 ? sensorIndex = 0 : sensorIndex++;
-                    pH = true;
+                    readpH = true;
                 }
             }
         }
@@ -404,9 +403,9 @@ int regulationTemperature() {
                 double diff = lastTemp - Hamilton[3].temp_sensorValue;
                 double err = condition.regulTemp.consigne - Hamilton[3].temp_sensorValue;
 
-                int adjust = (int)(condition.regulTemp.Kd * diff + condition.regulTemp.Ki * err);
-                if (meanPIDOut_temp > 200) meanPIDOut_temp = 200;
-                if (meanPIDOut_temp < 70) meanPIDOut_temp = 70;
+                double adjust = (condition.regulTemp.Kd * diff + condition.regulTemp.Ki * err);
+                if (meanPIDOut_temp > 200) meanPIDOut_temp = 200.0;
+                if (meanPIDOut_temp < 70) meanPIDOut_temp = 70.0;
 
                 meanPIDOut_temp += adjust;
                 Serial.print("lastTemp"); Serial.println(lastTemp);
@@ -492,13 +491,19 @@ void load(int address) {
 
 
 void readJSON(char* json) {
-    StaticJsonDocument<512> doc;
-    deserializeJson(doc, json);
+    StaticJsonDocument<jsonDocSize_data> doc;
+    char buffer[bufferSize];
 
+    DeserializationError error = deserializeJson(doc, json);
 
-    uint8_t command = doc["command"];
-    uint8_t condID = doc["condID"];
-    uint8_t senderID = doc["senderID"];
+    if (error) {
+        Serial.print(F("deserializeJson() failed: "));
+        Serial.println(error.f_str());
+        //return;
+    }
+    uint8_t command = doc[cmd];
+    uint8_t condID = doc[cID];
+    uint8_t senderID = doc[sID];
 
     uint32_t time = doc["time"];
     if (time > 0) RTC.setTime(time);
@@ -510,7 +515,8 @@ void readJSON(char* json) {
             //webSocket.sendTXT(buffer);
             break;
         case REQ_DATA:
-            condition.serializeData(buffer, RTC.getTime(), CONDID);
+            //condition.serializeData(buffer, RTC.getTime(), CONDID);
+            condition.serializeData(time, CONDID, buffer);
             webSocket.sendTXT(buffer);
             break;
         case SEND_PARAMS:

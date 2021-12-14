@@ -310,7 +310,7 @@ namespace Appli_CocoriCO2
                 data += MW.conditions[i].regulpH.consigne; data += ";";
                 data += MW.conditions[i].regulpH.sortiePID_pc; data += ";";
 
-                writeDataPointAsync(i, -1, "temperature", MW.conditions[i].temperature, dt);
+                
                 writeDataPointAsync(i, -1, "pH", MW.conditions[i].pH, dt);
                 writeDataPointAsync(i, -1, "regulpH.consigne", MW.conditions[i].regulpH.consigne, dt);
                 writeDataPointAsync(i, -1, "regulpH.sortiePID", MW.conditions[i].regulpH.sortiePID_pc, dt);
@@ -319,6 +319,7 @@ namespace Appli_CocoriCO2
                 {
                     data += MW.conditions[i].regulTemp.consigne; data += ";";
                     data += MW.conditions[i].regulTemp.sortiePID_pc; data += ";";
+                    writeDataPointAsync(i, -1, "temperature", MW.conditions[i].temperature, dt);
                     writeDataPointAsync(i, -1, "regulTemp.consigne", MW.conditions[i].regulTemp.consigne, dt);
                     writeDataPointAsync(i, -1, "regulTemp.sortiePID", MW.conditions[i].regulTemp.sortiePID_pc, dt);
                 }

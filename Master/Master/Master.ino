@@ -732,7 +732,27 @@ int regulationTemperaturePAC() {
         return regulTempEC.consigneForcage;
     }
     else {
+
         if (elapsed(&tempoRR.debut, tempoRR.interval)) {
+            double diff = lastTemp - masterData.tempPAC;
+            double err = regulTempEC.consigne - masterData.tempPAC;
+
+            double adjust = (regulTempEC.Kd * diff + regulTempEC.Ki * err);
+
+            meanPIDOut_temp += adjust;
+            if (meanPIDOut_temp > 255) meanPIDOut_temp = 255;
+            if (meanPIDOut_temp < 0) meanPIDOut_temp = 0.0;
+
+            lastTemp = masterData.tempPAC;
+
+        }
+        regulTempEC.sortiePID_pc = (int)map(meanPIDOut_temp, 50, 255, 0, 100);
+        if (regulTempEC.sortiePID_pc < 0) regulTempEC.sortiePID_pc = 0;
+        analogWrite(PIN_V3V_PAC, meanPIDOut_temp);
+
+        return meanPIDOut_temp;
+
+        /*if (elapsed(&tempoRR.debut, tempoRR.interval)) {
             double diff = lastTemp - masterData.tempPAC;
             double err = regulTempEC.consigne - masterData.tempPAC;
 
@@ -752,7 +772,7 @@ int regulationTemperaturePAC() {
         }
         regulTempEC.sortiePID_pc = (int)map(meanPIDOut_temp, 50, 255, 0, 100);
         if (regulTempEC.sortiePID_pc < 0) regulTempEC.sortiePID_pc = 0;
-        analogWrite(PIN_V3V_PAC, meanPIDOut_temp);
+        analogWrite(PIN_V3V_PAC, meanPIDOut_temp);*/
     }
 
     
@@ -1090,6 +1110,7 @@ int state = 0;
 
 void readMBSensors() {
     int errorCode = 0;
+    //sensorIndex = 0;
     if (elapsed(&tempoSensorRead.debut, tempoSensorRead.interval)) {
 
         readFluo();
