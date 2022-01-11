@@ -8,7 +8,6 @@
 #include <EEPROMex.h>
 #include <ArduinoJson.h>
 #include "C:\Users\CRCBN\Desktop\code automates/Libs/Mesocosmes.h"
-#include "C:\Users\CRCBN\Desktop\code automates/Libs/Hamilton.h"
 #include "C:\Users\CRCBN\Desktop\code automates/Libs/Condition.h"
 #include "C:\Users\CRCBN\Desktop\code automates/Libs/ModbusSensor.h"
 #include <WebSocketsServer.h>
@@ -1034,6 +1033,7 @@ void readMBSensors() {
             calibrateSensor();
         }
         else {
+            //Serial.print(F("sensor Index:")); Serial.println(sensorIndex);
             if (sensorIndex < 5) { // HAMILTON: indexes O to 2 are mesocosms, index 4 is input measure tank, index 3 is acidification tank
                 //Hamilton.setSensor(sensorIndex + 1, &master);
                 mbSensor.query.u8id = sensorIndex + 1;

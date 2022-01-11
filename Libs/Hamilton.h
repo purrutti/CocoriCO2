@@ -29,7 +29,7 @@ public:
     ModbusSensorHamilton() {
     };
 
-    void setSensor(uint8_t slaveAddress, Modbus *m) {
+    void setSensor(uint8_t slaveAddress, Modbus* m) {
         query.u8id = slaveAddress; // slave address
         query.u8fct = 3; // function code (this one is registers read)
         query.u16RegAdd = 2089; // start address in slave
@@ -83,9 +83,9 @@ public:
     float pH_sensorValue;
     float temp_sensorValue;
 
-    Modbus * master;
+    Modbus* master;
 
-    void setQuery(uint8_t fct, uint16_t RegAdd, uint16_t CoilsNb ) {
+    void setQuery(uint8_t fct, uint16_t RegAdd, uint16_t CoilsNb) {
         query.u8fct = fct; // function code (this one is registers read)
         query.u16RegAdd = RegAdd; // start address in slave
         query.u16CoilsNo = CoilsNb; // number of elements (coils or registers) to read
@@ -117,7 +117,7 @@ public:
     {
         setQuerySetLevel();
         if (!querySent) {
-            master->query(query); 
+            master->query(query);
             querySent = true;
         }
         else {
@@ -142,7 +142,7 @@ public:
             if (master->getState() == COM_IDLE) {
                 u.b[0] = data[2];
                 u.b[1] = data[3];
-                if(u.fval < 9)                pH_sensorValue = u.fval;
+                if (u.fval < 9)                pH_sensorValue = u.fval;
                 querySent = false;
                 return 1;
 
@@ -185,7 +185,7 @@ public:
         data[0] = cmd;
         data[1] = 0;
         if (!querySent) {
-            master->query(query); 
+            master->query(query);
             querySent = true;
         }
         else {
@@ -223,7 +223,7 @@ public:
     {
         setQueryCalibrationStatus();
         if (!querySent) {
-            master->query(query); 
+            master->query(query);
             querySent = true;
         }
         else {
@@ -234,7 +234,7 @@ public:
                     Serial.print("status "); Serial.print(i); Serial.print(":"); Serial.println(data[i]);
                 }
                 return 1;
-            }            
+            }
         }
         return 0;
     }
