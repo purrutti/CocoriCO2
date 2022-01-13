@@ -34,7 +34,6 @@
                 <ComboBoxItem Content="Condition 2"/>
                 <ComboBoxItem Content="Condition 3"/>
                 <ComboBoxItem Content="Inlet Pressure"/>
-                <ComboBoxItem Content="Hot Water"/>
             </ComboBox>
             <TextBox HorizontalAlignment="Left" Height="20" Margin="1,326,0,0" TextWrapping="Wrap"  x:Name="tb_pH_consigneForcage"  VerticalAlignment="Top" Width="100" Grid.Column="1"/>
             <CheckBox x:Name="checkBox_pH_Override" Content="Manual Override" HorizontalAlignment="Left" Margin="19,328,0,0" VerticalAlignment="Top"/>

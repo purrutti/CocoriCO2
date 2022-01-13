@@ -183,15 +183,18 @@ namespace Appli_CocoriCO2
 
 
             bool t = false;
+            String thresholdString="";
             if (triggered) t = true;
             if (!triggered && upperThan && value >= (threshold + delta))
             {
                 dtTriggered = DateTime.Now;
+                thresholdString = (threshold + delta).ToString();
                 t = true;
             }
             if (!triggered && lowerThan && value <= (threshold - delta))
             {
                 dtTriggered = DateTime.Now;
+                thresholdString = (threshold - delta).ToString();
                 t = true;
             }
             triggered = t;
@@ -200,7 +203,7 @@ namespace Appli_CocoriCO2
             {
                 raised = true;
                 dtRaised = DateTime.Now;
-                sendSlackMessage(this.libelle + " triggered at:" + dtTriggered.ToString());
+                sendSlackMessage(this.libelle + ": Measure = " + value.ToString() + ", Set point = " + threshold.ToString() + ", triggered at:" + dtTriggered.ToString()); ;
             }
             if (raised) return true;
             return false;
@@ -377,13 +380,13 @@ namespace Appli_CocoriCO2
             double d;
 
             string cond, meso;
-            checkAlarme("C0_AlarmPressureEA", ambiantConditions.pressionEA, masterParams.regulPressionEA.consigne);
-            checkAlarme("C0_AlarmPressureEC", ambiantConditions.pressionEC, masterParams.regulPressionEC.consigne);
+            checkAlarme("Alarm Pressure Ambient water", ambiantConditions.pressionEA, masterParams.regulPressionEA.consigne);
+            checkAlarme("AlarmPressure Hot Water", ambiantConditions.pressionEC, masterParams.regulPressionEC.consigne);
 
 
             cond = "C0";
 
-            checkAlarme(cond + "_AlarmpH", conditions[0].pH, conditions[0].regulpH.consigne);
+            checkAlarme(cond + " Mixing Tank: Alarm pH", conditions[0].pH, conditions[0].regulpH.consigne);
 
 
 
@@ -394,18 +397,18 @@ namespace Appli_CocoriCO2
 
 
                 if (ambiantConditions.tide)//vanne exondation ouverte
-                    checkAlarme(cond + meso + "_AlarmLevelL", conditions[0].Meso[j].alarmeNiveauBas, false);
-                else checkAlarme(cond + meso + "_AlarmLevelL", conditions[0].Meso[j].alarmeNiveauBas, true);
+                    checkAlarme(cond + meso + ": Alarm Low level", conditions[0].Meso[j].alarmeNiveauBas, false);
+                else checkAlarme(cond + meso + ": Alarm Low Level", conditions[0].Meso[j].alarmeNiveauBas, true);
 
 
 
-                checkAlarme(cond + meso + "_AlarmLevelLL", conditions[0].Meso[j].alarmeNiveauTresBas, false);
+                checkAlarme(cond + meso + ": Alarm Very Low Level", conditions[0].Meso[j].alarmeNiveauTresBas, false);
 
                 Double.TryParse(Properties.Settings.Default["FlowrateSetpoint"].ToString(), out d);
 
-                checkAlarme(cond + meso + "_AlarmFlowrate", conditions[0].Meso[j].debit, d);
-                checkAlarme(cond + meso + "_AlarmpHMesocosm", conditions[0].Meso[j].pH, ambiantConditions.pH);
-                checkAlarme(cond + meso + "_AlarmTempMesocosm", conditions[0].Meso[j].temperature, ambiantConditions.temperature);
+                checkAlarme(cond + meso + ": Alarm Flowrate", conditions[0].Meso[j].debit, d);
+                checkAlarme(cond + meso + ": Alarm pH", conditions[0].Meso[j].pH, ambiantConditions.pH);
+                checkAlarme(cond + meso + ": Alarm Temperature", conditions[0].Meso[j].temperature, ambiantConditions.temperature);
 
             }
 
@@ -414,8 +417,8 @@ namespace Appli_CocoriCO2
             {
                 cond = "C" + i;
 
-                checkAlarme(cond + "_AlarmpH", conditions[i].pH, conditions[i].regulpH.consigne);
-                checkAlarme(cond + "_AlarmTemperature", conditions[i].temperature, conditions[i].regulTemp.consigne);
+                checkAlarme(cond + " Mixing Tank: Alarm pH", conditions[i].pH, conditions[i].regulpH.consigne);
+                checkAlarme(cond + " Mixing Tank: Alarm Temperature", conditions[i].temperature, conditions[i].regulTemp.consigne);
 
 
 
@@ -424,21 +427,21 @@ namespace Appli_CocoriCO2
                 {
                     meso = "M" + j;
 
-                    checkAlarme(cond + meso + "_AlarmLevelH", conditions[i].Meso[j].alarmeNiveauHaut, false);
+                    checkAlarme(cond + meso + ": Alarm Overflood", conditions[i].Meso[j].alarmeNiveauHaut, false);
 
                     if (ambiantConditions.tide)//vanne exondation ouverte
-                        checkAlarme(cond + meso + "_AlarmLevelL", conditions[i].Meso[j].alarmeNiveauBas, false);
-                    else checkAlarme(cond + meso + "_AlarmLevelL", conditions[i].Meso[j].alarmeNiveauBas, true);
+                        checkAlarme(cond + meso + ": Alarm Low Level", conditions[i].Meso[j].alarmeNiveauBas, false);
+                    else checkAlarme(cond + meso + ": Alarm Low Level", conditions[i].Meso[j].alarmeNiveauBas, true);
 
 
 
-                    checkAlarme(cond + meso + "_AlarmLevelLL", conditions[i].Meso[j].alarmeNiveauTresBas, false);
+                    checkAlarme(cond + meso + ": Alarm Very Low Level", conditions[i].Meso[j].alarmeNiveauTresBas, false);
 
                     Double.TryParse(Properties.Settings.Default["FlowrateSetpoint"].ToString(), out d);
 
-                    checkAlarme(cond + meso + "_AlarmFlowrate", conditions[i].Meso[j].debit, d);
-                    checkAlarme(cond + meso + "_AlarmpHMesocosm", conditions[i].Meso[j].pH, conditions[i].regulpH.consigne);
-                    checkAlarme(cond + meso + "_AlarmTempMesocosm", conditions[i].Meso[j].temperature, conditions[i].regulTemp.consigne);
+                    checkAlarme(cond + meso + ": Alarm Flowrate", conditions[i].Meso[j].debit, d);
+                    checkAlarme(cond + meso + ": Alarm pH", conditions[i].Meso[j].pH, conditions[i].regulpH.consigne);
+                    checkAlarme(cond + meso + ": Alarm Temperature", conditions[i].Meso[j].temperature, conditions[i].regulTemp.consigne);
 
                 }
             }
@@ -462,10 +465,10 @@ namespace Appli_CocoriCO2
             Boolean.TryParse(Properties.Settings.Default["AlarmPressure"].ToString(), out e);
             Double.TryParse(Properties.Settings.Default["PressureDelta"].ToString(), out d);
             Alarme a = new Alarme();
-            a.set(cond + "_AlarmPressureEA", e, 2, d, TimeSpan.FromSeconds(30));
+            a.set("Alarm Pressure Ambient water", e, 2, d, TimeSpan.FromSeconds(30));
             alarms.Add(a);
             Alarme b = new Alarme();
-            b.set(cond + "_AlarmPressureEC", e, 2, d, TimeSpan.FromSeconds(30));
+            b.set("Alarm Pressure Hot water", e, 2, d, TimeSpan.FromSeconds(30));
             alarms.Add(b);
 
             for (int i = 0; i < 4; i++) //conditions
@@ -476,7 +479,7 @@ namespace Appli_CocoriCO2
                 Double.TryParse(Properties.Settings.Default["ConditionpHDelta"].ToString(), out d);
                 Boolean.TryParse(Properties.Settings.Default["AlarmpHCondition"].ToString(), out e);
                 Alarme c = new Alarme();
-                c.set(cond + "_AlarmpH", e, 2, d, TimeSpan.FromSeconds(30));
+                c.set(cond + " Mixing Tank: Alarm pH", e, 2, d, TimeSpan.FromSeconds(30));
                 alarms.Add(c);
                 
                 if (i > 0)
@@ -484,7 +487,7 @@ namespace Appli_CocoriCO2
                     Double.TryParse(Properties.Settings.Default["ConditionTempDelta"].ToString(), out d);
                     Boolean.TryParse(Properties.Settings.Default["AlarmTempCondition"].ToString(), out e);
                     Alarme f = new Alarme();
-                    f.set(cond + "_AlarmTemperature", e, 2, d, TimeSpan.FromSeconds(30));
+                    f.set(cond + " Mixing Tank: Alarm Temperature", e, 2, d, TimeSpan.FromSeconds(30));
                     alarms.Add(f);
                 }
 
@@ -493,33 +496,33 @@ namespace Appli_CocoriCO2
                     meso = "M" + j;
                     Boolean.TryParse(Properties.Settings.Default["AlarmLevelH"].ToString(), out e);
                     Alarme g = new Alarme();
-                    g.set(cond + meso + "_AlarmLevelH", e, 0, 0, TimeSpan.FromSeconds(30));
+                    g.set(cond + meso + ": Alarm Overflood", e, 0, 0, TimeSpan.FromSeconds(30));
                     alarms.Add(g);
                     Boolean.TryParse(Properties.Settings.Default["AlarmLevelL"].ToString(), out e);
                     Alarme h = new Alarme();
-                    h.set(cond + meso + "_AlarmLevelL", e, 0, 0, TimeSpan.FromMinutes(90));
+                    h.set(cond + meso + ": Alarm Low Level", e, 0, 0, TimeSpan.FromMinutes(90));
                     alarms.Add(h);
                     Boolean.TryParse(Properties.Settings.Default["AlarmLevelLL"].ToString(), out e);
                     Alarme k = new Alarme();
-                    k.set(cond + meso + "_AlarmLevelLL", e, 0, 0, TimeSpan.FromSeconds(30));
+                    k.set(cond + meso + ": Alarm Very Low Level", e, 0, 0, TimeSpan.FromSeconds(30));
                     alarms.Add(k);
 
                     Double.TryParse(Properties.Settings.Default["FlowrateDelta"].ToString(), out d);
                     Boolean.TryParse(Properties.Settings.Default["AlarmFlowrate"].ToString(), out e);
 
                     Alarme l = new Alarme();
-                    l.set(cond + meso + "_AlarmFlowrate", e, 2, d, TimeSpan.FromSeconds(30));
+                    l.set(cond + meso + ": Alarm Flowrate", e, 2, d, TimeSpan.FromSeconds(30));
                     alarms.Add(l);
 
                     Double.TryParse(Properties.Settings.Default["MesocosmpHDelta"].ToString(), out d);
                     Boolean.TryParse(Properties.Settings.Default["AlarmpHMesocosm"].ToString(), out e);
                     Alarme m = new Alarme();
-                    m.set(cond + meso + "_AlarmpHMesocosm", e, 2, d, TimeSpan.FromSeconds(30));
+                    m.set(cond + meso + ": Alarm pH", e, 2, d, TimeSpan.FromSeconds(30));
                     alarms.Add(m);
                     Double.TryParse(Properties.Settings.Default["MesocosmTempDelta"].ToString(), out d);
                     Boolean.TryParse(Properties.Settings.Default["AlarmtempMesocosm"].ToString(), out e);
                     Alarme n = new Alarme();
-                    n.set(cond + meso + "_AlarmTempMesocosm", e, 2, d, TimeSpan.FromSeconds(30));
+                    n.set(cond + meso + ": Alarm Temperature", e, 2, d, TimeSpan.FromSeconds(30));
                     alarms.Add(n);
 
                 }
