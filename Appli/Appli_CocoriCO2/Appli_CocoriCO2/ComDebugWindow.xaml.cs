@@ -144,7 +144,11 @@ namespace Appli_CocoriCO2
                     MW.ambiantConditions.lastUpdated = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(MW.ambiantConditions.time);
                     MW.statusLabel1.Text = "Last updated: " + MW.ambiantConditions.lastUpdated.ToString() + " UTC";
                     MW.ambiantConditions.salinite = calculateSalinity(MW.ambiantConditions.cond);
-                        }
+                    double slope, offset;
+                    Double.TryParse(Properties.Settings.Default["FluoOffset"].ToString(), out offset);
+                    Double.TryParse(Properties.Settings.Default["FluoSlope"].ToString(), out slope);
+                    MW.ambiantConditions.fluo = MW.ambiantConditions.fluo * slope + offset;
+                }
                 else if (c.command == 8)
                 {
 

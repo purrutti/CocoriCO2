@@ -69,6 +69,7 @@ namespace Appli_CocoriCO2
         }
         private void RefreshUI()
         {
+            double t;
             int condID = comboBox_Condition.SelectedIndex;
             int sensorID; // HAMILTON: indexes O to 2 are mesocosms, index 3 is acidification tank, index 4 is input measure tank, 5 = oxy, 6 = NTU, 7 = Cond
             if (condID > 0)
@@ -145,6 +146,24 @@ namespace Appli_CocoriCO2
                     btn_SendSlope.Visibility = Visibility.Visible;
                     btn_FactoryReset.IsEnabled = true;
                     break;
+                case 8://FLuo
+                    label_measure.Content = string.Format("{0:0.000} ", MW.ambiantConditions.fluo);
+                    label_measure2.Content = "";
+                    label_measure3.Content = "";
+                    tb_Offset.IsEnabled = true;
+                    tb_Slope.IsEnabled = true;
+                    Double.TryParse(Properties.Settings.Default["FluoOffset"].ToString(), out t);
+
+                    tb_Offset.Text = string.Format("{0:0.000} ", t);
+                    Double.TryParse(Properties.Settings.Default["FluoSlope"].ToString(), out t);
+                    tb_Slope.Text = string.Format("{0:0.000} ", t);
+                    lbl_std1.Content = "Offset";
+                    lbl_std2.Content = "Slope";
+                    lbl_std2.Visibility = Visibility.Visible;
+                    tb_Slope.Visibility = Visibility.Visible;
+                    btn_SendSlope.Visibility = Visibility.Visible;
+                    btn_FactoryReset.IsEnabled = true;
+                    break;
             }
         }
             private void RefreshMeasure()
@@ -189,6 +208,10 @@ namespace Appli_CocoriCO2
                     label_measure2.Content = string.Format("{0:0.00}", MW.ambiantConditions.salinite);
                     
                     break;
+                case 8:
+                    label_measure.Content = string.Format("{0:0.000} ", MW.ambiantConditions.fluo);
+
+                    break;
 
 
             }
@@ -211,7 +234,13 @@ namespace Appli_CocoriCO2
             float value;
 
             float.TryParse(tb_Offset.Text, out value);
-            sendReq(condID, sensorID, 0, value);
+            if (sensorID == 8)
+            {
+                Properties.Settings.Default["FluoOffset"] = value.ToString();
+                Properties.Settings.Default.Save();
+
+            }
+            else sendReq(condID, sensorID, 0, value);
         }
 
         private void btn_SendSlope_Click(object sender, RoutedEventArgs e)
@@ -221,7 +250,14 @@ namespace Appli_CocoriCO2
             float value;
 
             float.TryParse(tb_Slope.Text, out value);
-            sendReq(condID, sensorID, 1, value);
+            if (sensorID == 8)
+            {
+                Properties.Settings.Default["FluoSlope"] = value.ToString();
+                Properties.Settings.Default.Save();
+
+            }
+            else
+                sendReq(condID, sensorID, 1, value);
         }
 
         private void sendReq(int condID, int sensorID, int calibParam, float value)

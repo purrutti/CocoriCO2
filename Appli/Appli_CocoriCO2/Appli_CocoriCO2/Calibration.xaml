@@ -43,6 +43,7 @@
             <ComboBoxItem Content="Measure Tank Oxygen"/>
             <ComboBoxItem Content="Measure Tank Turbidity"/>
             <ComboBoxItem Content="Measure Tank Salinity"/>
+            <ComboBoxItem Content="Measure Tank Fluo"/>
         </ComboBox>
 
     </Grid>
