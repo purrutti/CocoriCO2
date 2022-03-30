@@ -835,8 +835,11 @@ void readJSON(char* json, uint8_t num) {
     case REQ_PARAMS:
         condition[condID].load();
         if (condID > 0) {
-            condition[condID].regulpH.consigne = condition[condID].regulpH.offset + masterData.pH;
-            condition[condID].regulTemp.consigne = condition[condID].regulTemp.offset + masterData.temperature;
+            double value = condition[condID].regulpH.offset + masterData.pH;
+            if (value > 4.0 && value < 10.0) condition[condID].regulpH.consigne = value;
+
+            value = condition[condID].regulTemp.offset + masterData.temperature;
+            if (value > 0.0 && value < 50.0) condition[condID].regulTemp.consigne = value;
         }
         condition[condID].serializeParams(heure, 0, buffer);
         webSocket.sendTXT(num, buffer);
