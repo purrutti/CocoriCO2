@@ -182,30 +182,34 @@ namespace Appli_CocoriCO2
             }
 
 
-            bool t = false;
             String thresholdString="";
-            if (triggered) t = true;
-            if (!triggered && upperThan && value >= (threshold + delta))
-            {
-                dtTriggered = DateTime.Now;
-                thresholdString = (threshold + delta).ToString();
-                t = true;
-            }
-            if (!triggered && lowerThan && value <= (threshold - delta))
-            {
-                dtTriggered = DateTime.Now;
-                thresholdString = (threshold - delta).ToString();
-                t = true;
-            }
-            triggered = t;
+            bool a = false;
 
-            if (!raised && triggered && dtTriggered.Add(delay) < DateTime.Now)
+            if (upperThan && value >= (threshold + delta)) a = true;
+            if (lowerThan && value <= (threshold - delta)) a = true;
+
+            if (!raised && triggered && a && dtTriggered.Add(delay) < DateTime.Now)
             {
                 raised = true;
                 dtRaised = DateTime.Now;
                 sendSlackMessage(this.libelle + ": Measure = " + value.ToString() + ", Set point = " + threshold.ToString() + ", triggered at:" + dtTriggered.ToString()); ;
+                return true;
             }
-            if (raised) return true;
+
+            if (!triggered && upperThan && a)
+            {
+                dtTriggered = DateTime.Now;
+                thresholdString = (threshold + delta).ToString();
+                triggered = true;
+            }
+            if (!triggered && lowerThan && a)
+            {
+                dtTriggered = DateTime.Now;
+                thresholdString = (threshold - delta).ToString();
+                triggered = true;
+            }
+            if (!a) triggered = false;
+
             return false;
         }
 
@@ -238,6 +242,7 @@ namespace Appli_CocoriCO2
             }
             if (raised) return true;
             return false;
+
         }
 
 
@@ -381,7 +386,7 @@ namespace Appli_CocoriCO2
 
             string cond, meso;
             checkAlarme("Alarm Pressure Ambient water", ambiantConditions.pressionEA, masterParams.regulPressionEA.consigne);
-            checkAlarme("AlarmPressure Hot Water", ambiantConditions.pressionEC, masterParams.regulPressionEC.consigne);
+            checkAlarme("Alarm Pressure Hot water", ambiantConditions.pressionEC, masterParams.regulPressionEC.consigne);
 
 
             cond = "C0";
@@ -397,7 +402,7 @@ namespace Appli_CocoriCO2
 
 
                 if (ambiantConditions.tide)//vanne exondation ouverte
-                    checkAlarme(cond + meso + ": Alarm Low level", conditions[0].Meso[j].alarmeNiveauBas, false);
+                    checkAlarme(cond + meso + ": Exondation not effective", conditions[0].Meso[j].alarmeNiveauBas, false);
                 else checkAlarme(cond + meso + ": Alarm Low Level", conditions[0].Meso[j].alarmeNiveauBas, true);
 
 
@@ -430,7 +435,7 @@ namespace Appli_CocoriCO2
                     checkAlarme(cond + meso + ": Alarm Overflood", conditions[i].Meso[j].alarmeNiveauHaut, false);
 
                     if (ambiantConditions.tide)//vanne exondation ouverte
-                        checkAlarme(cond + meso + ": Alarm Low Level", conditions[i].Meso[j].alarmeNiveauBas, false);
+                        checkAlarme(cond + meso + ": Exondation not effective", conditions[i].Meso[j].alarmeNiveauBas, false);
                     else checkAlarme(cond + meso + ": Alarm Low Level", conditions[i].Meso[j].alarmeNiveauBas, true);
 
 
@@ -502,6 +507,9 @@ namespace Appli_CocoriCO2
                     Alarme h = new Alarme();
                     h.set(cond + meso + ": Alarm Low Level", e, 0, 0, TimeSpan.FromMinutes(90));
                     alarms.Add(h);
+                    Alarme o = new Alarme();
+                    o.set(cond + meso + ": Exondation not effective", e, 0, 0, TimeSpan.FromMinutes(90));
+                    alarms.Add(o);
                     Boolean.TryParse(Properties.Settings.Default["AlarmLevelLL"].ToString(), out e);
                     Alarme k = new Alarme();
                     k.set(cond + meso + ": Alarm Very Low Level", e, 0, 0, TimeSpan.FromSeconds(30));
