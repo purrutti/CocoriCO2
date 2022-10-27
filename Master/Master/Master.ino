@@ -1052,12 +1052,20 @@ bool SerializePACParams(uint32_t timeString, char* buffer) {
 }
 
 double readFluo() {
+    //Serial.print("READ FLUO");
+    
     int value = analogRead(PIN_CAPTEUR_FLUO);  // pin 0-10V
 
-    int Fluo_mV = map(value, 0, 1024, 0, 1000); //passage en 0-10V
-    int Fluo = map(Fluo_mV, 0, 500, 0, 40000); // passage en micro gramme /L (max = 40 micro G)
-    double  F = Fluo / 100000.0; //micro gremme / litre sans le gain de 100;
+    long Fluo_mV = map(value, 0, 1024, 0, 1000); //passage en 0-10V
+    long Fluo = map(Fluo_mV, 0, 500, 0, 50000); // passage en micro gramme /L (max = 5 micro G)
+    double  F = Fluo / 1000.0; //micro gremme / litre sans le gain de 100;
     masterData.fluo = F;
+
+    /*Serial.print("value:"); Serial.println(value);
+    Serial.print("mV:"); Serial.println(Fluo_mV);
+    Serial.print("Fluo:"); Serial.println(Fluo);
+    Serial.print("F:"); Serial.println(F);
+    */
     return F;
 }
 

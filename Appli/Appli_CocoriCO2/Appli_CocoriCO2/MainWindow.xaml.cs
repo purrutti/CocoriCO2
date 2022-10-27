@@ -194,28 +194,31 @@ namespace Appli_CocoriCO2
                     break;
             }
 
+            bool a = false;
 
-            bool t = false;
-            if (triggered) t = true;
-            if (!triggered && upperThan && value >= (threshold + delta))
-            {
-                dtTriggered = DateTime.Now;
-                t = true;
-            }
-            if (!triggered && lowerThan && value <= (threshold - delta))
-            {
-                dtTriggered = DateTime.Now;
-                t = true;
-            }
-            triggered = t;
+            if (upperThan && value >= (threshold + delta)) a = true;
+            if (lowerThan && value <= (threshold - delta)) a = true;
 
-            if (!raised && triggered && dtTriggered.Add(delay) < DateTime.Now)
+            if (!raised && triggered && a && dtTriggered.Add(delay) < DateTime.Now)
             {
                 raised = true;
                 dtRaised = DateTime.Now;
                 sendSlackMessage(this.libelle + ": Measure = " + value.ToString() + ", Set point = " + threshold.ToString() + ", triggered at:" + dtTriggered.ToString()); ;
+                return true;
             }
-            if (raised) return true;
+
+            if (!triggered && upperThan && a)
+            {
+                dtTriggered = DateTime.Now;
+                triggered = true;
+            }
+            if (!triggered && lowerThan && a)
+            {
+                dtTriggered = DateTime.Now;
+                triggered = true;
+            }
+            if (!a) triggered = false;
+
             return false;
         }
 

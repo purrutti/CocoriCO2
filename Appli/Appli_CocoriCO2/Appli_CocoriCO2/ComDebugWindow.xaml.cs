@@ -307,6 +307,12 @@ namespace Appli_CocoriCO2
             writeDataPointAsync(0, -1, "Hot_Water_Pressure", MW.ambiantConditions.pressionEC, dt);
             writeDataPointAsync(0, -1, "Hot_Water_Temperature", MW.ambiantConditions.tempPAC, dt);
 
+
+            writeDataPointAsync(0, -1, "Hot_Water_Pressure.sortiePID", MW.ambiantConditions.sortiePID_EC, dt);
+            writeDataPointAsync(0, -1, "Cold_Water_Pressure.sortiePID", MW.ambiantConditions.sortiePID_EA, dt);
+
+
+
             for (int i = 0; i < 4; i++)
             {
                 data += MW.conditions[i].temperature; data += ";";
