@@ -188,28 +188,29 @@ namespace Appli_CocoriCO2
         {
             if(MW.conditionData.Count > 0)
             {
-                try
-                {
-                    Condition c = MW.conditionData.Last<Condition>();
-                    if (c.lastUpdated != lastFileWrite)
-                    {
-                        DateTime dt = DateTime.Now.ToUniversalTime();
-                        string filePath = Properties.Settings.Default["dataFileBasePath"].ToString() + "_" + dt.ToString("yyyy-MM-dd") + ".csv";
-                        filePath = filePath.Replace('\\', '/');
 
-                        saveToFile(filePath, dt);
-                        //if (c.lastUpdated.Day != lastFileWrite.Day) ftpTransfer(filePath);
-                        if (c.lastUpdated.Hour != lastFileWrite.Hour)// POur tester
-                        {
-                            ftpTransfer(filePath);
-                            lastFileWrite = c.lastUpdated;
-                        }
+                DateTime dt = DateTime.Now.ToUniversalTime();
+                string filePath = Properties.Settings.Default["dataFileBasePath"].ToString() + "_" + dt.ToString("yyyy-MM-dd") + ".csv";
+                filePath = filePath.Replace('\\', '/');
+                Condition c = MW.conditionData.Last<Condition>();
+
+                try
+                {                    
+                    if (c.lastUpdated != lastFileWrite)
+                    {                  
+                        saveToFile(filePath, dt);                        
                         MW.conditionData.Clear();
                     }
                 }
                 catch (Exception e)
                 {
                     MessageBox.Show("Error writing data: " + e.Message, "Error saving data");
+                }
+
+                if (c.lastUpdated.Hour != lastFileWrite.Hour)
+                {
+                    ftpTransfer(filePath);
+                    lastFileWrite = c.lastUpdated;
                 }
             }
             
