@@ -204,7 +204,8 @@ namespace Appli_CocoriCO2
                 }
                 catch (Exception e)
                 {
-                    MessageBox.Show("Error writing data: " + e.Message, "Error saving data");
+                    //MessageBox.Show("Error writing data: " + e.Message, "Error saving data");
+                    MW.statusLabel3.Text = dt.ToString() + ": Error writing data file: " + e.Message;
                 }
 
                 if (c.lastUpdated.Hour != lastFileWrite.Hour)
@@ -376,10 +377,13 @@ namespace Appli_CocoriCO2
                     client.Credentials = new NetworkCredential(ftpUsername, ftpPassword);
                     client.UploadFile(ftpDir, WebRequestMethods.Ftp.UploadFile, fileName);
                 }
+                MW.statusLabel3.Text = "";
             }
             catch (Exception e)
             {
-                MessageBox.Show("Error sending data file on FTP server: " + e.Message, "Error sending FTP data");
+                DateTime dt = DateTime.Now;
+                MW.statusLabel3.Text = dt.ToString()+": Error sending data file on FTP server: " + e.Message;
+                //MessageBox.Show("Error sending data file on FTP server: " + e.Message, "Error sending FTP data");
             }
 
         }

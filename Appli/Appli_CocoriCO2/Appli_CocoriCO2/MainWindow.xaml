@@ -43,6 +43,9 @@
                 <TextBlock x:Name="statusLabel1" />
             </StatusBarItem>
             <StatusBarItem Height="24" VerticalAlignment="Bottom" Width="347" HorizontalAlignment="Right">
+                <TextBlock x:Name="statusLabel3" />
+            </StatusBarItem>
+            <StatusBarItem Height="24" VerticalAlignment="Bottom" Width="347" HorizontalAlignment="Right">
                 <TextBlock x:Name="statusLabel2" />
             </StatusBarItem>
         </StatusBar>
