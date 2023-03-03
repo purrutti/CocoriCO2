@@ -109,6 +109,8 @@ bool toggleCO2Valve = false;
 uint8_t AppSocketId = -1;
 
 
+bool calibAuthorized = false;
+
 enum {
     REQ_PARAMS = 0,
     REQ_DATA = 1,
@@ -265,7 +267,7 @@ void setup() {
         //condition[i].regulTemp.consigne = 0;
     }
 
-    tempoSensorRead.interval = 50;
+    tempoSensorRead.interval = 200;//50
     tempoRegul.interval = 100;
     tempoCheckMeso.interval = 200;
     tempoSendValues.interval = 5000;
@@ -276,6 +278,12 @@ void setup() {
     tempoRR.interval = 10000;
 
     tempoSensorRead.debut = millis() + 2000;
+
+    //CONFIGURE LA MESURE DES CAPTEURS NTU ET CONDUCTIVITE EN GAMME 4
+    mbSensor.query.u8id = 30;
+    while (!mbSensor.configMesure(&master));
+    mbSensor.query.u8id = 40;
+    while (!mbSensor.configMesure(&master));
 
 
 
@@ -375,7 +383,7 @@ void loop() {
 
     readMBSensors();
 
-    webSocket.loop();
+    if(!calib.calibEnCours) webSocket.loop();
 
     if (elapsed(&tempoRegul.debut, tempoRegul.interval)) {
         regulationpH();
@@ -1125,14 +1133,16 @@ void readMBSensors() {
     if (elapsed(&tempoSensorRead.debut, tempoSensorRead.interval)) {
 
         readFluo();
-        if (state == 0 && calib.calibRequested) {
+        if (state == 0 && calib.calibRequested && calibAuthorized) {
             calib.calibRequested = false;
             calib.calibEnCours = true;
+            mbSensor.querySent = false;
         }
         if (calib.calibEnCours) {
             calibrateSensor();
         }
         else {
+            calibAuthorized = false;
             if (sensorIndex < 5) { // HAMILTON: indexes O to 2 are mesocosms, index 4 is input measure tank, index 3 is acidification tank
                 //Hamilton.setSensor(sensorIndex + 1, &master);
                 mbSensor.query.u8id = sensorIndex + 1;
@@ -1179,6 +1189,8 @@ void readMBSensors() {
                 }
             }
             else {
+
+                calibAuthorized = false;
                 switch (sensorIndex) {
                 case 5:
                     mbSensor.query.u8id = 10;//PODOC
@@ -1202,10 +1214,12 @@ void readMBSensors() {
                             masterData.oxy = mbSensor.params[1];
                             state = 0;
                             sensorIndex++;
+                            calibAuthorized = true;
                         }
                         else if (errorCode == 255){
                             state = 0;
                             sensorIndex++;
+                            calibAuthorized = true;
                         }
                     }
                     break;
@@ -1231,10 +1245,12 @@ void readMBSensors() {
                             masterData.turb = mbSensor.params[1];
                             state = 0;
                             sensorIndex++;
+                            calibAuthorized = true;
                         }
                         else if (errorCode == 255) {
                             state = 0;
                             sensorIndex++;
+                            calibAuthorized = true;
                         }
                     }
                     break;
@@ -1261,10 +1277,12 @@ void readMBSensors() {
                             masterData.salinite = mbSensor.params[2];
                             state = 0;
                             sensorIndex=0;
+                            calibAuthorized = true;
                         }
                         else if (errorCode == 255) {
                             state = 0;
                             sensorIndex = 0;
+                            calibAuthorized = true;
                         }
                     }
                     break;
@@ -1279,6 +1297,8 @@ void readMBSensors() {
 }
 
 int HamiltonCalibStep = 0;
+
+int stateCalib = 0;
 
 void calibrateSensor() {
     Serial.println("CALIBRATE SENSOR");
@@ -1297,12 +1317,12 @@ void calibrateSensor() {
         mbSensor.query.u8id = calib.sensorID + 1;
         Serial.print("Hamilton.query.u8id:"); Serial.println(mbSensor.query.u8id);
         if (calib.calibParam == 99) {
-            if (state == 0) {
-                if (mbSensor.factoryReset(&master)) state = 1;
+            if (stateCalib == 0) {
+                if (mbSensor.factoryReset(&master)) stateCalib = 1;
             }
             else {
                 calib.calibEnCours = false;
-                state = 0;
+                stateCalib = 0;
             }
         }
         else {
@@ -1319,17 +1339,17 @@ void calibrateSensor() {
         Serial.println("CALIBRATE PODOC");
         mbSensor.query.u8id = 10;
         if (calib.calibParam == 99) {
-            if (state == 0) {
-                if (mbSensor.factoryReset(&master)) state = 1;
+            if (stateCalib == 0) {
+                if (mbSensor.factoryReset(&master)) stateCalib = 1;
             }
             else {
                 calib.calibEnCours = false;
-                state = 0;
+                stateCalib = 0;
             }
         }
         else {
             int offset;
-            if (state == 0) {
+            if (stateCalib == 0) {
                 //PODOC oxy
                 if (calib.calibParam == 0) {
                     offset = 516;
@@ -1337,12 +1357,12 @@ void calibrateSensor() {
                 else {
                     offset = 522;
                 }
-                if (mbSensor.calibrateCoeff(calib.value, offset, &master)) state = 1;
+                if (mbSensor.calibrateCoeff(calib.value, offset, &master)) stateCalib = 1;
             }
             else {
                 offset = 654;
                 if (mbSensor.validateCalibration(offset, &master)) {
-                    state = 0;
+                    stateCalib = 0;
                     calib.calibEnCours = false;
                 }
             }
@@ -1352,29 +1372,29 @@ void calibrateSensor() {
     case 6://NTU
         mbSensor.query.u8id = 40;
         if (calib.calibParam == 99) {
-            if (state == 0) {
-                if (mbSensor.factoryReset(&master)) state = 1;
+            if (stateCalib == 0) {
+                if (mbSensor.factoryReset(&master)) stateCalib = 1;
             }
             else {
                 calib.calibEnCours = false;
-                state = 0;
+                stateCalib = 0;
             }
         }
         else {
             int offset;
-            if (state == 0) {
+            if (stateCalib == 0) {
                 if (calib.calibParam == 0) {
                     offset = 528;// Gamme 4 jusqu'a 4000 NTU, sinon changer d'adresse
                 }
                 else {
                     offset = 530;// Gamme 4 jusqu'a 4000 NTU, sinon changer d'adresse
                 }
-                if (mbSensor.calibrateCoeff(calib.value, offset, &master)) state = 1;
+                if (mbSensor.calibrateCoeff(calib.value, offset, &master)) stateCalib = 1;
             }
             else {
                 offset = 654;
                 if (mbSensor.validateCalibration(offset, &master)) {
-                    state = 0;
+                    stateCalib = 0;
                     calib.calibEnCours = false;
                 }
             }
@@ -1384,29 +1404,31 @@ void calibrateSensor() {
     case 7://PC4E
         mbSensor.query.u8id = 30;
         if (calib.calibParam == 99) {
-            if (state == 0) {
-                if (mbSensor.factoryReset(&master)) state = 1;
+            if (stateCalib == 0) {
+                if (mbSensor.factoryReset(&master)) stateCalib = 1;
             }
             else {
                 calib.calibEnCours = false;
-                state = 0;
+                stateCalib = 0;
             }
         }
         else {
             int offset;
-            if (state == 0) {
+            if (stateCalib == 0) {
+
                 if (calib.calibParam == 0) {
                     offset = 528;
                 }
                 else {
-                    offset = 530;
+                    offset = 530; //518
                 }
-                if (mbSensor.calibrateCoeff(calib.value, offset, &master)) state = 1;
+                    if (mbSensor.calibrateCoeff(calib.value, offset, &master)) 
+                    stateCalib = 1;
             }
             else {
-                offset = 654;
+                offset = 654;//654
                 if (mbSensor.validateCalibration(offset, &master)) {
-                    state = 0;
+                    stateCalib = 0;
                     calib.calibEnCours = false;
                 }
             }

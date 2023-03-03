@@ -83,6 +83,26 @@ public:
     }
 
 
+    bool configMesure(Modbus* master) {
+        setQuery(16, 165, 5);
+        data[0] = 0;
+        data[1] = 1024;
+        data[2] = 1024;
+        data[3] = 1024;
+        data[4] = 1024;
+        if (!querySent) {
+            master->query(query);
+            querySent = true;
+        }
+        else {
+            master->poll();
+            if (master->getState() == COM_IDLE) {
+                querySent = false;
+                return 1;
+            }
+        }
+        return 0;
+    }
 
     uint8_t requestValues(Modbus* master)
     {
@@ -218,16 +238,28 @@ public:
         data[12] = 2020; //année
 
         if (!querySent) {
-            master->query(query);
+            if (int ret = master->query(query) < 0) { Serial.print("PROBLEM with query:"); Serial.println(ret); }
             querySent = true;
         }
         else {
             master->poll();
             if (master->getState() == COM_IDLE) {
-                querySent = false;
+                if (master->u8lastError == NO_REPLY) {
+                    Serial.println("time out");
+                    querySent = false;
+                }
+                else {
+                    querySent = false;
+                    delay(50);
+                    Serial.println("validation OK");
+                    /*for (int i = 0; i < 16; i++) {
+                        Serial.print("data["); Serial.print(i); Serial.print("]="); Serial.println(data[i], HEX);
+                    }*/
 
-                for (int i = 0; i < 16; i++) data[i] = 0;
-                return 1;
+                    for (int i = 0; i < 16; i++) data[i] = 0;
+                    return 1;
+                }
+                
             }
         }
         return 0;
