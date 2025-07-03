@@ -52,7 +52,7 @@ const char* sdata = "data";
 
 
 
-bool customRegul = false;
+bool customRegul = true;
 double regulFilter = 0.01;
 
 double lastTemp=18;
@@ -149,8 +149,8 @@ public:
         doc[cmd] = 3;
         doc[cID] = condID;
         doc[sID] = sender;
-        doc[temp] = String(mesureTemperature,2);
-        doc[pH] = String(mesurepH,2);
+        doc[temp] = mesureTemperature;
+        doc[pH] = mesurepH;
         
 
         //Serial.print(F("CONDID:")); Serial.println(condID);
@@ -161,25 +161,14 @@ public:
         JsonObject dataArray[3];
 
         JsonObject regulT= doc.createNestedObject(rTemp);
-        regulT[cons] = String(regulTemp.consigne,2);
-        regulT[sPID_pc] = String(regulTemp.sortiePID_pc,0);
+        regulT[cons] = regulTemp.consigne;
+        regulT[sPID_pc] = regulTemp.sortiePID_pc;
 
         JsonObject regulp = doc.createNestedObject(rpH);
-        regulp[cons] = String(regulpH.consigne,2);
-        regulp[sPID_pc] = String(regulpH.sortiePID_pc,0);
+        regulp[cons] = regulpH.consigne;
+        regulp[sPID_pc] = regulpH.sortiePID_pc;
 
         for (int i = 0; i < 3; i++) {
-            dataArray[i] = data.createNestedObject();
-            dataArray[i][sMesoID] = Meso[i]._mesocosmeIndex;
-            dataArray[i][temp] = String(Meso[i].temperature,2);
-            dataArray[i][pH] = String(Meso[i].pH,2);
-
-            dataArray[i][debit] = String(Meso[i].debit,2);
-            dataArray[i][LevelH] = Meso[i].alarmeNiveauHaut;
-            dataArray[i][LevelL] = Meso[i].alarmeNiveauBas;
-            dataArray[i][LevelLL] = Meso[i].alarmeNiveauTresBas;
-        }
-/*for (int i = 0; i < 3; i++) {
             dataArray[i] = data.createNestedObject();
             dataArray[i][sMesoID] = Meso[i]._mesocosmeIndex;
             dataArray[i][temp] = Meso[i].temperature;
@@ -189,8 +178,7 @@ public:
             dataArray[i][LevelH] = Meso[i].alarmeNiveauHaut;
             dataArray[i][LevelL] = Meso[i].alarmeNiveauBas;
             dataArray[i][LevelLL] = Meso[i].alarmeNiveauTresBas;
-        }*/
-
+        }
         serializeJson(doc, buffer, 600);
         return true;
     }
@@ -265,22 +253,11 @@ public:
             Meso[MesoID].temperature = elem[temp]; // 0, 0, 0
             Meso[MesoID].pH = elem[pH]; // 0, 0, 0
             Meso[MesoID].debit = elem[debit]; // 0, 0, 0
-            /*Meso[MesoID].alarmeNiveauHaut = elem[LevelH]; // 0, 0, 0
+            Meso[MesoID].alarmeNiveauHaut = elem[LevelH]; // 0, 0, 0
             Meso[MesoID].alarmeNiveauBas = elem[LevelL]; // 0, 0, 0
             Meso[MesoID].alarmeNiveauTresBas = elem[LevelLL]; // 0, 0, 0
-            */
         }
-        Serial.println("DESER DATA");
-        Serial.println("doc[rTemp][cons]" + String((double)doc["rTemp"]["cons"]));
-        Serial.println("doc[rpH][cons]" + String((double)doc[rpH][cons]));
-        Serial.println("doc[rpH][sPID_pc]" + String((double)doc[rpH][sPID_pc]));
-
-        Serial.println("regulTemp.consigne" + String((double)regulTemp.consigne));
-        Serial.println("regulTemp.offset" + String((double)regulTemp.offset));
-        regulTemp.consigne = doc["rTemp"]["cons"]; // 1
-        Serial.println("regulTemp.consigne" + String((double)regulTemp.consigne));
-
-        Serial.println("doc[rTemp][sPID_pc]" + String((double)doc[rTemp][sPID_pc]));
+        regulTemp.consigne = doc[rTemp][cons]; // 1
         regulTemp.sortiePID_pc = doc[rTemp][sPID_pc]; // 2
 
         regulpH.consigne = doc[rpH][cons]; // 3

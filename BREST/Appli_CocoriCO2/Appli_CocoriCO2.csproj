@@ -40,9 +40,6 @@
     <Reference Include="CsvHelper, Version=18.0.0.0, Culture=neutral, PublicKeyToken=8c4959082be5c823, processorArchitecture=MSIL">
       <HintPath>..\packages\CsvHelper.18.0.0\lib\net47\CsvHelper.dll</HintPath>
     </Reference>
-    <Reference Include="Fleck, Version=1.2.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Fleck.1.2.0\lib\net45\Fleck.dll</HintPath>
-    </Reference>
     <Reference Include="InfluxDB.Client, Version=1.18.0.0, Culture=neutral, PublicKeyToken=2ffdb0e6ebde0d3f, processorArchitecture=MSIL">
       <HintPath>..\packages\InfluxDB.Client.1.18.0\lib\netstandard2.0\InfluxDB.Client.dll</HintPath>
     </Reference>

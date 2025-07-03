@@ -53,7 +53,7 @@ Condition condition;
 
 
 
-ModbusRtu master(0, 3, 46); // this is master and RS-232 or USB-FTDI
+Modbus master(0, 3, 46); // this is master and RS-232 or USB-FTDI
 ModbusSensorHamilton Hamilton[4];// indexes O to 2 are mesocosms, index 3 is buffer tank
 typedef struct Calibration {
     int sensorID;
@@ -79,7 +79,7 @@ tempo tempoSendValues;
 tempo tempoRR;
 
 int sensorIndex = 0;
-bool ppH = true;
+bool readpH = true;
 
 // Enter a MAC address for your controller below.
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield
@@ -94,17 +94,16 @@ char buffer[600];
 
 
 void webSocketEvent(WStype_t type, uint8_t* payload, size_t lenght) {
-    //Serial.println(" WEBSOCKET EVENT:");
-    //Serial.println(type);
+
     switch (type) {
     case WStype_DISCONNECTED:
-        /*Serial.print(num); */Serial.println(" Disconnected!");
+        //Serial.print(num); Serial.println(" Disconnected!");
         break;
     case WStype_CONNECTED:
         Serial.println(" Connected!");
 
         // send message to client
-        webSocket.sendTXT("Connected");
+        webSocket.sendTXT(F("Connected"));
         break;
     case WStype_TEXT:
 
@@ -118,7 +117,7 @@ void webSocketEvent(WStype_t type, uint8_t* payload, size_t lenght) {
         // webSocket.broadcastTXT("message here");
         break;
     case WStype_ERROR:
-        //Serial.println(" ERROR!");
+        Serial.println(" ERROR!");
         break;
     }
 }
@@ -190,17 +189,12 @@ void setup() {
     }
 
     condition.regulpH.pid = PID((double*)&Hamilton[3].pH_sensorValue, &condition.regulpH.sortiePID, &condition.regulpH.consigne, condition.regulpH.Kp, condition.regulpH.Ki, condition.regulpH.Kd, DIRECT);
-    condition.regulpH.pid.SetOutputLimits(30, 158);
+    condition.regulpH.pid.SetOutputLimits(0, 127);
     condition.regulpH.pid.SetMode(AUTOMATIC);
 
     condition.regulTemp.pid = PID((double*)&Hamilton[3].temp_sensorValue, &condition.regulTemp.sortiePID, &condition.regulTemp.consigne, condition.regulTemp.Kp, condition.regulTemp.Ki, condition.regulTemp.Kd, DIRECT);
     condition.regulTemp.pid.SetOutputLimits(0, 255);
     condition.regulTemp.pid.SetMode(AUTOMATIC);
-
-    //setPIDparams();
-
-    
-    
 
 
     tempoSensorRead.interval = 200;
@@ -209,9 +203,9 @@ void setup() {
 
     tempoRegulpH.interval = 100;
     tempoCheckMeso.interval = 200;
-    tempoSendValues.interval = 1000;
-    tempoRR.debut = millis();
-    tempoRR.interval = 1000;
+    tempoSendValues.interval = 5000;
+
+    tempoRR.interval = 5000;
 
     tempoSensorRead.debut = millis() + 2000;
     Serial.println("ETHER");
@@ -232,11 +226,15 @@ void setup() {
     }
     Serial.println("Ethernet connected");
 
-    webSocket.begin("192.168.1.10", 81,"/");
+    webSocket.begin("192.168.1.160", 81);
     //webSocket.begin("echo.websocket.org", 80);
     webSocket.onEvent(webSocketEvent);
 
     RTC.read();
+    setPIDparams();
+
+
+
 }
 
 // the loop function runs over and over again until power down or reset
@@ -262,7 +260,7 @@ void loop() {
 void sendData() {
     if (elapsed(&tempoSendValues.debut, tempoSendValues.interval)) {
         Serial.println("SEND DATA");
-        condition.serializeData(buffer, RTC.getTime(), CONDID);
+        condition.serializeData(RTC.getTime(), CONDID,buffer);
         Serial.println(buffer);
         webSocket.sendTXT(buffer);
     }
@@ -271,13 +269,13 @@ void sendData() {
 
 void setPIDparams() {
 
-     condition.regulpH.pid.SetTunings(condition.regulpH.Kp,condition.regulpH.Ki,condition.regulpH.Kd);
+    condition.regulpH.pid = PID((double*)&Hamilton[3].pH_sensorValue, &condition.regulpH.sortiePID, &condition.regulpH.consigne, condition.regulpH.Kp, condition.regulpH.Ki, condition.regulpH.Kd, DIRECT);
     condition.regulpH.pid.SetOutputLimits(0, 127);
     condition.regulpH.pid.SetMode(AUTOMATIC);
     condition.regulpH.pid.SetControllerDirection(REVERSE);
 
-     condition.regulTemp.pid.SetOutputLimits(50, 255);
-     condition.regulTemp.pid.SetTunings(condition.regulTemp.Kp,condition.regulTemp.Ki,condition.regulTemp.Kd);
+    condition.regulTemp.pid = PID((double*)&Hamilton[3].temp_sensorValue, &condition.regulTemp.sortiePID, &condition.regulTemp.consigne, condition.regulTemp.Kp, condition.regulTemp.Ki, condition.regulTemp.Kd, P_ON_M, DIRECT);
+    condition.regulTemp.pid.SetOutputLimits(70, 200);
     condition.regulTemp.pid.SetMode(AUTOMATIC);
     condition.regulTemp.pid.SetControllerDirection(DIRECT);
 
@@ -338,7 +336,10 @@ void checkMesocosmes() {
 
 }
 
+int state = 0;
 void readMBSensors() {
+  
+    int errorCode = 0;
     if (elapsed(&tempoSensorRead.debut, tempoSensorRead.interval)) {
         if (calib.calibRequested) {
             calib.calibRequested = false;
@@ -348,23 +349,23 @@ void readMBSensors() {
             calibrateSensor();
         }
         else {
-            if (ppH) {
+            if (readpH) {
                 if (Hamilton[sensorIndex].readPH()) {
                     Serial.print("sensor address:"); Serial.println(Hamilton[sensorIndex].query.u8id);
                     Serial.print(F("pH:")); Serial.println(Hamilton[sensorIndex].pH_sensorValue);
                     if (sensorIndex < 3) condition.Meso[sensorIndex].pH = Hamilton[sensorIndex].pH_sensorValue;
                     if (sensorIndex == 3) condition.mesurepH = Hamilton[sensorIndex].pH_sensorValue;
-                    ppH = false;
+                    readpH = false;
                 }
             }
             else {
                 if (Hamilton[sensorIndex].readTemp()) {
                     Serial.print("sensor address:"); Serial.println(Hamilton[sensorIndex].query.u8id);
-                    Serial.print(F("temp:")); Serial.println(Hamilton[sensorIndex].temp_sensorValue);
+                    Serial.print(F("pH:")); Serial.println(Hamilton[sensorIndex].temp_sensorValue);
                     if (sensorIndex < 3) condition.Meso[sensorIndex].temperature = Hamilton[sensorIndex].temp_sensorValue;
                     if (sensorIndex == 3) condition.mesureTemperature = Hamilton[sensorIndex].temp_sensorValue;
                     sensorIndex == 3 ? sensorIndex = 0 : sensorIndex++;
-                    ppH = true;
+                    readpH = true;
                 }
             }
         }
@@ -405,9 +406,9 @@ int regulationTemperature() {
                 double diff = lastTemp - Hamilton[3].temp_sensorValue;
                 double err = condition.regulTemp.consigne - Hamilton[3].temp_sensorValue;
 
-                int adjust = (int)(condition.regulTemp.Kd * diff + condition.regulTemp.Ki * err);
-                if (meanPIDOut_temp > 200) meanPIDOut_temp = 200;
-                if (meanPIDOut_temp < 70) meanPIDOut_temp = 70;
+                double adjust = (condition.regulTemp.Kd * diff + condition.regulTemp.Ki * err);
+                if (meanPIDOut_temp > 200) meanPIDOut_temp = 200.0;
+                if (meanPIDOut_temp < 70) meanPIDOut_temp = 70.0;
 
                 meanPIDOut_temp += adjust;
                 Serial.print("lastTemp"); Serial.println(lastTemp);
@@ -427,10 +428,8 @@ int regulationTemperature() {
         }
         else {
             //condition.load();
-
-            //setPIDparams();
             condition.regulTemp.pid.Compute();
-            //Serial.println("Kp:" + String(condition.regulTemp.pid.GetKp()));
+
             condition.regulTemp.sortiePID_pc = (int)map(condition.regulTemp.sortiePID, 50, 255, 0, 100);
             if (condition.regulTemp.sortiePID_pc < 0) condition.regulTemp.sortiePID_pc = 0;
             analogWrite(PIN_V3V, condition.regulTemp.sortiePID);
@@ -444,14 +443,13 @@ int regulationpH() {
     if (condition.regulpH.autorisationForcage) {
         if (condition.regulpH.consigneForcage > 0 && condition.regulpH.consigneForcage <= 100) {
             digitalWrite(PIN_POMPE_MARCHE, LOW);
-            int pts = (int)map(condition.regulpH.consigneForcage,0,100,30,158);
-            analogWrite(PIN_POMPE_ANA, pts);
-            //Serial.println("FORCAGE!");
+            analogWrite(PIN_POMPE_ANA, (int)(condition.regulpH.consigneForcage * 127 / 100));
+            Serial.println("FORCAGE!");
         }
         else {
             digitalWrite(PIN_POMPE_MARCHE, HIGH);
             analogWrite(PIN_POMPE_ANA, 0);
-            //Serial.println("ARRET!");
+            Serial.println("ARRET!");
         }
     }
     else {
@@ -474,7 +472,6 @@ int regulationpH() {
         else {*/
         condition.regulpH.pid.Compute();
         condition.regulpH.sortiePID_pc = (int)(condition.regulpH.sortiePID / 1.27);
-        //condition.regulpH.sortiePID_pc = (int)map(condition.regulpH.sortiePID,30,158,0,100);
         if (condition.regulpH.sortiePID < 1) digitalWrite(PIN_POMPE_MARCHE, HIGH);
         else {
             digitalWrite(PIN_POMPE_MARCHE, LOW);
@@ -497,35 +494,40 @@ void load(int address) {
 
 
 void readJSON(char* json) {
-    StaticJsonDocument<512> doc;
-    deserializeJson(doc, json);
+    StaticJsonDocument<jsonDocSize_data> doc;
+    char buffer[bufferSize];
 
+    DeserializationError error = deserializeJson(doc, json);
 
-        
-    uint8_t command = doc["cmd"];
-    uint8_t condID = doc["cID"];
-    uint8_t senderID = doc["sID"];
+    if (error) {
+        Serial.print(F("deserializeJson() failed: "));
+        Serial.println(error.f_str());
+        //return;
+    }
+    uint8_t command = doc[cmd];
+    uint8_t condID = doc[cID];
+    uint8_t senderID = doc[sID];
 
     uint32_t time = doc["time"];
     if (time > 0) RTC.setTime(time);
     if (condID == CONDID) {
         switch (command) {
-        case 0:
+        case REQ_PARAMS:
 
-            condition.serializeParams(buffer, RTC.getTime(),CONDID);
+            //condition.serializeParams(buffer, RTC.getTime(),CONDID);
+            //webSocket.sendTXT(buffer);
+            break;
+        case REQ_DATA:
+            //condition.serializeData(buffer, RTC.getTime(), CONDID);
+            condition.serializeData(time, CONDID, buffer);
             webSocket.sendTXT(buffer);
             break;
-        case 1:
-            condition.serializeData(buffer, RTC.getTime(), CONDID);
-            webSocket.sendTXT(buffer);
-            break;
-        case 2:
-        Serial.println("RECEIVED PARAMS:"+String(json));
+        case SEND_PARAMS:
             condition.deserializeParams(doc);
             condition.save();
             setPIDparams();
-            /*condition.serializeParams(buffer, RTC.getTime(), CONDID);
-            webSocket.sendTXT(buffer);*/
+            //condition.serializeParams(buffer, RTC.getTime());
+            //webSocket.sendTXT(buffer);
             break;
             /*case SEND_DATA:
                 condition.deserializeData(doc);
@@ -536,7 +538,7 @@ void readJSON(char* json) {
                 /*case CALIBRATE_SENSOR:
                     readCalibRequest(doc);
                     break;*/
-        case 4:
+        case CALIBRATE_SENSOR:
             Serial.println(F("CALIB REQ received"));
             calib.sensorID = doc[F("sensorID")];
             calib.calibParam = doc[F("calibParam")];

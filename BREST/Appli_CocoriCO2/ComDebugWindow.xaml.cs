@@ -21,7 +21,6 @@ using InfluxDB.Client.Core;
 using InfluxDB.Client.Writes;
 using System.Threading;
 using System.Net;
-using System.Net.WebSockets;
 
 namespace Appli_CocoriCO2
 {
@@ -84,13 +83,13 @@ namespace Appli_CocoriCO2
         {
             if (tb2.Text.Length > 0)
             {
-                //ReadData(tb2.Text);
+                ReadData(tb2.Text);
             }
         }
 
 
 
-        public void ReadData(string data, WebSocket websocket)
+        public void ReadData(string data)
         {
 
             try
@@ -102,22 +101,22 @@ namespace Appli_CocoriCO2
 
 
                 MW.statusLabel1.Text = "Last updated: " + c.lastUpdated.ToString() + " UTC";
-                if (c.command == 2 && (c.rpH != null)) //SEND_PARAMS
+                if (c.command == 2 && (c.regulpH != null)) //SEND_PARAMS
                 {
                     MW.conditions[c.condID].lastUpdated = c.lastUpdated;
 
                     // MW.Labels[MW.Labels.Length-1] = c.lastUpdated.ToString();
                     //MW.seriesCollection[0].Values.Add(c.command);
 
-                    double sortie = MW.conditions[c.condID].rpH.sortiePID_pc;
-                    MW.conditions[c.condID].rpH = c.rpH;
-                    //MW.conditions[c.condID].rpH.consigne = consigne;
-                    MW.conditions[c.condID].rpH.sortiePID_pc = sortie;
+                    double sortie = MW.conditions[c.condID].regulpH.sortiePID_pc;
+                    MW.conditions[c.condID].regulpH = c.regulpH;
+                    //MW.conditions[c.condID].regulpH.consigne = consigne;
+                    MW.conditions[c.condID].regulpH.sortiePID_pc = sortie;
 
-                    sortie = MW.conditions[c.condID].rTemp.sortiePID_pc;
-                    MW.conditions[c.condID].rTemp = c.rTemp;
-                    // MW.conditions[c.condID].rTemp.consigne = consigne;
-                    MW.conditions[c.condID].rTemp.sortiePID_pc = sortie;
+                    sortie = MW.conditions[c.condID].regulTemp.sortiePID_pc;
+                    MW.conditions[c.condID].regulTemp = c.regulTemp;
+                    // MW.conditions[c.condID].regulTemp.consigne = consigne;
+                    MW.conditions[c.condID].regulTemp.sortiePID_pc = sortie;
                 }
                 else if (c.command == 3 && (c.Meso != null))
                 {
@@ -130,13 +129,13 @@ namespace Appli_CocoriCO2
                     }
                     MW.conditions[c.condID].temperature = c.temperature;
                     MW.conditions[c.condID].pH = c.pH;
-                    MW.conditions[c.condID].rpH.sortiePID_pc = c.rpH.sortiePID_pc;
+                    MW.conditions[c.condID].regulpH.sortiePID_pc = c.regulpH.sortiePID_pc;
 
                     if (c.condID != 0)
                     {
-                        MW.conditions[c.condID].rpH.consigne = c.rpH.consigne;
-                        MW.conditions[c.condID].rTemp.sortiePID_pc = c.rTemp.sortiePID_pc;
-                        MW.conditions[c.condID].rTemp.consigne = c.rTemp.consigne;
+                        MW.conditions[c.condID].regulpH.consigne = c.regulpH.consigne;
+                        MW.conditions[c.condID].regulTemp.sortiePID_pc = c.regulTemp.sortiePID_pc;
+                        MW.conditions[c.condID].regulTemp.consigne = c.regulTemp.consigne;
                     }
                 }
                 else if (c.command == 6)
@@ -144,7 +143,6 @@ namespace Appli_CocoriCO2
                     MW.ambiantConditions = JsonConvert.DeserializeObject<Ambiant>(data);
                     MW.ambiantConditions.lastUpdated = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc).AddSeconds(MW.ambiantConditions.time);
                     MW.statusLabel1.Text = "Last updated: " + MW.ambiantConditions.lastUpdated.ToString() + " UTC";
-                    MW.ambiantConditions.salinite = calculateSalinity(MW.ambiantConditions.cond);
                     double slope, offset;
                     Double.TryParse(Properties.Settings.Default["FluoOffset"].ToString(), out offset);
                     Double.TryParse(Properties.Settings.Default["FluoSlope"].ToString(), out slope);
@@ -154,11 +152,6 @@ namespace Appli_CocoriCO2
                 {
 
                     MW.masterParams = JsonConvert.DeserializeObject<MasterParams>(data);
-                }
-                else if (c.command == 9)
-                {
-
-                    MW.pacParams = JsonConvert.DeserializeObject<PACParams>(data);
                 }
 
                 MW.DisplayData(c.command);
@@ -171,51 +164,38 @@ namespace Appli_CocoriCO2
             }
         }
 
-        private double calculateSalinity(double cond)
-        {
-            double[] a = new double[] { 0.008, -0.1692, 25.3851, 14.0941, -7.0261,2.7081 };
-            double[] b = new double[] { 0.0005, -0.0056,-0.0066, -0.0375, 0.0636, -0.0144 };
-            double[] c = new double[] { 0.6766097,0.0200564,0.000011043,-0.00000009698,0.00000000010031};
-
-            double k = 0.0162;
-
-            double rt = c[0] + c[1] * 25.0 + c[2] * 25.0 * 25.0 + c[3] * 25.0 * 25.0 * 25.0 + c[4] * 25.0 * 25.0 * 25.0 * 25.0;
-            double Rt = (cond/1000) / (42.914 * rt);
-            double S = a[0] + a[1] * Math.Pow(Rt, 0.5) + a[2] * Math.Pow(Rt, 1) + a[3] * Math.Pow(Rt, 1.5) + a[4] * Math.Pow(Rt, 2) + a[5] * Math.Pow(Rt, 2.5) + ((25.0 - 15)/(1+ k * (25.0 - 15))*(b[0] + b[1] * Math.Pow(Rt, 0.5) + b[2] * Math.Pow(Rt, 1) + b[3] * Math.Pow(Rt, 1.5) + b[4] * Math.Pow(Rt, 2) + b[5] * Math.Pow(Rt, 2.5)));
-            return S;
-        }
-
         private void saveData()
         {
-            if(MW.conditionData.Count > 0)
+            try
             {
-
-                DateTime dt = DateTime.Now.ToUniversalTime();
-                string filePath = Properties.Settings.Default["dataFileBasePath"].ToString() + "_" + dt.ToString("yyyy-MM-dd") + ".csv";
-                filePath = filePath.Replace('\\', '/');
                 Condition c = MW.conditionData.Last<Condition>();
+                if (c.lastUpdated != lastFileWrite)
+                {
+                    DateTime dt = DateTime.Now.ToUniversalTime();
+                    string filePath = Properties.Settings.Default["dataFileBasePath"].ToString() + "_" + dt.ToString("yyyy-MM-dd") + ".csv";
+                    filePath = filePath.Replace('\\', '/');
 
-                try
-                {                    
-                    if (c.lastUpdated != lastFileWrite)
-                    {                  
-                        saveToFile(filePath, dt);                        
-                        MW.conditionData.Clear();
+                    try
+                    {
+                        saveToFile(filePath, dt);
                     }
-                }
-                catch (Exception e)
-                {
-                    //MessageBox.Show("Error writing data: " + e.Message, "Error saving data");
-                    MW.statusLabel3.Text = dt.ToString() + ": Error writing data file: " + e.Message;
-                }
-
-                if (c.lastUpdated.Hour != lastFileWrite.Hour)
-                {
-                    ftpTransfer(filePath);
-                    lastFileWrite = c.lastUpdated;
+                    catch (Exception e)
+                    {
+                        MessageBox.Show("Problem writing to InfluxDB:" + e.Message, "ERROR");
+                    }
+                    //if (c.lastUpdated.Day != lastFileWrite.Day) ftpTransfer(filePath);
+                    if (c.lastUpdated.Hour != lastFileWrite.Hour)// POur tester
+                    {
+                        ftpTransfer(filePath);
+                        lastFileWrite = c.lastUpdated;
+                    }
+                    MW.conditionData.Clear();
                 }
             }
-            
+            catch (Exception e)
+            {
+
+            }
 
         }
 
@@ -233,15 +213,16 @@ namespace Appli_CocoriCO2
 
             try
             {
-                var writeApi = client.GetWriteApiAsync();
-                await writeApi.WritePointAsync(bucket, org, point);
-
+                var writeApiAsync = client.GetWriteApiAsync();
+                await writeApiAsync.WritePointAsync(bucket, org, point);
+                /*using (var writeApi = client.GetWriteApi()) {  
+                    writeApi.WritePoint(bucket, org, point);
+                }*/
             }
             catch (Exception e)
             {
 
             }
-
         }
 
 
@@ -250,7 +231,7 @@ namespace Appli_CocoriCO2
             if (!System.IO.File.Exists(filePath))
             {
                 //Write headers
-                String header = "Time;Sun;Tide;Ambient_O2;Ambient_Conductivity;Ambient_Salinity;Ambient_Turbidity;Ambient_Fluo;Ambient_Temperature;Ambient_pH;Cold_Water_Pressure;Hot_Water_Pressure;Hot_Water_Temperature;Cleanup_Mode;";
+                String header = "Time;Sun;Tide;Ambient_O2;Ambient_Conductivity;Ambient_Salinity;Ambient_Turbidity;Ambient_Fluo;Ambient_Temperature;Ambient_pH;Cold_Water_Pressure;Hot_Water_Pressure;";
 
                 for (int i = 0; i < 4; i++)
                 {
@@ -273,6 +254,7 @@ namespace Appli_CocoriCO2
                         header += "Condition["; header += i; header += "]_Meso["; header += j; header += "]_LevelLL;";
                     }
                 }
+                header += "Cleanup_Mode;";
                 header += "\n";
                 System.IO.File.WriteAllText(filePath, header);
             }
@@ -293,8 +275,6 @@ namespace Appli_CocoriCO2
             data += MW.ambiantConditions.pH; data += ";";
             data += MW.ambiantConditions.pressionEA; data += ";";
             data += MW.ambiantConditions.pressionEC; data += ";";
-            data += MW.ambiantConditions.tempPAC; data += ";";
-            data += MW.cleanupMode; data += ";";
 
             writeDataPointAsync(0, -1, "sun", sun, dt);
             writeDataPointAsync(0, -1, "tide", tide, dt);
@@ -304,44 +284,37 @@ namespace Appli_CocoriCO2
             writeDataPointAsync(0, -1, "turb", MW.ambiantConditions.turb, dt);
             writeDataPointAsync(0, -1, "fluo", MW.ambiantConditions.fluo, dt);
             writeDataPointAsync(0, -1, "temperature", MW.ambiantConditions.temperature, dt);
-            writeDataPointAsync(0, -1, "pH", MW.ambiantConditions.pH, dt);
-
+            writeDataPointAsync(0, -1, "Ambient_pH", MW.ambiantConditions.pH, dt);
             writeDataPointAsync(0, -1, "Cold_Water_Pressure", MW.ambiantConditions.pressionEA, dt);
             writeDataPointAsync(0, -1, "Hot_Water_Pressure", MW.ambiantConditions.pressionEC, dt);
-            writeDataPointAsync(0, -1, "Hot_Water_Temperature", MW.ambiantConditions.tempPAC, dt);
-
-
-            writeDataPointAsync(0, -1, "Hot_Water_Pressure.sortiePID", MW.ambiantConditions.sortiePID_EC, dt);
-            writeDataPointAsync(0, -1, "Cold_Water_Pressure.sortiePID", MW.ambiantConditions.sortiePID_EA, dt);
-
-
+            double cum = MW.cleanupMode ? 1 : 0;
+            writeDataPointAsync(0, -1, "CleanupMode", cum, dt);
 
             for (int i = 0; i < 4; i++)
             {
                 data += MW.conditions[i].temperature; data += ";";
                 data += MW.conditions[i].pH; data += ";";
-                data += MW.conditions[i].rpH.consigne; data += ";";
-                data += MW.conditions[i].rpH.sortiePID_pc; data += ";";
+                data += MW.conditions[i].regulpH.consigne; data += ";";
+                data += MW.conditions[i].regulpH.sortiePID_pc; data += ";";
 
-                
+                writeDataPointAsync(i, -1, "temperature", MW.conditions[i].temperature, dt);
                 writeDataPointAsync(i, -1, "pH", MW.conditions[i].pH, dt);
-                writeDataPointAsync(i, -1, "rpH.consigne", MW.conditions[i].rpH.consigne, dt);
-                writeDataPointAsync(i, -1, "rpH.sortiePID", MW.conditions[i].rpH.sortiePID_pc, dt);
+                writeDataPointAsync(i, -1, "regulpH.consigne", MW.conditions[i].regulpH.consigne, dt);
+                writeDataPointAsync(i, -1, "regulpH.sortiePID", MW.conditions[i].regulpH.sortiePID_pc, dt);
 
                 if (i > 0)
                 {
-                    data += MW.conditions[i].rTemp.consigne; data += ";";
-                    data += MW.conditions[i].rTemp.sortiePID_pc; data += ";";
-                    writeDataPointAsync(i, -1, "temperature", MW.conditions[i].temperature, dt);
-                    writeDataPointAsync(i, -1, "rTemp.consigne", MW.conditions[i].rTemp.consigne, dt);
-                    writeDataPointAsync(i, -1, "rTemp.sortiePID", MW.conditions[i].rTemp.sortiePID_pc, dt);
+                    data += MW.conditions[i].regulTemp.consigne; data += ";";
+                    data += MW.conditions[i].regulTemp.sortiePID_pc; data += ";";
+                    writeDataPointAsync(i, -1, "regulTemp.consigne", MW.conditions[i].regulTemp.consigne, dt);
+                    writeDataPointAsync(i, -1, "regulTemp.sortiePID", MW.conditions[i].regulTemp.sortiePID_pc, dt);
                 }
 
                 for (int j = 0; j < 3; j++)
                 {
-                    bool LH = MW.conditions[i].Meso[j].alarmeNiveauHaut;
-                    bool LL = MW.conditions[i].Meso[j].alarmeNiveauBas;
-                    bool LLL = MW.conditions[i].Meso[j].alarmeNiveauTresBas;
+                    double LH = MW.conditions[i].Meso[j].alarmeNiveauHaut ? 1 : 0;
+                    double LL = MW.conditions[i].Meso[j].alarmeNiveauBas ? 1 : 0;
+                    double LLL = MW.conditions[i].Meso[j].alarmeNiveauTresBas ? 1 : 0;
 
                     data += MW.conditions[i].Meso[j].temperature; data += ";";
                     data += MW.conditions[i].Meso[j].pH; data += ";";
@@ -353,40 +326,30 @@ namespace Appli_CocoriCO2
                     writeDataPointAsync(i, j, "temperature", MW.conditions[i].Meso[j].temperature, dt);
                     writeDataPointAsync(i, j, "pH", MW.conditions[i].Meso[j].pH, dt);
                     writeDataPointAsync(i, j, "debit", MW.conditions[i].Meso[j].debit, dt);
-                    /*writeDataPointAsync(i, j, "LH", LH, dt);
+                    writeDataPointAsync(i, j, "LH", LH, dt);
                     writeDataPointAsync(i, j, "LL", LL, dt);
-                    writeDataPointAsync(i, j, "LLL", LLL, dt);*/
+                    writeDataPointAsync(i, j, "LLL", LLL, dt);
 
                 }
             }
+            data += MW.cleanupMode; data += ";";
             data += "\n";
             System.IO.File.AppendAllText(filePath, data);
         }
 
         private void ftpTransfer(string fileName)
         {
-            try
-            {
-                string ftpUsername = Properties.Settings.Default["ftpUsername"].ToString();
-                string ftpPassword = Properties.Settings.Default["ftpPassword"].ToString();
-                string ftpDir = "ftp://" + Properties.Settings.Default["ftpDir"].ToString();
+            string ftpUsername = Properties.Settings.Default["ftpUsername"].ToString();
+            string ftpPassword = Properties.Settings.Default["ftpPassword"].ToString();
+            string ftpDir = "ftp://" + Properties.Settings.Default["ftpDir"].ToString();
 
-                string fn = fileName.Substring(fileName.LastIndexOf('/') + 1);
-                ftpDir += fn;
-                using (var client = new WebClient())
-                {
-                    client.Credentials = new NetworkCredential(ftpUsername, ftpPassword);
-                    client.UploadFile(ftpDir, WebRequestMethods.Ftp.UploadFile, fileName);
-                }
-                MW.statusLabel3.Text = "";
-            }
-            catch (Exception e)
+            string fn = fileName.Substring(fileName.LastIndexOf('/') + 1);
+            ftpDir += fn;
+            using (var client = new WebClient())
             {
-                DateTime dt = DateTime.Now;
-                MW.statusLabel3.Text = dt.ToString()+": Error sending data file on FTP server: " + e.Message;
-                //MessageBox.Show("Error sending data file on FTP server: " + e.Message, "Error sending FTP data");
+                client.Credentials = new NetworkCredential(ftpUsername, ftpPassword);
+                client.UploadFile(ftpDir, WebRequestMethods.Ftp.UploadFile, fileName);
             }
-
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)

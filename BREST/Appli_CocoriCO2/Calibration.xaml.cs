@@ -59,6 +59,7 @@ namespace Appli_CocoriCO2
         }
         private async Task InitializeAsync()
         {
+
             int t;
             Int32.TryParse(Properties.Settings.Default["dataLogInterval"].ToString(), out t);
             var dueTime = TimeSpan.FromMinutes(0);
@@ -69,7 +70,8 @@ namespace Appli_CocoriCO2
         }
         private void RefreshUI()
         {
-            double t;
+            
+                    double t;
             int condID = comboBox_Condition.SelectedIndex;
             int sensorID; // HAMILTON: indexes O to 2 are mesocosms, index 3 is acidification tank, index 4 is input measure tank, 5 = oxy, 6 = NTU, 7 = Cond
             if (condID > 0)
@@ -115,6 +117,7 @@ namespace Appli_CocoriCO2
                     tb_Offset.IsEnabled = false;
                     tb_Slope.IsEnabled = false;
                     lbl_std1.Content = "Calibration standard 1";
+                    lbl_std2.Content = "Calibration standard 2";
                     lbl_std2.Visibility = Visibility.Visible;
                     tb_Slope.Visibility = Visibility.Visible;
                     btn_SendSlope.Visibility = Visibility.Visible;
@@ -122,25 +125,29 @@ namespace Appli_CocoriCO2
                     break;
                 case 6:
                     label_measure.Content = string.Format("{0:0.00} ", MW.ambiantConditions.turb);
+                    label_measure2.Content = "";
+                    label_measure3.Content = "";
                     label_explain_offset.Content = "Ideally a value close to 0";
-                    label_explain_slope.Content = "Has to be around 40000";
+                    label_explain_slope.Content = "Ideally a value close to 25";
                     tb_Offset.IsEnabled = true;
                     tb_Slope.IsEnabled = true;
                     lbl_std1.Content = "Calibration standard 1";
+                    lbl_std2.Content = "Calibration standard 2";
                     lbl_std2.Visibility = Visibility.Visible;
                     tb_Slope.Visibility = Visibility.Visible;
                     btn_SendSlope.Visibility = Visibility.Visible;
                     btn_FactoryReset.IsEnabled = true;
                     break;
                 case 7:
-                    label_measure.Content = string.Format("{0:0.00} ", MW.ambiantConditions.cond);
                     label_measure.Content = string.Format("{0:0.00} uS/cm", MW.ambiantConditions.cond);
                     label_measure2.Content = string.Format("{0:0.00}", MW.ambiantConditions.salinite);
+                    label_measure3.Content = "";
                     label_explain_offset.Content = "Ideally a value close to 0 µS/cm";
                     label_explain_slope.Content = "Has to be above 20 000 µS/cm";
                     tb_Offset.IsEnabled = true;
                     tb_Slope.IsEnabled = true;
                     lbl_std1.Content = "Calibration standard 1";
+                    lbl_std2.Content = "Calibration standard 2";
                     lbl_std2.Visibility = Visibility.Visible;
                     tb_Slope.Visibility = Visibility.Visible;
                     btn_SendSlope.Visibility = Visibility.Visible;
@@ -204,7 +211,6 @@ namespace Appli_CocoriCO2
                     break;
                 case 7:
                     label_measure.Content = string.Format("{0:0.00} ", MW.ambiantConditions.cond);
-                    label_measure.Content = string.Format("{0:0.00} uS/cm", MW.ambiantConditions.cond);
                     label_measure2.Content = string.Format("{0:0.00}", MW.ambiantConditions.salinite);
                     
                     break;
@@ -240,7 +246,7 @@ namespace Appli_CocoriCO2
                 Properties.Settings.Default.Save();
 
             }
-            else sendReqAsync(condID, sensorID, 0, value);
+            else sendReq(condID, sensorID, 0, value);
         }
 
         private void btn_SendSlope_Click(object sender, RoutedEventArgs e)
@@ -257,29 +263,24 @@ namespace Appli_CocoriCO2
 
             }
             else
-                sendReqAsync(condID, sensorID, 1, value);
+                sendReq(condID, sensorID, 1, value);
         }
 
-        private async Task sendReqAsync(int condID, int sensorID, int calibParam, float value)
+        private void sendReq(int condID, int sensorID, int calibParam, float value)
         {
             //{ command: 4, condID: 1,senderID: 4, MesoID: 1,sensorID: 2, calibParam: 1, value: 123,45}
-            string msg = "{cmd:4,cID:" + condID + ",sID:4,sensorID:" + sensorID + ",calibParam:" + calibParam + ",value:" + value + "}";
+            string msg = "{command:4,condID:" + condID + ",senderID:4,sensorID:" + sensorID + ",calibParam:" + calibParam + ",value:" + value + "}";
 
             ((MainWindow)Application.Current.MainWindow).comDebugWindow.tb1.Text = msg;
 
-            foreach(var wsd in ((MainWindow)Application.Current.MainWindow)._sockets)
+
+            if (((MainWindow)Application.Current.MainWindow).ws.State == WebSocketState.Open)
             {
-                var ws = wsd;
-                if (ws.IsAvailable)
-                {
-                    /*Task<string> t2 = Send(ws, msg, ((MainWindow)Application.Current.MainWindow).comDebugWindow.tb2);
-                    t2.Wait(50);*/
-                    await ws.Send(msg);
-                }
+                Task<string> t2 = Send(((MainWindow)Application.Current.MainWindow).ws, msg, ((MainWindow)Application.Current.MainWindow).comDebugWindow.tb2);
+                t2.Wait(50);
             }
-            
         }
-        
+
         private void comboBox_Sensor_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             RefreshUI();
@@ -291,7 +292,7 @@ namespace Appli_CocoriCO2
         }
 
 
-        private static async Task<string> Send(WebSocket ws, string msg, TextBox tb)
+        private static async Task<string> Send(ClientWebSocket ws, string msg, TextBox tb)
         {
             var timeOut = new CancellationTokenSource(500).Token;
             if (ws.State == WebSocketState.Open)
@@ -318,13 +319,11 @@ namespace Appli_CocoriCO2
         private void btn_FactoryReset_Click(object sender, RoutedEventArgs e)
         {
             int condID = comboBox_Condition.SelectedIndex;
-            int sensorID;
-            if (condID == 0) sensorID = comboBox_Sensor_C0.SelectedIndex;
-            else sensorID = comboBox_Sensor.SelectedIndex;
+            int sensorID = comboBox_Sensor.SelectedIndex;
             float value;
 
             float.TryParse(tb_Offset.Text, out value);
-            sendReqAsync(condID, sensorID, 99, value);
+            sendReq(condID, sensorID, 99, value);
         }
 
         private void Window_Closing_1(object sender, System.ComponentModel.CancelEventArgs e)

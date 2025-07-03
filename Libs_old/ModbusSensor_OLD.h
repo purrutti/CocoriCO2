@@ -83,8 +83,28 @@ public:
     }
 
 
+    bool configMesure(Modbus* master) {
+        setQuery(16, 165, 5);
+        data[0] = 0;
+        data[1] = 1024;
+        data[2] = 1024;
+        data[3] = 1024;
+        data[4] = 1024;
+        if (!querySent) {
+            master->query(query);
+            querySent = true;
+        }
+        else {
+            master->poll();
+            if (master->getState() == COM_IDLE) {
+                querySent = false;
+                return 1;
+            }
+        }
+        return 0;
+    }
 
-    uint8_t requestValues(ModbusRtu* master)
+    uint8_t requestValues(Modbus* master)
     {
         setQueryW();
         if (!querySent) {
@@ -95,7 +115,7 @@ public:
         else {
             master->poll();
             tries++;
-
+            
             if (master->getState() == COM_IDLE) {
                 querySent = false;
                 return 1;
@@ -104,15 +124,14 @@ public:
         return 0;
     }
 
-    uint8_t readValues(ModbusRtu* master)
+    uint8_t readValues(Modbus* master)
     {
         setQueryR();
         if (!querySent) {
             master->query(query);
             querySent = true;
             tries = 0;
-        }
-        else {
+        }else {
             master->poll();
             tries++;
             if (master->getState() == COM_IDLE) {
@@ -136,7 +155,7 @@ public:
 
 
                 clearData();
-
+                
                 if (params[0] > 0.1) return 1;
                 else return -1;
             }
@@ -149,7 +168,7 @@ public:
         return 0;
     }
 
-    bool calibrateCoeff(float value, int offset, ModbusRtu* master)
+    bool calibrateCoeff(float value, int offset, Modbus* master)
     {
         setQueryCalibration(offset);
         u.fval = value;
@@ -178,7 +197,7 @@ public:
         return 0;
     }
 
-    bool factoryReset(ModbusRtu* master)
+    bool factoryReset(Modbus* master)
     {
         Serial.println("factory reset");
         setQuery(16, 2, 1);
@@ -200,7 +219,7 @@ public:
         return 0;
     }
 
-    bool validateCalibration(int offset, ModbusRtu* master)
+    bool validateCalibration(int offset, Modbus* master)
     {
         setQueryCalValidation();
         setQuery(16, offset, 16);
@@ -216,19 +235,31 @@ public:
         data[9] = 17; //heures
         data[10] = 31; //jour
         data[11] = 12; //mois
-        data[12] = 2020; //année
+        data[12] = 2020; //annÃ©e
 
         if (!querySent) {
-            master->query(query);
+            if (int ret = master->query(query) < 0) { Serial.print("PROBLEM with query:"); Serial.println(ret); }
             querySent = true;
         }
         else {
             master->poll();
             if (master->getState() == COM_IDLE) {
-                querySent = false;
+                if (master->u8lastError == NO_REPLY) {
+                    Serial.println("time out");
+                    querySent = false;
+                }
+                else {
+                    querySent = false;
+                    delay(50);
+                    Serial.println("validation OK");
+                    /*for (int i = 0; i < 16; i++) {
+                        Serial.print("data["); Serial.print(i); Serial.print("]="); Serial.println(data[i], HEX);
+                    }*/
 
-                for (int i = 0; i < 16; i++) data[i] = 0;
-                return 1;
+                    for (int i = 0; i < 16; i++) data[i] = 0;
+                    return 1;
+                }
+                
             }
         }
         return 0;
@@ -270,7 +301,7 @@ public:
         setQuery(3, 4800, 8);
     }
 
-    bool readErrors(ModbusRtu* master)
+    bool readErrors(Modbus* master)
     {
         setQueryErrors();
         if (!querySent) {
@@ -284,7 +315,7 @@ public:
                 u.b[1] = data[3];
                 pH_sensorValue = u.fval;
                 querySent = false;
-
+                
 
                 clearData();
                 return 1;
@@ -296,7 +327,7 @@ public:
 
     }
 
-    bool setLevel(ModbusRtu* master)
+    bool setLevel(Modbus* master)
     {
         setQuerySetLevel();
         if (!querySent) {
@@ -313,7 +344,7 @@ public:
         return 0;
     }
 
-    bool readPH(ModbusRtu* master)
+    bool readPH(Modbus* master)
     {
         setQuerypH();
         if (!querySent) {
@@ -330,7 +361,7 @@ public:
                 /*for (int i = 0; i < 16; i++) {
                     Serial.print("data["); Serial.print(i); Serial.print("]="); Serial.println(data[i], HEX);
                 }*/
-
+               
                 clearData();
                 return 1;
 
@@ -341,7 +372,7 @@ public:
 
     }
 
-    bool readTemp(ModbusRtu* master)
+    bool readTemp(Modbus* master)
     {
         setQueryTemp();
         if (!querySent) {
@@ -355,7 +386,7 @@ public:
                 u.b[1] = data[3];
                 temp_sensorValue = u.fval;
                 querySent = false;
-
+                
                 clearData();
                 return 1;
             }
@@ -369,7 +400,7 @@ public:
     2 = cancel an active calbration
     3 = restore standard calbration
     4 = restore product calibration*/
-    bool sendCalibrationCommand(int cmd, ModbusRtu* master)
+    bool sendCalibrationCommand(int cmd, Modbus* master)
     {
         setQueryCalibrationCommand();
         data[0] = cmd;
@@ -388,7 +419,7 @@ public:
         return 0;
     }
 
-    bool sendCalibrationValue(float value, ModbusRtu* master)
+    bool sendCalibrationValue(float value, Modbus* master)
     {
         setQueryCalibrationValue();
         u.fval = value;
@@ -409,7 +440,7 @@ public:
         return 0;
     }
 
-    bool getCalibrationStatus(ModbusRtu* master)
+    bool getCalibrationStatus(Modbus* master)
     {
         setQueryCalibrationStatus();
         if (!querySent) {
@@ -429,7 +460,7 @@ public:
         return 0;
     }
 
-    int calibrate(float value, int step, ModbusRtu* master) {
+    int calibrate(float value, int step, Modbus* master) {
         Serial.println(F("CALIB HAMILTON"));
         switch (step) {
         case 0:
@@ -461,7 +492,7 @@ public:
         return step;
     }
 
-    bool HamiltonFactoryReset(ModbusRtu* master)
+    bool HamiltonFactoryReset(Modbus* master)
     {
         Serial.println(F("factory reset"));
         setQuery(16, 8191, 2);
