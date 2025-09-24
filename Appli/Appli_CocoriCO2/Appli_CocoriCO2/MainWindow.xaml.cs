@@ -31,6 +31,8 @@ using Newtonsoft.Json.Linq;
 using System.Reflection;
 
 using Fleck;
+using System.Net.Http;
+using System.Net.Http.Headers;
 
 namespace Appli_CocoriCO2
 {
@@ -242,6 +244,23 @@ namespace Appli_CocoriCO2
         public bool raised { get; set; }
         public bool acknowledged { get; set; }
         public int comparaison { get; set; }
+
+
+        private void MakePostRequest(string RequestUrl, string Content)
+        {
+            HttpClient httpClient = new HttpClient();
+            HttpContent httpContent = new StringContent(Content);
+
+            httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+            try
+            {
+                httpClient.PostAsync(RequestUrl, httpContent).ConfigureAwait(false);
+            }
+            catch (HttpRequestException hre)
+            {
+                Console.WriteLine("hre.Message");
+            }
+        }
         public bool checkAndRaise(double val) // raise alarm if value is upperThan threshold
         {
             value = val;
@@ -301,6 +320,9 @@ namespace Appli_CocoriCO2
             var slackClient = new SlackTaskClient(TOKEN);
 
             slackClient.PostMessageAsync(Properties.Settings.Default["SlackChannelID"].ToString(), msg);
+            MakePostRequest("https://hooks.slack.com/services/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", "{ \"text\":\"" + msg + "\"}");
+
+        
         }
 
         public bool checkAndRaise(bool val, bool th) // raise alarm if value is upperThan threshold
