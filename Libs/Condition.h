@@ -162,11 +162,13 @@ public:
 
         JsonObject regulT= doc.createNestedObject(rTemp);
         regulT[cons] = String(regulTemp.consigne,2);
-        regulT[sPID_pc] = String(regulTemp.sortiePID_pc,0);
+        if(!isnan(regulTemp.sortiePID_pc)) regulT[sPID_pc] = String(regulTemp.sortiePID_pc,0);
+        else regulT[sPID_pc] = String("-99");
 
         JsonObject regulp = doc.createNestedObject(rpH);
         regulp[cons] = String(regulpH.consigne,2);
-        regulp[sPID_pc] = String(regulpH.sortiePID_pc,0);
+        if (!isnan(regulpH.sortiePID_pc)) regulp[sPID_pc] = String(regulpH.sortiePID_pc,0);
+        else regulp[sPID_pc] = String("-99");
 
         for (int i = 0; i < 3; i++) {
             dataArray[i] = data.createNestedObject();

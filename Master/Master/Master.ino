@@ -616,7 +616,7 @@ void printToSD() {
 
 void setPIDparams() {
     condition.regulpH.pid = PID((double*)&condition.mesurepH, &condition.regulpH.sortiePID, &condition.regulpH.consigne, condition.regulpH.Kp, condition.regulpH.Ki, condition.regulpH.Kd, REVERSE);
-    condition.regulpH.pid.SetOutputLimits(0, 20);
+    condition.regulpH.pid.SetOutputLimits(0, 50);
     condition.regulpH.pid.SetMode(AUTOMATIC);
     condition.regulpH.pid.SetControllerDirection(REVERSE);
 
