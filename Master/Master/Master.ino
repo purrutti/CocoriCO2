@@ -1157,11 +1157,13 @@ void readMBSensors() {
             if (sensorIndex < 5) { // HAMILTON: indexes O to 2 are mesocosms, index 4 is input measure tank, index 3 is acidification tank
                 //Hamilton.setSensor(sensorIndex + 1, &master);
                 mbSensor.query.u8id = sensorIndex + 1;
+
+                Serial.print(F("SENSOR:")); Serial.println(sensorIndex + 1);
                 if (pHSensor) {
 
                     if (mbSensor.readPH(&master)) {
 
-                        //Serial.print(F("pH:")); Serial.println(mbSensor.pH_sensorValue);
+                        Serial.print(F("pH:")); Serial.println(mbSensor.pH_sensorValue);
                         if (mbSensor.pH_sensorValue > 0) {
                             if (sensorIndex < 3) condition.Meso[sensorIndex].pH = mbSensor.pH_sensorValue;
                             if (sensorIndex == 3) condition.mesurepH = mbSensor.pH_sensorValue;
@@ -1184,7 +1186,7 @@ void readMBSensors() {
                 }*/
                 else {
                     if (mbSensor.readTemp(&master)) {
-                        //Serial.print(F("temp:")); Serial.println(mbSensor.temp_sensorValue);
+                        Serial.print(F("temp:")); Serial.println(mbSensor.temp_sensorValue);
                         if (mbSensor.temp_sensorValue > 0) {
                             if (sensorIndex < 3) condition.Meso[sensorIndex].temperature = mbSensor.temp_sensorValue;
                             if (sensorIndex == 3) condition.mesureTemperature = mbSensor.temp_sensorValue;

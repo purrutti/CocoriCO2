@@ -238,9 +238,15 @@ public:
         regulpH.Kp = regulp[Kp]; // 2.1
         regulpH.Ki = regulp[Ki]; // 2.1
         regulpH.Kd = regulp[Kd]; // 2.1
-        const char* regulpH_autorisationForcage = regulp[aForcage];
-        if (strcmp(regulpH_autorisationForcage, "true") == 0 || strcmp(regulpH_autorisationForcage, "True") == 0) regulpH.autorisationForcage = true;
+        //const char* regulpH_autorisationForcage = regulp[aForcage];
+        //if (strcmp(regulpH_autorisationForcage, "true") == 0 || strcmp(regulpH_autorisationForcage, "True") == 0) regulpH.autorisationForcage = true;
+        //else regulpH.autorisationForcage = false;
+        
+
+        String aForcage = regulp["aForcage"];
+        if (aForcage.compareTo("true") == 0) regulpH.autorisationForcage = true;
         else regulpH.autorisationForcage = false;
+        
         regulpH.consigneForcage = regulp[consForcage]; // 2.1
         regulpH.offset = regulp[offset];
 
@@ -250,11 +256,21 @@ public:
         regulTemp.Kp = regulT[Kp]; // 2.1
         regulTemp.Ki = regulT[Ki]; // 2.1
         regulTemp.Kd = regulT[Kd]; // 2.1
-        const char* regulTemp_autorisationForcage = regulT[aForcage];
-        if (strcmp(regulTemp_autorisationForcage, "true") == 0 || strcmp(regulTemp_autorisationForcage, "True") == 0) regulTemp.autorisationForcage = true;
+
+        String aForcage2 = regulT["aForcage"];
+        if (aForcage2.compareTo("true") == 0) regulTemp.autorisationForcage = true;
         else regulTemp.autorisationForcage = false;
+
+
+        //const char* regulTemp_autorisationForcage = regulT[aForcage];
+        //if (strcmp(regulTemp_autorisationForcage, "true") == 0 || strcmp(regulTemp_autorisationForcage, "True") == 0) regulTemp.autorisationForcage = true;
+        //else regulTemp.autorisationForcage = false;
         regulTemp.consigneForcage = regulT[consForcage]; // 2.1
         regulTemp.offset = regulT[offset];
+
+        //Serial.println("A Forcage = " + String(regulTemp_autorisationForcage));
+
+        Serial.println("Bool A Forcage = " + String(regulTemp.autorisationForcage));
         
     }
 

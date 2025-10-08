@@ -15,7 +15,7 @@
 #include <WebSocketsClient.h>
 #include <RTC.h>
 
-const uint8_t CONDID = 3;
+const uint8_t CONDID = 2;
 
 /***** PIN ASSIGNMENTS *****/
 const byte PIN_DEBITMETRE_1 = 56;
@@ -209,7 +209,7 @@ void setup() {
 
     tempoRegulpH.interval = 100;
     tempoCheckMeso.interval = 200;
-    tempoSendValues.interval = 1000;
+    tempoSendValues.interval = 5000;
     tempoRR.debut = millis();
     tempoRR.interval = 1000;
 
