@@ -15,7 +15,7 @@
 #include <WebSocketsClient.h>
 #include <RTC.h>
 
-const uint8_t CONDID = 2;
+const uint8_t CONDID = 3;
 
 /***** PIN ASSIGNMENTS *****/
 const byte PIN_DEBITMETRE_1 = 56;

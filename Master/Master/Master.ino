@@ -149,6 +149,8 @@ typedef struct MasterData {
     double fluo;
     double pH;
     double temperature;
+    double C0_pH;
+    double C0_temperature;
     double salinite;
     uint32_t nextSunUp;
     uint32_t nextSunDown;
@@ -709,6 +711,7 @@ double readTemp(int lissage, uint8_t pin, double temp) {
     temp = ((double)t) / 100.0; // pressure in bars
     temp = (lissage * temp + (100.0 - lissage) * ancienneTemp) / 100.0;
     return temp;
+    
 }
 
 
@@ -973,9 +976,16 @@ void deserializeMasterParams(StaticJsonDocument<512> doc) {
     regulPression[0].Kp = regulPression0[F("Kp")]; // 2.1
     regulPression[0].Ki = regulPression0[F("Ki")]; // 2.1
     regulPression[0].Kd = regulPression0[F("Kd")]; // 2.1
-    const char* regul0_autorisationForcage = regulPression0[F("aForcage")];
-    if (strcmp(regul0_autorisationForcage, "true") == 0 || strcmp(regul0_autorisationForcage, "True") == 0) regulPression[0].autorisationForcage = true;
+
+
+    String aForcage = regulPression0["aForcage"];
+    if (aForcage.compareTo("true") == 0) regulPression[0].autorisationForcage = true;
     else regulPression[0].autorisationForcage = false;
+
+
+    //const char* regul0_autorisationForcage = regulPression0[F("aForcage")];
+    //if (strcmp(regul0_autorisationForcage, "true") == 0 || strcmp(regul0_autorisationForcage, "True") == 0) regulPression[0].autorisationForcage = true;
+    //else regulPression[0].autorisationForcage = false;
     regulPression[0].consigneForcage = regulPression0[F("consForcage")]; // 2.1
     regulPression[0].offset = regulPression0[F("offset")];
 
@@ -984,9 +994,16 @@ void deserializeMasterParams(StaticJsonDocument<512> doc) {
     regulPression[1].Kp = regulPression1[F("Kp")]; // 2.1
     regulPression[1].Ki = regulPression1[F("Ki")]; // 2.1
     regulPression[1].Kd = regulPression1[F("Kd")]; // 2.1
-    const char* regul1_autorisationForcage = regulPression1[F("aForcage")];
-    if (strcmp(regul1_autorisationForcage, "true") == 0 || strcmp(regul1_autorisationForcage, "True") == 0) regulPression[1].autorisationForcage = true;
+
+
+    String aForcage2 = regulPression1["aForcage"];
+    if (aForcage2.compareTo("true") == 0) regulPression[1].autorisationForcage = true;
     else regulPression[1].autorisationForcage = false;
+
+
+    //const char* regul1_autorisationForcage = regulPression1[F("aForcage")];
+    //if (strcmp(regul1_autorisationForcage, "true") == 0 || strcmp(regul1_autorisationForcage, "True") == 0) regulPression[1].autorisationForcage = true;
+    //else regulPression[1].autorisationForcage = false;
     regulPression[1].consigneForcage = regulPression1[F("consForcage")]; // 2.1
     regulPression[1].offset = regulPression1[F("offset")];
 
@@ -1002,9 +1019,15 @@ void deserializePACParams(StaticJsonDocument<512> doc) {
     regulTempEC.Kp = regulTemp[F("Kp")]; // 2.1
     regulTempEC.Ki = regulTemp[F("Ki")]; // 2.1
     regulTempEC.Kd = regulTemp[F("Kd")]; // 2.1
-    const char* regulTemp_autorisationForcage = regulTemp[F("aForcage")];
-    if (strcmp(regulTemp_autorisationForcage, "true") == 0 || strcmp(regulTemp_autorisationForcage, "True") == 0) regulTempEC.autorisationForcage = true;
+
+
+    String aForcage2 = regulTemp["aForcage"];
+    if (aForcage2.compareTo("true") == 0) regulTempEC.autorisationForcage = true;
     else regulTempEC.autorisationForcage = false;
+
+    //const char* regulTemp_autorisationForcage = regulTemp[F("aForcage")];
+    //if (strcmp(regulTemp_autorisationForcage, "true") == 0 || strcmp(regulTemp_autorisationForcage, "True") == 0) regulTempEC.autorisationForcage = true;
+    //else regulTempEC.autorisationForcage = false;
     regulTempEC.consigneForcage = regulTemp[F("consForcage")]; // 2.1
     regulTempEC.offset = regulTemp[F("offset")];
 
@@ -1103,8 +1126,10 @@ bool SerializeMasterData(uint32_t timeString, char* buffer) {
     doc[turb] = String(masterData.turb,2);
     doc[fluo] = String(masterData.fluo,2);
     doc[pH] = String(masterData.pH,2);
-    doc[sal] = String(masterData.salinite,2);
-    doc[temp] = String(masterData.temperature,2);
+    doc[sal] = String(masterData.salinite, 2);
+    doc[temp] = String(masterData.temperature, 2);
+    doc["C0_pH"] = String(masterData.C0_pH, 2);
+    doc["C0_temp"] = String(masterData.C0_temperature, 2);
     doc[pressionEA] = String(masterData.pression[0],2);
     doc[pressionEC] = String(masterData.pression[1],2);
     doc[sPID_EA] = regulPression[0].sortiePID_pc;
@@ -1154,7 +1179,7 @@ void readMBSensors() {
         }
         else {
             calibAuthorized = false;
-            if (sensorIndex < 5) { // HAMILTON: indexes O to 2 are mesocosms, index 4 is input measure tank, index 3 is acidification tank
+            if (sensorIndex < 6) { // HAMILTON: indexes O to 2 are mesocosms, index 4 is input measure tank, index 3 is acidification tank, index 5 is C0 mixing tank
                 //Hamilton.setSensor(sensorIndex + 1, &master);
                 mbSensor.query.u8id = sensorIndex + 1;
 
@@ -1168,6 +1193,8 @@ void readMBSensors() {
                             if (sensorIndex < 3) condition.Meso[sensorIndex].pH = mbSensor.pH_sensorValue;
                             if (sensorIndex == 3) condition.mesurepH = mbSensor.pH_sensorValue;
                             if (sensorIndex == 4) masterData.pH = mbSensor.pH_sensorValue;
+
+                            if (sensorIndex == 5) masterData.C0_pH = mbSensor.pH_sensorValue;
 
                         }
                         mbSensor.pH_sensorValue = -99;
@@ -1194,114 +1221,14 @@ void readMBSensors() {
                                 masterData.temperature = mbSensor.temp_sensorValue;
                             }
 
+                            if (sensorIndex == 5) masterData.C0_temperature = mbSensor.temp_sensorValue;
+
                         }
                         mbSensor.temp_sensorValue = -99;
                         sensorIndex++;
                         pHSensor = true;
                     }
-                }
-            }
-            else {
-
-                calibAuthorized = false;
-                switch (sensorIndex) {
-                case 5:
-                    mbSensor.query.u8id = 10;//PODOC
-                    if (state == 0) {
-                        errorCode = mbSensor.requestValues(&master);
-                        if (errorCode == 1) {
-                            state = 1;
-                        }
-                        else if(errorCode == -1) {
-                            state = 0;
-                            sensorIndex++;
-                        }
-                    }
-                    else{
-                        errorCode = mbSensor.readValues(&master);
-                        if (errorCode == 1) {
-                            /*Serial.print(F("Temperature:")); Serial.println(mbSensor.params[0]);
-                            Serial.print(F("oxy %:")); Serial.println(mbSensor.params[1]);
-                            Serial.print(F("oxy mg/L:")); Serial.println(mbSensor.params[2]);
-                            Serial.print(F("oxy ppm:")); Serial.println(mbSensor.params[3]);*/
-                            masterData.oxy = mbSensor.params[1];
-                            state = 0;
-                            sensorIndex++;
-                            calibAuthorized = true;
-                        }
-                        else if (errorCode == 255){
-                            state = 0;
-                            sensorIndex++;
-                            calibAuthorized = true;
-                        }
-                    }
-                    break;
-                case 6:
-                    mbSensor.query.u8id = 40;//NTU
-                    if (state == 0) {
-                        errorCode = mbSensor.requestValues(&master);
-                        if (errorCode == 1) {
-                            state = 1;
-                        }
-                        else if (errorCode == 255) {
-                            state = 0;
-                            sensorIndex++;
-                        }
-                    }
-                    else {
-                        errorCode = mbSensor.readValues(&master);
-                        if (errorCode == 1) {
-                            /*Serial.print(F("Temperature:")); Serial.println(mbSensor.params[0]);
-                            Serial.print(F("NTU:")); Serial.println(mbSensor.params[1]);
-                            Serial.print(F("FNU:")); Serial.println(mbSensor.params[2]);
-                            Serial.print(F("mg/L:")); Serial.println(mbSensor.params[3]);*/
-                            masterData.turb = mbSensor.params[1];
-                            state = 0;
-                            sensorIndex++;
-                            calibAuthorized = true;
-                        }
-                        else if (errorCode == 255) {
-                            state = 0;
-                            sensorIndex++;
-                            calibAuthorized = true;
-                        }
-                    }
-                    break;
-                case 7:
-                    mbSensor.query.u8id = 30;//Cond
-                    if (state == 0) {
-                        errorCode = mbSensor.requestValues(&master);
-                        if (errorCode == 1) {
-                            state = 1;
-                        }
-                        else if (errorCode == 255) {
-                            state = 0;
-                            sensorIndex = 0;
-                        }
-                    }
-                    else {
-                        errorCode = mbSensor.readValues(&master);
-                        if (errorCode == 1) {
-                            /*Serial.print(F("Temperature:")); Serial.println(mbSensor.params[0]);
-                            Serial.print(F("conductivite:")); Serial.println(mbSensor.params[1]);
-                            Serial.print(F("salinite:")); Serial.println(mbSensor.params[2]);
-                            Serial.print(F("TDS:")); Serial.println(mbSensor.params[3]);*/
-                            masterData.cond = mbSensor.params[1];
-                            masterData.salinite = mbSensor.params[2];
-                            state = 0;
-                            sensorIndex=0;
-                            calibAuthorized = true;
-                        }
-                        else if (errorCode == 255) {
-                            state = 0;
-                            sensorIndex = 0;
-                            calibAuthorized = true;
-                        }
-                    }
-                    break;
-                case 8:
-                    //TODO: FLUO
-                    break;
+                
                 }
 
             }
@@ -1323,6 +1250,7 @@ void calibrateSensor() {
     case 2:
     case 3:
     case 4:
+    case 5:
         Serial.println("CALIBRATE PH");
         Serial.print("calib.value:"); Serial.println(calib.value);
 
@@ -1348,104 +1276,5 @@ void calibrateSensor() {
         break;
 
 
-    case 5://PODOC
-        Serial.println("CALIBRATE PODOC");
-        mbSensor.query.u8id = 10;
-        if (calib.calibParam == 99) {
-            if (stateCalib == 0) {
-                if (mbSensor.factoryReset(&master)) stateCalib = 1;
-            }
-            else {
-                calib.calibEnCours = false;
-                stateCalib = 0;
-            }
-        }
-        else {
-            int offset;
-            if (stateCalib == 0) {
-                //PODOC oxy
-                if (calib.calibParam == 0) {
-                    offset = 516;
-                }
-                else {
-                    offset = 522;
-                }
-                if (mbSensor.calibrateCoeff(calib.value, offset, &master)) stateCalib = 1;
-            }
-            else {
-                offset = 654;
-                if (mbSensor.validateCalibration(offset, &master)) {
-                    stateCalib = 0;
-                    calib.calibEnCours = false;
-                }
-            }
-
-        }
-        break;
-    case 6://NTU
-        mbSensor.query.u8id = 40;
-        if (calib.calibParam == 99) {
-            if (stateCalib == 0) {
-                if (mbSensor.factoryReset(&master)) stateCalib = 1;
-            }
-            else {
-                calib.calibEnCours = false;
-                stateCalib = 0;
-            }
-        }
-        else {
-            int offset;
-            if (stateCalib == 0) {
-                if (calib.calibParam == 0) {
-                    offset = 528;// Gamme 4 jusqu'a 4000 NTU, sinon changer d'adresse
-                }
-                else {
-                    offset = 530;// Gamme 4 jusqu'a 4000 NTU, sinon changer d'adresse
-                }
-                if (mbSensor.calibrateCoeff(calib.value, offset, &master)) stateCalib = 1;
-            }
-            else {
-                offset = 654;
-                if (mbSensor.validateCalibration(offset, &master)) {
-                    stateCalib = 0;
-                    calib.calibEnCours = false;
-                }
-            }
-
-        }
-        break;
-    case 7://PC4E
-        mbSensor.query.u8id = 30;
-        if (calib.calibParam == 99) {
-            if (stateCalib == 0) {
-                if (mbSensor.factoryReset(&master)) stateCalib = 1;
-            }
-            else {
-                calib.calibEnCours = false;
-                stateCalib = 0;
-            }
-        }
-        else {
-            int offset;
-            if (stateCalib == 0) {
-
-                if (calib.calibParam == 0) {
-                    offset = 528;
-                }
-                else {
-                    offset = 530; //518
-                }
-                    if (mbSensor.calibrateCoeff(calib.value, offset, &master)) 
-                    stateCalib = 1;
-            }
-            else {
-                offset = 654;//654
-                if (mbSensor.validateCalibration(offset, &master)) {
-                    stateCalib = 0;
-                    calib.calibEnCours = false;
-                }
-            }
-        }
-        break;
     }
 }
