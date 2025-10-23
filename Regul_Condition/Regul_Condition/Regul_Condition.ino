@@ -38,6 +38,9 @@ const byte PIN_POMPE_DIR = 19;
 const byte PIN_POMPE_ANA = 4;
 /***************************/
 
+uint16_t limitePIDMin = 90;
+uint16_t limitePIDMax = 166;
+
 
 enum {
     REQ_PARAMS = 0,
@@ -194,7 +197,7 @@ void setup() {
     condition.regulpH.pid.SetMode(AUTOMATIC);
 
     condition.regulTemp.pid = PID((double*)&Hamilton[3].temp_sensorValue, &condition.regulTemp.sortiePID, &condition.regulTemp.consigne, condition.regulTemp.Kp, condition.regulTemp.Ki, condition.regulTemp.Kd, DIRECT);
-    condition.regulTemp.pid.SetOutputLimits(0, 255);
+    condition.regulTemp.pid.SetOutputLimits(limitePIDMin, limitePIDMax);
     condition.regulTemp.pid.SetMode(AUTOMATIC);
 
     //setPIDparams();
@@ -276,7 +279,7 @@ void setPIDparams() {
     condition.regulpH.pid.SetMode(AUTOMATIC);
     condition.regulpH.pid.SetControllerDirection(REVERSE);
 
-     condition.regulTemp.pid.SetOutputLimits(50, 255);
+     condition.regulTemp.pid.SetOutputLimits(limitePIDMin, limitePIDMax);
      condition.regulTemp.pid.SetTunings(condition.regulTemp.Kp,condition.regulTemp.Ki,condition.regulTemp.Kd);
     condition.regulTemp.pid.SetMode(AUTOMATIC);
     condition.regulTemp.pid.SetControllerDirection(DIRECT);
@@ -309,9 +312,16 @@ void calibrateSensor() {
         if (HamiltonCalibStep == 4) {
             HamiltonCalibStep = 0;
             calib.calibEnCours = false;
+
+            sendCalibOK();
         }
     }
 
+}
+
+void sendCalibOK() {
+    String s = "{\"cmd\":20, \"cID\":" + String(CONDID) + String(",\"sID\":")+String(CONDID)+String("}");
+    webSocket.sendTXT(s);
 }
 
 

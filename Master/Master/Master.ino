@@ -114,8 +114,6 @@ bool toggleCO2Valve = false;
 uint8_t AppSocketId = -1;
 
 
-bool calibAuthorized = false;
-
 enum {
     REQ_PARAMS = 0,
     REQ_DATA = 1,
@@ -138,6 +136,7 @@ typedef struct Calibration {
     float value;
     bool calibEnCours;
     bool calibRequested;
+    bool calibSuccessful;
 }Calibration;
 
 Calibration calib;
@@ -394,7 +393,8 @@ void loop() {
     checkMesocosmes();
     checkWaterLevelCO2();
     //printToSD();
-    sendData();
+
+    if (elapsed(&tempoSendValues.debut, tempoSendValues.interval)) sendData();
 
     if (currentMin != RTC.getMinute()) {
         currentMin = RTC.getMinute();
@@ -629,7 +629,7 @@ void setPIDparams() {
 
     for (int i = 0; i < 2; i++) {
         regulPression[i].pid = PID((double*)&masterData.pression[i], &regulPression[i].sortiePID, &regulPression[i].consigne, regulPression[i].Kp, regulPression[i].Ki, regulPression[i].Kd, DIRECT);
-        regulPression[i].pid.SetOutputLimits(80, 255);
+        regulPression[i].pid.SetOutputLimits(80, 255); //reduce 80 to 51
         regulPression[i].pid.SetMode(AUTOMATIC);
         regulPression[i].pid.SetControllerDirection(DIRECT);
     }
@@ -731,7 +731,13 @@ int regulationTemperaturePAC() {
     }
     else {
 
-        if (elapsed(&tempoRR.debut, tempoRR.interval)) {
+        regulTempEC.pid.Compute();
+        regulTempEC.sortiePID_pc = (int)map(regulTempEC.sortiePID, 50, 255, 0, 100);
+        if (regulTempEC.sortiePID_pc < 0)regulTempEC.sortiePID_pc = 0;
+        analogWrite(PIN_V3V_PAC, regulTempEC.sortiePID);
+        return regulTempEC.sortiePID_pc;
+
+        /*if (elapsed(&tempoRR.debut, tempoRR.interval)) {
             double diff = lastTemp - masterData.tempPAC;
             double err = regulTempEC.consigne - masterData.tempPAC;
 
@@ -749,6 +755,7 @@ int regulationTemperaturePAC() {
         analogWrite(PIN_V3V_PAC, meanPIDOut_temp);
 
         return meanPIDOut_temp;
+        */
 
         /*if (elapsed(&tempoRR.debut, tempoRR.interval)) {
             double diff = lastTemp - masterData.tempPAC;
@@ -946,7 +953,6 @@ void readJSON(char* json) {
 }
 
 void sendData() {
-    if (elapsed(&tempoSendValues.debut, tempoSendValues.interval)) {
         Serial.println("SEND DATA");
 
         char buf[600];
@@ -954,8 +960,13 @@ void sendData() {
         Serial.println(buf);
         webSocket.sendTXT(buf);
         sendMasterData();
-    }
+    
 
+}
+
+void sendCalibOK() {
+
+    webSocket.sendTXT("{\"cmd\":20, \"cID\":0,\"sID\":0}");
 }
 
 void sendMasterData() {
@@ -1161,24 +1172,26 @@ float checkValue(float val, float min, float max, float def) {
     return def;
 }
 
-int state = 0;
+//int state = 0;
 
 void readMBSensors() {
     int errorCode = 0;
     //sensorIndex = 0;
     if (elapsed(&tempoSensorRead.debut, tempoSensorRead.interval)) {
 
-        readFluo();
-        if (state == 0 && calib.calibRequested && calibAuthorized) {
+        //readFluo();
+        if (calib.calibRequested) {
             calib.calibRequested = false;
             calib.calibEnCours = true;
             mbSensor.querySent = false;
         }
         if (calib.calibEnCours) {
             calibrateSensor();
+            if (calib.calibSuccessful) {
+                sensorIndex = calib.sensorID;
+            }
         }
         else {
-            calibAuthorized = false;
             if (sensorIndex < 6) { // HAMILTON: indexes O to 2 are mesocosms, index 4 is input measure tank, index 3 is acidification tank, index 5 is C0 mixing tank
                 //Hamilton.setSensor(sensorIndex + 1, &master);
                 mbSensor.query.u8id = sensorIndex + 1;
@@ -1224,8 +1237,13 @@ void readMBSensors() {
                             if (sensorIndex == 5) masterData.C0_temperature = mbSensor.temp_sensorValue;
 
                         }
+                        if (calib.calibSuccessful) {
+                            calib.calibSuccessful = false;
+                            sendCalibOK();
+                        }
                         mbSensor.temp_sensorValue = -99;
                         sensorIndex++;
+                        if (sensorIndex == 6) sensorIndex = 0;
                         pHSensor = true;
                     }
                 
@@ -1259,6 +1277,8 @@ void calibrateSensor() {
         Serial.print("Hamilton.query.u8id:"); Serial.println(mbSensor.query.u8id);
         if (calib.calibParam == 99) {
             if (stateCalib == 0) {
+
+                calib.calibSuccessful = false;
                 if (mbSensor.factoryReset(&master)) stateCalib = 1;
             }
             else {
@@ -1271,6 +1291,7 @@ void calibrateSensor() {
             if (HamiltonCalibStep == 4) {
                 HamiltonCalibStep = 0;
                 calib.calibEnCours = false;
+                calib.calibSuccessful = true;
             }
         }
         break;
